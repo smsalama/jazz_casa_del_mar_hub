@@ -1,0 +1,12 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Third-party, generated and tool paths"
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)\.tools/''',
+  '''(^|/)\.next/''',
+  '''(^|/)dist/''',
+  '''(^|/)coverage/''',
+]

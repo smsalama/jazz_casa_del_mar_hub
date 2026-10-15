@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Blocks commit messages that contain em-dashes or en-dashes.
+ROOT=$(git rev-parse --show-toplevel)
+node "$ROOT/scripts/check-dashes.mjs" --message "$1" || { echo "Commit blocked: remove the dashes from the commit message."; exit 1; }

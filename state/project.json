@@ -1,0 +1,54 @@
+{
+  "client": "jazz_casa_del_mar",
+  "project": "site",
+  "agency_version": "0.1.1+ef1fb3c",
+  "created": "2026-10-15",
+  "phase": "1 Discovery",
+  "repos": {
+    "hub": {
+      "name": "jazz_casa_del_mar_hub",
+      "url": "https://github.com/smsalama/jazz_casa_del_mar_hub"
+    },
+    "web": {
+      "name": "jazz_casa_del_mar_web",
+      "url": "https://github.com/smsalama/jazz_casa_del_mar_web",
+      "status": "planned"
+    },
+    "api": {
+      "name": "",
+      "url": "",
+      "status": "decided at architecture"
+    }
+  },
+  "touchpoints": {
+    "T1-scope": {
+      "status": "pending",
+      "approval_file": ""
+    },
+    "T2-design": {
+      "status": "pending",
+      "approval_file": ""
+    },
+    "T3-release": {
+      "status": "pending",
+      "approval_file": "",
+      "version": ""
+    }
+  },
+  "budgets": {
+    "unit": "subagent tokens",
+    "1 Discovery": 300000,
+    "2 Requirements": 600000,
+    "3 Initial legal and risk": 500000,
+    "4 Design and architecture": 1500000,
+    "6 Implementation": 4000000,
+    "7 Independent reviews": 1200000,
+    "8 Testing": 1000000,
+    "9 Remediation": 1000000,
+    "10 Release readiness": 500000
+  },
+  "usage": [],
+  "tasks": [],
+  "decisions": [],
+  "open_questions": []
+}

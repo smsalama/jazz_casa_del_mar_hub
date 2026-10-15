@@ -1,0 +1,18 @@
+{
+  "gate": "requirements",
+  "status": "PASS",
+  "criteria": [
+    "Scope approved at T1",
+    "Every story has testable acceptance criteria",
+    "Assumptions and exclusions documented"
+  ],
+  "reviewer": "role-product-owner",
+  "date": "YYYY-MM-DD",
+  "evidence": [
+    "evidence/2-requirements/verify-CLIENT-PROJECT-hub-abc1234-20261015T120000Z.log"
+  ],
+  "findings": [
+    { "severity": "low", "finding": "Example finding", "where": "docs/stories.md:12" }
+  ],
+  "actions": []
+}

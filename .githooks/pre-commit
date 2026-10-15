@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Blocks commits that contain em-dashes, en-dashes or secrets.
+ROOT=$(git rev-parse --show-toplevel)
+node "$ROOT/scripts/check-dashes.mjs" --staged || { echo "Commit blocked: remove the dashes listed above."; exit 1; }
+bash "$ROOT/scripts/secrets.sh" staged || { echo "Commit blocked: a possible secret was found (see above). Move it to .env."; exit 1; }

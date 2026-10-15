@@ -1,0 +1,2 @@
+# Path prefixes the dash check skips, one per line.
+# Only for third-party files that must not be edited. Every entry needs a reason in the line above it.
