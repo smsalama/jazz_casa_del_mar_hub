@@ -209,7 +209,7 @@ paths:
               $ref: '#/components/schemas/ContactForm'
       responses:
         '200':
-          description: Confirmation page stating the reference `ENQ-XXXXXX` (FR-20)
+          description: Confirmation page stating the reference `ENQ-XXXXXX`, six characters from the 32 character alphabet `A-HJ-NP-Z2-9` (no `I` or `O`); the insert is retried with a new reference on a unique violation (FR-20, AC-13.4, data model D-5)
           headers:
             Content-Security-Policy:
               $ref: '#/components/headers/ContentSecurityPolicyPublic'
@@ -243,6 +243,11 @@ paths:
         Single opt in with a required consent tick. An address already subscribed (compared after
         trimming and ignoring case) gets the same confirmation and no second record. Median time is
         the same for both cases within 100 ms (G-11). Rate limit 5 per hour (NFR-21).
+        Cap (NFR-35, data model D-4): the subscriber cap is checked before the address is looked up;
+        once the cap is reached every sign up, new or already subscribed, gets the same 503 page, so
+        the response never reveals whether an address exists.
+        Suppression (data model D-3, proposed, pending T2): an address with a suppression entry is not
+        stored and gets the same confirmation as any other address.
       security: []
       parameters:
         - $ref: '#/components/parameters/Lang'
@@ -1121,7 +1126,7 @@ paths:
       tags: [admin-lists]
       operationId: reorderList
       summary: Save a new order for every item of the list (FR-36)
-      description: '`itemIds` must contain exactly the current items; otherwise 409 `version_conflict`.'
+      description: '`version` must equal the current list order version and `itemIds` must contain exactly the current items; otherwise 409 `version_conflict` with the current list in `current`, so two simultaneous reorders cannot silently overwrite each other (NFR-33, data model D-7).'
       security:
         - adminSession: []
           csrfToken: []
@@ -1469,7 +1474,11 @@ paths:
     get:
       tags: [admin-enquiries]
       operationId: getEnquiry
-      summary: Read one enquiry in full; marks it read (FR-42)
+      summary: Read one enquiry in full (FR-42)
+      description: |
+        Safe and changes nothing (NFR-22: state never changes on GET). When the portal opens an
+        enquiry it marks it read with a separate `PATCH` carrying `{"read": true}` (`updateEnquiry`),
+        which needs the CSRF token like every other admin write.
       responses:
         '200':
           description: Enquiry
@@ -1487,7 +1496,10 @@ paths:
     patch:
       tags: [admin-enquiries]
       operationId: updateEnquiry
-      summary: Mark handled or unhandled, or mark as a data protection request (FR-42)
+      summary: Mark read or unread, handled or unhandled, or mark as a data protection request (FR-42)
+      description: |
+        `read: true` records the time it was first read (sent by the portal when an enquiry is opened);
+        `read: false` returns it to unread. Idempotent flags, not versioned (data model section 6).
       security:
         - adminSession: []
           csrfToken: []
@@ -1915,7 +1927,9 @@ components:
     HtmlFormUnavailable:
       description: |
         The record could not be stored (data store error, or the cap of NFR-35 reached). The form is
-        shown again with an error message and typed values kept; no confirmation (FR-20).
+        shown again with an error message and typed values kept; no confirmation (FR-20). For newsletter
+        sign up the cap is checked before the address is looked up, so at the cap every address gets
+        this same response (D-4).
       headers:
         Content-Security-Policy:
           $ref: '#/components/headers/ContentSecurityPolicyPublic'
@@ -2139,7 +2153,7 @@ components:
           type: integer
           minimum: 1
         current:
-          description: For `version_conflict`, the stored entry, item or settings the save was refused against
+          description: For `version_conflict`, the stored entry, item, list (for a reorder) or settings the save was refused against
           type: object
         usage:
           description: For `in_use`, where the media is used
@@ -2923,10 +2937,14 @@ components:
     ListSummary:
       type: object
       additionalProperties: false
-      required: [key, label, itemLabel, minItems, maxItems, count, belowMinimum, publicPaths]
+      required: [key, version, label, itemLabel, minItems, maxItems, count, belowMinimum, publicPaths]
       properties:
         key:
           $ref: '#/components/schemas/ListKey'
+        version:
+          type: integer
+          minimum: 1
+          description: List order version; goes up by 1 whenever an item is added, deleted or the list is reordered. Required by `reorderList` (D-7)
         label:
           type: string
           maxLength: 200
@@ -3031,8 +3049,12 @@ components:
     ListOrderUpdate:
       type: object
       additionalProperties: false
-      required: [itemIds]
+      required: [version, itemIds]
       properties:
+        version:
+          type: integer
+          minimum: 1
+          description: The list order version (`ListSummary.version`) the new order is based on (NFR-33, data model D-7)
         itemIds:
           type: array
           minItems: 1
@@ -3377,6 +3399,7 @@ components:
           $ref: '#/components/schemas/Id'
         reference:
           type: string
+          description: Generated from the 32 character alphabet `A-HJ-NP-Z2-9`; the pattern accepts the wider `A-Z2-9` set, which every generated value satisfies (data model D-5)
           pattern: '^ENQ-[A-Z2-9]{6}$'
         name:
           type: string
@@ -3454,6 +3477,9 @@ components:
       additionalProperties: false
       minProperties: 1
       properties:
+        read:
+          type: boolean
+          description: True marks the enquiry read (sent when the portal opens it); false marks it unread (FR-42)
         status:
           $ref: '#/components/schemas/EnquiryStatus'
         dataProtection:

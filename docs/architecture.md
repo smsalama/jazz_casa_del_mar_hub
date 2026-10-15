@@ -179,7 +179,7 @@ Boundaries are enforced by an ESLint import rule (browser code cannot import ser
 - **Admin API**: Astro API routes under `src/pages/admin/api/`, one file per path in the contract. Each handler validates input with Zod schemas that mirror the contract, calls a domain module, and returns contract shapes. Problem details for every error.
 - **Jobs**: purge and backup run in the scheduler (ADR-0010); image processing in the child process (ADR-0009).
 - **Commands**: compiled to `dist/cli/*.mjs` and run with `npm run <name>`; each checks the data folder permissions and refuses to run as a different user from the folder owner.
-- **Concurrency on 1 CPU**: SQLite calls are synchronous and short; long work is moved out of the event loop (Argon2id on the thread pool with at most 2 at once, images in the child process, CSV export streamed in chunks of 500 rows with `setImmediate` between chunks).
+- **Concurrency on 1 CPU**: SQLite calls are synchronous and short; long work is moved out of the event loop (Argon2id on the thread pool with at most 2 at once, images in the child process, CSV export read in keyset chunks of 500 rows with `.all()` and `setImmediate` between chunks, not `.iterate()`, data model D-10).
 
 ## 9. Internationalisation and routes
 
@@ -215,23 +215,24 @@ Language is the first path segment, slugs are shared English slugs (ADR-0011). E
 
 ## 10. Data
 
-**Store**: one SQLite file `DATA_DIR/site.db`, WAL, `synchronous=FULL`, accessed only through Drizzle (ADR-0003). Media files under `DATA_DIR/media/`. Keys in `DATA_DIR/secrets/keys.json`. Nothing under `DATA_DIR` is served except the public media copies through the strict file name handler.
+**Store**: one SQLite file `DATA_DIR/site.db`, WAL, `synchronous=FULL`, `secure_delete=ON`, with a WAL checkpoint after each purge, accessed only through Drizzle (ADR-0003). The detailed model is `docs/data-model.md`; this section is the summary. Media files under `DATA_DIR/media/`. Keys in `DATA_DIR/secrets/keys.json`. Nothing under `DATA_DIR` is served except the public media copies through the strict file name handler.
 
 **Tables** (the Database Engineer details columns, indexes and constraints in Phase 5):
 
 | Table | Holds | Personal data | Retention (FR-45) |
 | --- | --- | --- | --- |
-| `account` | Staff accounts, Argon2id hash, status, must change password, last sign in, failed attempts | Name, email | Personal data removed 30 days after deletion; disabled after 12 months without sign in |
+| `site_state`, `install_secret` | Content revision and schema version; the suppression HMAC key (never in `settings` or any response) | None | Kept |
+| `account` | Staff accounts, Argon2id hash, status, must change password, last sign in, lockout counters (no separate login attempt table) | Name, email | Personal data removed 30 days after deletion; disabled after 12 months without sign in |
 | `session` | SHA-256 of session id, account, times, CSRF secret | Account id | Deleted at sign out, idle 30 min, 8 h, or on password change, reset, disable, delete |
-| `login_attempt` | Per account failure window for lockout | Account id | 24 hours |
-| `content_entry`, `list_item`, `settings` | Content in four languages, with `version` | Placeholder contact details only | Kept |
+| `content_entry`, `list_item`, `settings` | Content in four languages, with `version`; lists also have a list order version (D-7) | Placeholder contact details only | Kept |
+| `legal_text_version` (proposed, pending T2, D-2) | Immutable archive of the privacy information and consent wording, referenced by enquiries and subscribers | None | Kept |
 | `media_asset`, `media_variant`, `media_usage` | Library metadata, alt text, captions, variants, usage | Possibly people in photos (FR-18 forbids in placeholders) | Original 30 days after deletion; public copies removed at once |
-| `enquiry` | FR-20 fields plus normalised search columns, status, read, data protection flag | Name, email, telephone, message | 12 months after receipt |
-| `subscriber` | Email, normalised email, language, status, consent version and time | Email | Active until unsubscribed or removed; readable address deleted 30 days after unsubscribing |
-| `suppression` | HMAC-SHA256 of normalised email, time | Keyed hash | 36 months |
-| `rate_limit`, `used_form_token` | Counters and accepted contact form nonces | Client address in counter key | 24 hours |
+| `enquiry` | FR-20 fields plus normalised search columns, status, read time (set by an explicit `PATCH`, never by a GET, D-1), data protection flag; reference `ENQ-` plus 6 characters from `A-HJ-NP-Z2-9`, retried on a unique violation (D-5) | Name, email, telephone, message | 12 months after receipt |
+| `subscriber` | Email, normalised email, language, status, consent version and time; the cap is checked before the address is looked up (D-4) | Email | Active until unsubscribed or removed; the whole row deleted 30 days after unsubscribing |
+| `suppression` | HMAC-SHA256 of normalised email, time; blocks a new sign up of that address with the same confirmation (proposed, pending T2, D-3) | Keyed hash | 36 months |
+| `rate_limit`, `used_form_token` | Counters and accepted contact form nonces | Keyed hash of the client address in the counter key (D-9) | 24 hours, removed by the 10 minute sweep (D-13) |
 | `security_event` | Time, account id or `anonymous`/`system`, event, result, counts | Account id only | 12 months |
-| `job_run` | Last runs of purge and backup | None | Last 400 runs |
+| `job_run`, `backup_archive` | Last runs of purge and backup; metadata of archives that exist | None | Last 400 runs; archive rows with their files |
 | `health` | One row for the health check write | None | n/a |
 | `dsr_record` (created empty, used when FR-44 is built) | Data subject request records, no message text | Reference only | 24 months after closure |
 
@@ -295,7 +296,7 @@ Language is the first path segment, slugs are shared English slugs (ADR-0011). E
 
 **Startup refusals** (each prints a line starting `STARTUP-REFUSED` and exits non zero before any port opens): non loopback `HOST` (NFR-18, G-22, AC-63.2); configuration file, data folder, backup folder or keys file readable by other accounts (G-17, AC-77.4); invalid configuration; failed migration.
 
-**Keys**: generated per install at first start (form token, CSRF derivation, suppression HMAC), 256 bits each, never in the package (AC-77.5).
+**Keys**: generated per install at first start (form token, CSRF derivation and rate limit key hash in `keys.json`; the suppression HMAC key in the database table `install_secret`), 256 bits each, never in the package (AC-77.5).
 
 **Logging**: JSON lines to standard output with an allow-list of fields and no personal data (NFR-14); error correlation ids shown on the 500 page (FR-13); security events in the database (NFR-34); access logs belong to the reverse proxy when hosted.
 
@@ -374,6 +375,8 @@ Language is the first path segment, slugs are shared English slugs (ADR-0011). E
 9. **`wasm-unsafe-eval` and `blob:` sources in the public CSP** (ADR-0007, ADR-0008), needed by the meshopt decoder and three.js texture loading; allowed by NFR-24 for a 3D decoder.
 10. **English URL slugs in all four languages** (ADR-0011), for example `/de/rooms/family-suite`.
 11. **Safari during local review** signs in with a non `Secure` cookie on `http://localhost` only (ADR-0006, RSK-10); impossible on any other address because of the start guard.
+12. **Consent and privacy wording archive** (data model D-2, ADR-0004, ADR-0006): proposed, pending T2. A small immutable `legal_text_version` table records each version of the wording, and the label shown on the page travels in the signed form token. Recommended, because without it "consent wording version" proves nothing.
+13. **Suppressed addresses at sign up** (data model D-3, ADR-0006): proposed, pending T2. Default: an address unsubscribed within 36 months is silently not re-added and sees the same confirmation; alternative: a fresh ticked consent removes the suppression entry.
 
 ## 18. Questions answered from threat model section 9
 
