@@ -13,7 +13,7 @@ This document says what the site must do and how well. It does not rank requirem
 
 Nothing in this list blocks building the local review concept. Items here are the only requirements still marked Provisional.
 
-**OQ-12 Data controller and lawful basis (settled as a placeholder, pending the solicitor).** At T1 Steven approved a clearly marked placeholder controller in the privacy notice and in the newsletter consent text until his solicitor answers question Q3 (data controller identity and UK data protection scope). The lawful basis wording for the contact form is pending question Q7. Requirements marked Provisional (OQ-12): FR-14, NFR-14. Nothing is hosted until Q3 and Q7 are answered and recorded in `docs/legal-register.md`.
+**OQ-12 Data controller and lawful basis (settled as a placeholder, pending the solicitor).** At T1 Steven approved a clearly marked placeholder controller in the privacy notice and in the newsletter consent text until his solicitor answers question Q3 (data controller identity and UK data protection scope). The lawful basis wording for the contact form is pending question Q7. Requirements marked Provisional (OQ-12): FR-14, FR-22, NFR-14. Nothing is hosted until Q3 and Q7 are answered and recorded in `docs/legal-register.md`.
 
 **OQ-20 Can staff add a room type? (new, found in P2-T2, finding L4).** FR-36 listed "rooms" as a list staff can add to, but FR-1 fixes six room pages and T1 limits editing to "fixed page designs". Working answer: staff can edit the six room entries and their content but cannot add or delete a room type; a seventh type needs a scope change. Affects FR-1, FR-36. Owner: Steven. Marked Provisional (OQ-20) in AC-34.6.
 
@@ -47,7 +47,7 @@ Each entry gives Steven's decision (the recommendation in `docs/t1-decisions.md`
 
 **OQ-11 Newsletter confirmation and sending.** Decision: single opt in with an explicit consent tick that names the controller; the site stores and exports subscribers but sends nothing; public unsubscribe page. Difference: the working answer allowed double opt in if email were chosen; email is not built, so it is single opt in. Affects FR-22, FR-23, FR-43.
 
-**OQ-12 Data controller and lawful basis.** Decision: a clearly marked placeholder controller until the solicitor answers Q3. Remains open in the sense above. Affects FR-14, NFR-14, NFR-16.
+**OQ-12 Data controller and lawful basis.** Decision: a clearly marked placeholder controller until the solicitor answers Q3. Remains open in the sense above. Affects FR-14, FR-22, NFR-14, NFR-16.
 
 **OQ-13 Local review versus hosting.** Decision: local review only; no hosting anywhere reachable by others until the solicitor's answers are recorded and the hosting conditions in section D of `docs/t1-decisions.md` are met (non local start-up refused unless HTTPS and two step verification are built and enforced, G-22; FR-33, FR-44 and FR-46 promoted to Must; legal rows closed). Affects FR-47, NFR-18, NFR-27, NFR-31.
 
@@ -288,7 +288,7 @@ Each entry gives Steven's decision (the recommendation in `docs/t1-decisions.md`
 
 **NFR-34 Security event record.** Priority: Must (G-2). Even when the audit log screen (FR-46) is not built, the server shall write a security event record, with time, account identifier, event and result and no personal data beyond the account identifier, for every sign in success and failure, lockout, password change or reset, account change, subscriber export (with row count), enquiry deletion and purge run (with counts per category). The record shall be kept for 12 months (Retention schedule), shall never contain passwords, one-time codes, session identifiers, enquiry text or subscriber email addresses, and shall not be editable or deletable through the admin portal. Source: G-2 (TM-28, TM-48, TM-52, TM-64). Verify: T.
 
-**NFR-35 Resource limits.** The server shall: reject request bodies over 64 KB on public forms and over 1 MB on admin requests other than uploads; close a connection that sends no complete request within 30 s; run at most one image processing job and at most two password hash computations at a time and queue the rest; send cache lifetimes of at least one year with fingerprinted file names for static and 3D assets; and cap stored enquiries and subscribers (default 50,000 each) with an admin warning at 80 percent. Source: G-13 (TM-06, TM-08, TM-40, TM-49, TM-66, TM-67). Verify: T.
+**NFR-35 Resource limits.** The server shall: reject request bodies over 64 KB on public forms and over 1 MB on admin requests other than uploads; close a connection that sends no complete request within 30 s; run at most one image processing job and at most two password hash computations at a time and queue the rest; send cache lifetimes of at least one year with fingerprinted file names for static and 3D assets; and cap stored enquiries and subscribers (default 50,000 each), with an admin warning at 80 percent and, once a cap is reached, refusal of new records (for an enquiry, with the visible error message of FR-20). Source: G-13 (TM-06, TM-08, TM-40, TM-49, TM-66, TM-67). Verify: T.
 
 **NFR-36 Client design verdict.** The success measure "Modernised Design and client feedback" (brief, Success measures) shall be checked by Steven's own verdict at two touchpoints: at T2 on the approved designs and at T3 on the release package running locally. Each verdict shall be one of "Approve", "Approve with changes" (the changes listed) or "Reject", quoted verbatim from Steven's chat reply in the matching file in `approvals/`. Implementation does not start before the T2 verdict is recorded as Approve or Approve with changes, and release does not proceed without a T3 verdict of Approve or Approve with changes. The measured budgets (NFR-1, NFR-6 to NFR-8) are reported to Steven with each verdict. Source: brief Success measures; M3. Verify: I.
 
@@ -318,3 +318,105 @@ Proposed by the analyst, extended after the UK legal review (`docs/legal-registe
 ## Requirement count
 
 48 functional requirements (FR-1 to FR-48) and 36 non-functional requirements (NFR-1 to NFR-36). None is withdrawn. FR-21 and FR-33 are kept but not built this release. Traceability to stories and acceptance criteria is in `docs/traceability.md`.
+
+## Changes applied after T1 (P2-T2)
+
+Steven approved T1 on 2026-10-15 ("Approve T1", `approvals/T1-scope.md`). This section lists every change made to the four requirements files because of that approval and the Phase 3 and gate reviews, by source ID. Changes to `docs/stories.md` are given by acceptance criterion (AC) or story (US); changes to `docs/assumptions.md` by A, DEP, RSK or EXC ID. Nothing was changed in `docs/backlog.md`, `docs/mvp.md` or `docs/change-log.md` (Product Owner). No ID was removed: seven acceptance criteria are WITHDRAWN and keep their numbers; no FR or NFR is withdrawn. FR-21 and FR-33 are kept but marked not built this release.
+
+Counts after the changes: 48 FR, 36 NFR, 80 stories, 401 active acceptance criteria and 7 withdrawn (408 numbers used), 4 active criteria still provisional (AC-10.5 on OQ-21, AC-15.1 and AC-17.4 on OQ-12, AC-34.6 on OQ-20). Before: 33 NFR, 78 stories, 338 criteria, 38 provisional. Traceability was regenerated by script and full coverage re-checked (every FR and NFR has a story and an active criterion; every story has an active criterion; every active criterion traces to a requirement).
+
+### Open questions (T1 section B)
+
+| Source | Change | Touched |
+| --- | --- | --- |
+| OQ-1 | One Administrator role; Editor role dropped; provisional markers removed | FR-34, FR-42, FR-43, FR-44, NFR-25, glossary "Administrator"; AC-32.1 rewritten; AC-32.5, AC-70.2, AC-70.5 withdrawn; AC-70.4 reworded; AC-70.6 added; editor wording changed to Administrator throughout stories |
+| OQ-2 | No enquiry email; FR-21 kept but not built; no reset by email; SMTP removed from the zero cost and test rules | FR-21, FR-34, NFR-31, NFR-32; US-14 note and markers removed; AC-14.5 added; AC-76.2, AC-76.3, AC-76.5, AC-77.1; A-5, DEP-10, EXC-24 |
+| OQ-3 | English default, detection from browser language list, no cookie: marker removed | FR-25; AC-23.1, AC-23.2, AC-23.3 |
+| OQ-4 | Edit scope fixed to text, titles, images, links, list items and settings within fixed designs; narrows D3 | FR-35, FR-36, FR-39; AC-33.2, AC-34.5 markers removed; AC-33.5 added; EXC-15, A-38 |
+| OQ-5 | Fixed concept sentence per language plus optional editable sentence of 200 characters; no noindex setting | FR-17, FR-35, FR-39, glossary "Fixed concept sentence"; AC-20.1, AC-20.5, AC-37.4 rewritten |
+| OQ-6 | Edits live on save; no draft, preview or history | FR-38 rewritten; US-36 retitled "Save changes and see them go live" with a status note; AC-36.1, AC-36.3 withdrawn; AC-36.2 rewritten; AC-36.4 marker removed; AC-24.1, AC-33.1, AC-34.1, AC-34.2 wording; EXC-23 |
+| OQ-7 | English shown for a missing translation, publishing not blocked: marker removed | FR-26; AC-24.1, AC-24.2 |
+| OQ-8 | Machine assisted, unreviewed, local review only: marker removed | FR-16; AC-19.3 (see L1); A-20 |
+| OQ-9 | One 3D scene on each of Home and the five section overview pages (six) | FR-27, FR-28; AC-26.1, AC-26.2 markers removed; AC-26.3 added |
+| OQ-10 | Schedule approved with four added rows; periods are settings | Retention schedule, FR-45, NFR-17; AC-43.4, AC-62.3 markers removed; AC-43.6 added; A-21 |
+| OQ-11 | Single opt in with consent naming the controller; no sending; public unsubscribe page | FR-22, FR-23; AC-15.6 withdrawn; AC-16.1, AC-16.2 markers removed |
+| OQ-12 | Marked placeholder controller pending solicitor Q3; stays Provisional | FR-14, FR-22, NFR-14, AC-15.1, AC-17.4 (still provisional); AC-17.4 reworded |
+| OQ-13 | Local review only; hosting conditions of T1 section D | FR-47, FR-33, FR-44, FR-46 notes, NFR-18 |
+| OQ-14 | Small Linux server, no database server, no mail server: markers removed | NFR-10, NFR-31; AC-55.1, AC-76.4; A-19 |
+| OQ-15 | Configurable Book now URL with visible external site label | FR-11; AC-10.6 added; AC-10.5 reworded (new question OQ-21) |
+| OQ-16 | Synthetic contact details and social links: marker removed | FR-12; AC-11.4 rewritten with exact values |
+| OQ-17 | Typeset name, no logo artwork, no badges; codename fallback noted | FR-17, FR-18, NFR-30; AC-21.3, AC-75.3 markers removed; Forbidden claims list in the glossary |
+| OQ-18 | Currency selector and meetings and events pages out: marker removed | FR-1; AC-1.4 |
+| OQ-19 | Extended to superlatives, deadlines and scarcity | FR-7, FR-18, Forbidden claims list; AC-2.3 marker removed; AC-7.1 rewritten; AC-7.3 and AC-21.5 added; A-31 |
+| OQ-20 (new) | Whether staff can add a room type (found while fixing L4) | Open after T1; FR-36; AC-34.6 provisional; A-32, EXC-27 |
+| OQ-21 (new) | Exact booking engine address was never supplied | Open after T1; FR-11; AC-10.5 provisional; A-33 |
+
+### UK legal register rows (`docs/legal-register.md`)
+
+| Source | Change | Touched |
+| --- | --- | --- |
+| LR-2 | No consent tick on the contact form; privacy information line; basis other than consent, wording pending Q7 | FR-19, FR-20, FR-14, NFR-14; AC-13.1, AC-13.2, AC-13.4, AC-13.5 rewritten; AC-13.9 withdrawn; AC-59.2, AC-59.3 |
+| LR-3 | Newsletter consent text names the controller (placeholder until Q3) | FR-22; AC-15.1 |
+| LR-4 | Privacy notice gains withdrawal of consent, required fields and consequence, legitimate interests, complaint to the controller, backups statement, and the Information Commission name | FR-14; AC-17.1 rewritten |
+| LR-5 | Data protection complaint route, subject on the form, label and 30 day acknowledge by date, hosting guide text | FR-14, FR-19, FR-42, FR-44, NFR-16; AC-13.11, AC-17.5, AC-40.6, AC-61.1; A-37 |
+| LR-8 | Retention rows added; backups statement | Retention schedule, FR-45, NFR-17; AC-43.6, AC-62.4 |
+| LR-12 | Draft record of processing activities in the package | FR-47; AC-45.6 |
+| LR-21 | Public form tokens carried in the form with no cookie; listed storage matches the Cookie notice | NFR-15, NFR-22, FR-15; AC-67.1 narrowed to admin actions; AC-67.4, AC-67.5, AC-60.7 added |
+| LR-29 | Sample offers carry no deadline or scarcity claim and a Sample offer label | FR-7; AC-7.1, AC-7.3 |
+| LR-32 | "Who runs this site" section on Terms and provider settings | FR-16, FR-39; AC-19.4, AC-37.6 |
+| LR-39 | Licence register and authorship statement cover every 3D input | FR-31, FR-18; AC-21.1, AC-29.4 |
+| LR-40 | Generated third party notices file in the package | NFR-31, FR-47; AC-76.6 |
+
+### Security gaps (`docs/threat-model.md`, section 8)
+
+| Source | Change | Touched |
+| --- | --- | --- |
+| G-1 | First Administrator by server command or single use setup code | FR-47; AC-45.3 |
+| G-2 | Security event record as a Must | NFR-34 (new), Retention schedule, FR-43, FR-45, FR-46; US-79 (new, AC-79.1 to AC-79.4); AC-41.4, AC-43.3 |
+| G-3 | Automatic daily backup; US-46 recorded as Must | FR-48; US-46 note; AC-46.4 |
+| G-4 | CSV quoting and prefix rules | FR-43; AC-41.3, AC-41.6 |
+| G-5 | URL, telephone and email setting validation | FR-39; AC-37.2, AC-37.5 |
+| G-6 | Fixed concept sentence in code, optional 200 character addition | FR-17; AC-20.1, AC-20.5 |
+| G-7 | Sanitiser on save for every language value; hidden character rejection | NFR-24; AC-69.7, AC-69.9; A-34 |
+| G-8 | Headers on every response; no version headers or source maps; metadata shown as encoded text | NFR-24; AC-69.8, AC-69.10 |
+| G-9 | Spam trap and 2 second rule on newsletter forms; signed form token with no cookie | FR-22, FR-23, NFR-22; AC-15.8, AC-16.6, AC-67.4, AC-67.5 |
+| G-10 | US-66 (rate limiting) recorded as Must | NFR-21; US-66 note |
+| G-11 | Equal response time for subscribed and not subscribed addresses | FR-22, FR-23; AC-15.7, AC-16.4 |
+| G-12 | Address comparison after trimming and ignoring case | FR-22, FR-23, FR-42, FR-43, FR-44; AC-15.9, AC-16.5, AC-40.7, AC-41.7, AC-42.5 |
+| G-13 | Resource limits | NFR-35 (new); US-80 (new, AC-80.1 to AC-80.5) |
+| G-14 | Image header check and isolated decoding with limits | NFR-23; AC-68.8, AC-68.9 |
+| G-15 | Backup archive permissions, exclusions and safe restore | FR-48; AC-46.5, AC-46.6 |
+| G-16 | TLS and credential handling for email | FR-21; AC-14.5 |
+| G-17 | Configuration permissions and per install signing keys | NFR-32; AC-77.4, AC-77.5 |
+| G-18 | Software bill of materials, install scripts, decoders and glTF validation | NFR-26; AC-71.5, AC-71.6, AC-71.7 |
+| G-19 | All sessions end on password change, reset, disable or delete | NFR-20; AC-32.6, AC-65.4, AC-65.6 |
+| G-20 | Trusted proxy rule for the client address | NFR-21; AC-66.6 |
+| G-21 | Server command to unlock an account | FR-34; AC-32.8 |
+| G-22 | Refuse non local start unless HTTPS and two-step verification; US-31 stays Won't | NFR-18, FR-33 note; US-31 note; AC-63.2 rewritten |
+| G-23 | Show the previous sign in and failed attempts after sign in | FR-32; AC-30.7 |
+
+### Requirements gate findings (`gates/requirements.json`)
+
+| Source | Change | Touched |
+| --- | --- | --- |
+| M1 | Done by the Orchestrator before this task | `docs/assumptions.md` analyst additions table |
+| M2 | EXC-15 now says it narrows D3 and was approved at T1; the analyst treats "Approve T1" as the explicit confirmation and flags the reading | EXC-15, A-38 |
+| M3 | Steven's design verdict at T2 and T3 as the check for the success measure | NFR-36 (new); US-75 requirements line; AC-75.4, AC-75.5, AC-75.6; A-24 |
+| M4 | Executable alternatives where a device, tool or external site may be unavailable | Glossary lab profile L2; NFR-8; AC-53.1, AC-48.5, AC-21.4 (also retagged: no longer tied to OQ-19); A-27, A-36, DEP-6, DEP-9 |
+| M5 | Seven criteria made objective | AC-63.2 (exit status, `STARTUP-REFUSED` text, no listening port), AC-49.2 (20 frames, lightest or darkest pixel), AC-59.4 (field name word list; the second clause "does not address children" was dropped as not checkable), AC-26.1 and AC-26.3 (six different root files), AC-45.4 (token list and string counts), AC-20.2 (computed position, no focusable child, present with JavaScript on and off), AC-21.3 (Forbidden claims list); FR-17, FR-28 aligned |
+| M6 | Three contradictions resolved | Image weight: NFR-7, NFR-12, AC-57.4 (hero poster 150 KB, every other poster and image 250 KB). Editable titles against the Concept suffix: FR-17, FR-35, AC-20.4 (the system adds the suffix after the editable title). Loader on every first visit against only after 300 ms: FR-29, AC-27.1 (loader only if the page is not ready within 300 ms) |
+| M7 | Spam trap and 2 second rule can no longer drop an enquiry silently | FR-19, FR-20, FR-22, FR-23, NFR-22; AC-13.6 rewritten; AC-13.10 added (visible message, typed values kept, resubmission accepted) |
+| M8 | Publishing scope for shared lists and global settings defined | FR-38; AC-36.5, AC-36.6, AC-36.7 |
+| L1 | Content register check covers all four legal pages in three languages (12 entries) | FR-16; AC-19.3 |
+| L2 | Password change takes effect immediately and ends all sessions, including the current one | AC-32.6, AC-65.4, NFR-20 |
+| L3 | Clauses given criteria | Server reset command AC-32.7, lockout unlock AC-32.8 (FR-34); settings validation AC-37.5 (FR-39); forward button AC-27.7 (FR-29); numeric facts on all pages AC-21.5 (FR-18) |
+| L4 | Room types fixed at six, pending OQ-20 | FR-36; AC-34.6; OQ-20; EXC-27 |
+| L5 | Undocumented assumptions recorded | iOS tilt permission A-28 and FR-27, AC-25.5; AVIF and WebP A-29; digits in offer wording A-31 (wording removed, FR-7); site search A-30, EXC-22 and FR-1 |
+| L6 | Requirement titles no longer truncated in the traceability table | `docs/traceability.md` (title parsing fixed in the generator) |
+| L7 | Provisional criteria re-checked after the answers | 38 provisional before; 4 now (see counts above) |
+
+### Not applied or applied with a judgement
+
+- Nothing in the task was left unapplied.
+- Judgements flagged for confirmation: A-38 (reading "Approve T1" as the explicit confirmation of OQ-4), OQ-20 and OQ-21 (new open items), A-27 (lab profile L2 values), A-34 (soft hyphen exception), A-35 (machine assisted translations of the fixed concept sentence and the title suffix), the default Book now address (A-33), the Forbidden claims list translations (glossary), and the 8 hour life of the public form token (FR-20).
+- US-31 stays Won't. US-46 (backup) and US-66 (rate limiting) are recorded as Must in the requirements; the backlog, MVP and change log are for the Product Owner to update.
