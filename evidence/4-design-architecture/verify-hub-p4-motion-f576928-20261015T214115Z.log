@@ -1,0 +1,30 @@
+Verify report
+Repo: hub-p4-motion
+Commit: f576928
+Uncommitted changes: 0
+Time (UTC): 20261015T214115Z
+Node: v22.22.0
+System: Linux x86_64
+
+== No em-dashes or en-dashes in files
+Dash check: clean (157 checked)
+
+== No dashes in commit messages
+Dash check: clean (55 checked)
+
+== No secrets in files or git history
+[90m10:41PM[0m [32mINF[0m [1mscanned ~1519761 bytes (1.52 MB) in 85.3ms[0m
+[90m10:41PM[0m [32mINF[0m [1mno leaks found[0m
+[90m10:41PM[0m [32mINF[0m [1m54 commits scanned.[0m
+[90m10:41PM[0m [32mINF[0m [1mscanned ~1829869 bytes (1.83 MB) in 456ms[0m
+[90m10:41PM[0m [32mINF[0m [1mno leaks found[0m
+
+== Project state and gate records valid
+State and gates: valid (1 gate record(s)).
+
+== Summary
+PASS  No em-dashes or en-dashes in files
+PASS  No dashes in commit messages
+PASS  No secrets in files or git history
+PASS  Project state and gate records valid
+RESULT: PASS

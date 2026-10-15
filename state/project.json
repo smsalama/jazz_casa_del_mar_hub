@@ -121,6 +121,20 @@
       "role": "role-system-architect",
       "task": "P4-T2",
       "tokens": 373018
+    },
+    {
+      "date": "2026-10-15",
+      "phase": "4 Design and architecture",
+      "role": "role-motion-designer",
+      "task": "P4-T3",
+      "tokens": 272370
+    },
+    {
+      "date": "2026-10-15",
+      "phase": "4 Design and architecture",
+      "role": "role-database-engineer",
+      "task": "P4-T4",
+      "tokens": 355625
     }
   ],
   "tasks": [
@@ -261,12 +275,12 @@
       "role": "role-motion-designer",
       "repo": "hub",
       "branch": "p4-motion",
-      "status": "todo",
+      "status": "done",
       "depends_on": [
         "P4-T1",
         "P4-T2"
       ],
-      "evidence": ""
+      "evidence": "evidence/4-design-architecture/verify-hub-p4-motion-f576928-20261015T214115Z.log"
     },
     {
       "id": "P4-T4",
@@ -274,9 +288,46 @@
       "role": "role-database-engineer",
       "repo": "hub",
       "branch": "p4-data",
-      "status": "todo",
+      "status": "done",
       "depends_on": [
         "P4-T2"
+      ],
+      "evidence": "evidence/4-design-architecture/verify-hub-p4-data-453c683-20261015T214503Z.log"
+    },
+    {
+      "id": "P4-T5",
+      "title": "Fix cross document conflicts found by motion and data engineers (architecture s13, ADR-0007, contract getEnquiry, D-1 to D-7)",
+      "role": "role-system-architect, role-requirements-analyst",
+      "repo": "hub",
+      "branch": "",
+      "status": "todo",
+      "depends_on": [
+        "P4-T3",
+        "P4-T4"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P4-T6",
+      "title": "Design gate review (accessibility, consultant)",
+      "role": "role-accessibility, role-consultant",
+      "repo": "hub",
+      "branch": "",
+      "status": "todo",
+      "depends_on": [
+        "P4-T5"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P4-T7",
+      "title": "Architecture gate review (consultant, security engineer)",
+      "role": "role-consultant, role-security-engineer",
+      "repo": "hub",
+      "branch": "",
+      "status": "todo",
+      "depends_on": [
+        "P4-T5"
       ],
       "evidence": ""
     }
@@ -360,6 +411,12 @@
       "id": "Q12",
       "question": "Solicitor question pack Q1 to Q7 in docs/legal/questions-2026-10-15.md (needed before any hosting, not before the local build)",
       "for": "Steven (solicitor)",
+      "asked": "2026-10-15"
+    },
+    {
+      "id": "Q17",
+      "question": "Phase 4 subagent budget: 1,178,944 of 1,500,000 used before the gate reviews. Continue over budget for fixes and reviews (estimated 500000 to 700000 more)?",
+      "for": "Steven",
       "asked": "2026-10-15"
     }
   ]
