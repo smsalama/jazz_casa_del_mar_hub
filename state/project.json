@@ -3,7 +3,7 @@
   "project": "site",
   "agency_version": "0.1.1+ef1fb3c",
   "created": "2026-10-15",
-  "phase": "2 Requirements (post T1 amendments)",
+  "phase": "4 Design and architecture",
   "repos": {
     "hub": {
       "name": "jazz_casa_del_mar_hub",
@@ -83,6 +83,30 @@
       "task": "P2-T2",
       "tokens": 175000,
       "note": "estimate: harness returned no subagent_tokens figure; subagent estimated 150000 to 200000"
+    },
+    {
+      "date": "2026-10-15",
+      "phase": "2 Requirements",
+      "role": "role-product-owner",
+      "task": "P2-T3",
+      "tokens": 120000,
+      "note": "estimate: harness returned no subagent_tokens figure"
+    },
+    {
+      "date": "2026-10-15",
+      "phase": "2 Requirements",
+      "role": "role-requirements-analyst",
+      "task": "P2-T4",
+      "tokens": 70000,
+      "note": "estimate: harness returned no subagent_tokens figure"
+    },
+    {
+      "date": "2026-10-15",
+      "phase": "2 Requirements",
+      "role": "role-product-owner",
+      "task": "P2-T5",
+      "tokens": 60000,
+      "note": "estimate: harness returned no subagent_tokens figure"
     }
   ],
   "tasks": [
@@ -102,7 +126,7 @@
       "role": "role-requirements-analyst, role-product-owner",
       "repo": "hub",
       "branch": "p2-requirements, p2-backlog",
-      "status": "review",
+      "status": "done",
       "depends_on": [
         "P1-T1"
       ],
@@ -163,9 +187,57 @@
       "role": "role-product-owner",
       "repo": "hub",
       "branch": "p2-po-update",
-      "status": "doing",
+      "status": "done",
       "depends_on": [
         "P2-T2"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P2-T4",
+      "title": "Fix requirements gate re-check findings",
+      "role": "role-requirements-analyst",
+      "repo": "hub",
+      "branch": "p2-gate-fixes",
+      "status": "done",
+      "depends_on": [
+        "P2-T3"
+      ],
+      "evidence": "evidence/2-requirements/verify-jazz_casa_del_mar_hub-4c59131-20261015T182217Z.log"
+    },
+    {
+      "id": "P2-T5",
+      "title": "Verify gate fixes, add US-81 to backlog and MVP",
+      "role": "role-product-owner",
+      "repo": "hub",
+      "branch": "p2-gate-fixes",
+      "status": "done",
+      "depends_on": [
+        "P2-T4"
+      ],
+      "evidence": "evidence/2-requirements/verify-jazz_casa_del_mar_hub-c04b0d2-20261015T182423Z.log"
+    },
+    {
+      "id": "P4-T1",
+      "title": "Design: user flows, IA, design system, screen specs",
+      "role": "role-ui-ux-designer",
+      "repo": "hub",
+      "branch": "p4-design",
+      "status": "todo",
+      "depends_on": [
+        "P2-T5"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P4-T2",
+      "title": "Architecture: stack, ADRs, modules, API contract, local run",
+      "role": "role-system-architect",
+      "repo": "hub",
+      "branch": "p4-architecture",
+      "status": "todo",
+      "depends_on": [
+        "P2-T5"
       ],
       "evidence": ""
     }
