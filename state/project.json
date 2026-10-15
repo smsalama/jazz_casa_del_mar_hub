@@ -22,8 +22,8 @@
   },
   "touchpoints": {
     "T1-scope": {
-      "status": "waiting",
-      "approval_file": ""
+      "status": "approved",
+      "approval_file": "approvals/T1-scope.md"
     },
     "T2-design": {
       "status": "pending",
@@ -136,6 +136,18 @@
         "P3-T2"
       ],
       "evidence": "docs/t1-decisions.md"
+    },
+    {
+      "id": "P2-T2",
+      "title": "Apply T1 decisions, legal remediation, security gaps and gate findings to requirements",
+      "role": "role-requirements-analyst",
+      "repo": "hub",
+      "branch": "p2-t1-amendments",
+      "status": "doing",
+      "depends_on": [
+        "P3-T3"
+      ],
+      "evidence": ""
     }
   ],
   "decisions": [
@@ -180,43 +192,25 @@
       "decision": "Designer extracts brand from the current site and may enhance it for the sector",
       "by": "Steven (in chat)",
       "file": "docs/brief.md"
+    },
+    {
+      "date": "2026-10-15",
+      "decision": "T1 approved: all items in docs/t1-decisions.md (sections A to F)",
+      "by": "Steven (in chat)",
+      "file": "approvals/T1-scope.md"
+    },
+    {
+      "date": "2026-10-15",
+      "decision": "Accepted risk: two step verification (US-31) deferred for local review only, enforced by G-22",
+      "by": "Steven (in chat)",
+      "file": "docs/t1-decisions.md"
     }
   ],
   "open_questions": [
     {
-      "id": "Q8",
-      "question": "Number of admin users and whether they need different permission levels",
-      "for": "Steven",
-      "asked": "2026-10-15"
-    },
-    {
-      "id": "Q9",
-      "question": "Enquiry notifications by email (needs client mail server) or only in the admin portal",
-      "for": "Steven",
-      "asked": "2026-10-15"
-    },
-    {
-      "id": "Q10",
-      "question": "Default language and whether it is chosen from the visitor's browser",
-      "for": "Steven",
-      "asked": "2026-10-15"
-    },
-    {
-      "id": "Q11",
-      "question": "OQ-4 to OQ-19 in docs/requirements.md (analyst open questions, Q8 to Q10 are OQ-1 to OQ-3)",
-      "for": "Steven",
-      "asked": "2026-10-15"
-    },
-    {
       "id": "Q12",
       "question": "Solicitor question pack Q1 to Q7 in docs/legal/questions-2026-10-15.md (needed before any hosting, not before the local build)",
       "for": "Steven (solicitor)",
-      "asked": "2026-10-15"
-    },
-    {
-      "id": "Q13",
-      "question": "T1 decisions in docs/t1-decisions.md",
-      "for": "Steven",
       "asked": "2026-10-15"
     }
   ]
