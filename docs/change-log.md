@@ -5,7 +5,7 @@
 - Owner: Product Owner (task P2-T1b)
 - Purpose: one entry per scope change, with the date, the request, the impact and the decision.
 - Rules: a scope change after T1 needs Steven's approval in chat, quoted in the entry and in `approvals/`. Changes before T1 are recorded here as the baseline. Entries are added at the end and are never edited afterwards; a later change gets a new entry.
-- Status of T1: approved on 2026-10-15 (CL-2, `approvals/T1-scope.md`). Entries CL-2 and CL-3 were added by P2-T3. The backlog (`docs/backlog.md`) and MVP (`docs/mvp.md`) now describe the approved scope.
+- Status of T1: approved on 2026-10-15 (CL-2, `approvals/T1-scope.md`). Entries CL-2 and CL-3 were added by P2-T3 and CL-4 by P2-T5. The backlog (`docs/backlog.md`) and MVP (`docs/mvp.md`) now describe the approved scope.
 
 ## CL-1 2026-10-15: Steven's scope decisions from chat (baseline before T1)
 
@@ -101,3 +101,10 @@ All approved as recommended. "Differs" means the answer is not the analyst's ear
 | OQ-21 Exact Book now address (raised in P2-T2) | "ignore booking" | Read by the Orchestrator as: keep the default Book now address (the resort page on the group site) and do not pursue the booking engine address. Book now stays in scope and still shows the external site label. No change to US-10 or US-37. Solicitor question Q2 about linking to the live site still applies before any hosting. | Accepted. AC-10.5 is no longer provisional. |
 
 After CL-3 only two criteria remain provisional: AC-15.1 and AC-17.4 (OQ-12).
+
+## CL-4 2026-10-15: US-81 split out of US-36 at the requirements gate
+
+- Date: 2026-10-15
+- Request: the Product Owner's gate re-check (finding M-C) found that FR-38 (changes go live on save) was traced only to US-36, which T1 made Won't, so no story that is built carried its criteria. The analyst fixed this in P2-T4 by moving the five live on save criteria into a new story, US-81 "Saved changes go live" (AC-36.2, AC-36.4, AC-36.5, AC-36.6 and AC-36.7 became AC-81.1 to AC-81.5). US-36 is retitled "Preview and publish changes safely, with version history" and keeps no active criteria.
+- Impact: no scope change. T1 approved OQ-6 as "edits go live on save", so the behaviour was already in scope; only its home story changed. Counts: 81 stories (was 80), 402 active criteria (was 401; the extra one is AC-37.7, the map and social link validation added for finding L-B), 5 criteria marked MOVED. Backlog: US-81 is Must, size S, so Must is 62 stories with 336 active criteria; Should 11, Could 5, Won't 3 are unchanged. The MVP is now 62 stories (`docs/mvp.md`). US-81 constrains the architecture: public pages must show saved changes within 60 seconds without a rebuild or restart.
+- Decision: recorded by the Product Owner as a requirements correction, not a new scope decision. Steven's approval is not needed. US-14, US-31 and US-36 stay Won't as approved at T1.
