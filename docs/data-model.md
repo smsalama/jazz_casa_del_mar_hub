@@ -492,3 +492,184 @@ Index `(job, started_at DESC)`: the scheduler's "last successful run" and the ma
 | `created_at`, `updated_at` | INTEGER | N | |
 
 The row holds no name, address or message of the requester (FR-44 asks for "reference only"). Indexes: `(closed_at) WHERE closed_at IS NOT NULL` (24 month purge); `(received_at) WHERE closed_at IS NULL` (open requests and their one month and 30 day deadlines). A request that is never closed is never purged; the main screen of FR-44 should list open requests older than 90 days.
+
+## 5. How content is stored
+
+### 5.1 Document shape
+
+`content_entry.data`, `list_item.data` and `settings.data` hold one JSON document. The keys are the registry **field paths** that the contract already uses (`ContentField.path`, for example `hero.heading`: dotted, camelCase segments, at most 200 characters).
+
+```json
+{
+  "v": 1,
+  "fields": {
+    "hero.heading": { "en": "Welcome", "de": "Willkommen", "it": "", "ru": "" },
+    "hero.intro":   { "en": { "type": "doc", "content": [] }, "de": null, "it": null, "ru": null },
+    "hero.image":   { "mediaId": "0197c0de-0000-7000-8000-000000000001" },
+    "features":     [ { "en": "Balcony", "de": "", "it": "", "ru": "" } ]
+  }
+}
+```
+
+| Registry field type (ADR-0004) | Stored value | "Missing" means |
+| --- | --- | --- |
+| `text` | `{ en, de, it, ru }` strings, each at most the field's `maxLength` (contract maximum 20,000) | empty string in that language |
+| `richText` | `{ en, de, it, ru }`, each an allow-listed ProseMirror document or `null` | `null`, or a document with no non blank text |
+| `media` | `{ "mediaId": "<uuid>" }` or `null` | `null` |
+| `textList` | array of up to 100 `text` values | an element empty in that language |
+
+- `v` is the shape version of the document, so a later change of the representation can be migrated lazily by a script.
+- A path that is absent is empty. A new registry field therefore needs no data migration to exist; it simply shows as missing everywhere until filled.
+- A save sends only the paths it changes (contract `FieldValueUpdate`); the server merges them into `fields`, validates the whole merged document against the registry, and writes it. Unknown paths are refused on save (`unknown_field`) and ignored with a logged warning on load.
+- Why JSON and not a `content_value(entry, path, lang, value)` table: there are about 30 entries and about 100 list items (a few thousand values in all); a save must be all or nothing and versioned at entry level anyway; nothing ever filters or sorts by content text (there is no site search, FR-1); completeness and missing translation lists are computed in memory from the registry (section 5.5). The cost is that the database cannot check field rules, which is why the registry validates on save, on load and once at start, and why `CHECK (json_valid(...))` and size caps remain as a last line.
+- Media in content is by id only (`mediaId`), never by file name or URL; the public file name is derived from `media_asset.file_key`, `rev`, the width and the format (section 4.4).
+
+### 5.2 Four languages and the English fallback (FR-24, FR-26, FR-37, NFR-28)
+
+- The language set is the fixed enumeration `en`, `de`, `it`, `ru` (a `CHECK` on `enquiry.language` and `subscriber.language`, and a constant in the registry). Every localised value always carries all four keys, so a document is complete in shape even when texts are empty.
+- Fallback is applied when the snapshot is read, never in SQL: `pick(value, lang)` returns the value in the page language if it is non empty, otherwise the English value together with a flag, and the rendering helper writes `lang="en"` on the element when the flag is set (ADR-0011). A page therefore cannot render an empty heading because of a missing translation, provided required fields (`required: true`, English must be non empty to save) are enforced on save.
+- Photos: alternative text and captions follow the same rule per photo (`alt_de` empty falls back to `alt_en`). `alt_en` cannot be empty while a photo is used (trigger), so a photo always has some alternative text.
+- Optional settings text (the per language concept sentence) falls back to English by the same rule.
+- Fixed texts (the concept sentence, the title suffix, the 500 page fallback) are not in the database at all; they are in `src/i18n/fixed/{lang}.json` (FR-17).
+- Seed content is supplied in all four languages; machine assisted translations are marked unreviewed in the content register (OQ-8), not in the database.
+
+### 5.3 How the fixed page designs map to content records (FR-1, FR-35, FR-36)
+
+Each of the 21 page types is an Astro page component with a fixed layout. Its component reads only the fields that its registry entry declares, from the entry, the lists and the settings named below. The registry (`src/lib/content/registry.ts`) is the authority for field paths and limits; the keys here are the proposed ones (15 page entries, 6 room entries, a handful of global entries).
+
+| Page type (FR-1) | Public path | Content entry | Lists read | Settings and other |
+| --- | --- | --- | --- | --- |
+| Home | `/{lang}` | `page.home` (hero text, overview, key facts as a `textList`) | `offers` (titles only) | Book now and contact links from `settings` |
+| Rooms and suites | `/{lang}/rooms` | `page.rooms` | none | six cards read from the six `room.*` entries (name, one image, short description) |
+| Six room pages | `/{lang}/rooms/<slug>` | `room.family-suite`, `room.executive-suite`, `room.superior-twin-sea-view`, `room.superior-queen-sea-view`, `room.triple-deluxe-twin-pool-view`, `room.triple-deluxe-queen-pool-view` | none | name, rich description, `features` `textList`, image fields |
+| Dining | `/{lang}/dining` | `page.dining` | `dining-venues` (10 items; anchor from `slug`) | |
+| Pools and beach | `/{lang}/pools-and-beach` | `page.pools-and-beach` | `pools-and-beach` (4) | |
+| Activities and facilities | `/{lang}/activities` | `page.activities` | `activities` (5) | |
+| Location | `/{lang}/location` | `page.location` (static map image field, text) | `attractions` (5 or more) | Maps link from `settings` |
+| Offers | `/{lang}/offers` | `page.offers` | `offers` (3 or more) | Book now link |
+| Gallery | `/{lang}/gallery` | `page.gallery` | `gallery` (12 or more, each a `media` field and caption text) | |
+| FAQ | `/{lang}/faq` | `page.faq` | `faq` (8 or more) | |
+| Contact Us | `/{lang}/contact` | `page.contact`; form labels and messages in `global.forms` | none | telephone, WhatsApp, email, address, social from `settings`; privacy information line is a versioned field (section 4.3) |
+| Privacy, Cookie, Terms, Accessibility | `/{lang}/privacy`, `/cookies`, `/terms`, `/accessibility` | `page.privacy`, `page.cookies`, `page.terms`, `page.accessibility` (rich text) | none | Terms reads the provider details from `settings` |
+| Newsletter unsubscribe | `/{lang}/newsletter/unsubscribe` | `page.newsletter-unsubscribe` | none | |
+| Every page | all | `global.navigation`, `global.footer` (newsletter form labels and the versioned consent text), `global.forms` (validation, confirmation and retry messages), `global.errors` (404 and 500 text), `global.common` (Book now labels, external site label) | none | `settings` |
+
+Consequences of "fixed designs": an admin can change text, order and membership of the seven lists, and photos, but cannot add a field, a list, a page or a room; any of those is a code change to the registry and the template plus a migration or seed update (RSK-4). Because field types have no "list of photos", a room's three to six images are separate `media` fields in the room entry (the registry fixes the count, FR-2 requires at least three); the gallery is a list whose items each hold one `media` field.
+
+### 5.4 Rooms are exactly six (FR-1, FR-36, OQ-20)
+
+Enforced in layers, so no single bug can add or remove a room:
+
+1. The seed inserts exactly the six `room.<slug>` rows (slugs equal the contract `RoomSlug` enum).
+2. Trigger `content_entry_room_insert` refuses any other `room.*` key. Trigger `content_entry_no_delete` refuses deleting any content entry. Trigger `content_entry_key_immutable` refuses changing `key` or `kind`. (Appendix B.)
+3. The contract has no endpoint that creates or deletes an entry; only `PUT /admin/api/content/{entryKey}` on an existing key.
+4. At start, the server compares the set of `content_entry.key` with the registry's key set and prints `STARTUP-REFUSED` if they differ (a hand edited or wrongly restored database).
+5. A test counts `room.*` rows after every content API test.
+
+### 5.5 Completeness and the missing translation list (FR-37)
+
+Computed in memory from the registry and the documents, never stored (a stored count could go stale):
+
+- Per entry or item and language: `complete` = number of `text`/`richText` fields (and `textList` fields, counted once, complete when every element has text) that are non blank in that language; `total` = number of such fields. `languagesComplete` = languages with `complete = total`. This is exactly the contract `Completeness` shape.
+- Photos count as owners `media/<id>`: `alt` always, `caption` only when the English caption is non empty (recommended so that a photo with no caption anywhere is not reported as three missing captions; open question D-15).
+- The list of all missing fields (contract `MissingTranslation`, up to 10,000 items) and `Overview.missingTranslations` come from the same pass over the snapshot.
+
+### 5.6 Live publishing support (FR-38, ADR-0004)
+
+Every write to content, lists, settings, media metadata or legal text increments `site_state.content_revision` in the same transaction. The snapshot is rebuilt from `content_entry`, `list_item` (ordered by `list_key, position`), `settings`, non deleted `media_asset` with their `media_variant` rows, and the revision; about 30 + 100 + 1 + a few hundred rows, which is a few milliseconds of query time. The 5 second `PRAGMA data_version` check catches changes made by other connections (a restore or a server command).
+
+## 6. Optimistic locking (NFR-33, TM-35)
+
+Versioned rows: `content_entry`, `list_item`, `settings`, `media_asset`. Each starts at 1 and goes up by exactly 1 per change.
+
+| Operation | Statement shape (bound parameters) | If `changes() = 0` |
+| --- | --- | --- |
+| Save an entry | `UPDATE content_entry SET data=?, version=version+1, updated_at=?, updated_by=? WHERE key=? AND version=?` | The row exists with another version: re-read it and answer 409 `version_conflict` with the current entry (contract `current`). |
+| Save a list item | same, `WHERE id=? AND list_key=? AND version=?` | 404 if the row does not exist, otherwise 409. |
+| Delete a list item | `DELETE FROM list_item WHERE id=? AND list_key=? AND version=?` | Same. Positions are not renumbered; gaps are harmless because reading orders by `position`. |
+| Create a list item | `position = coalesce(max(position), -1) + 1` for the list, `version = 1`, inside the transaction | A unique violation on `(list_key, position)` cannot happen under `BEGIN IMMEDIATE`; if it does, retry once. |
+| Save settings | `UPDATE settings SET data=?, version=version+1, ... WHERE id=1 AND version=?` | 409 |
+| Edit photo metadata or replace its file | `UPDATE media_asset SET ..., version=version+1[, rev=rev+1] WHERE id=? AND version=?` | 409 |
+| Reorder a list | Check that `itemIds` equals the current set of ids of the list, otherwise 409 `version_conflict`; then rewrite positions in two passes. Item versions do not change (a position is not content). | Stale set means 409. |
+
+Everything in a save happens in one `BEGIN IMMEDIATE` transaction: the version check, the document write, the `media_usage` refresh for that owner, a `legal_text_version` append when a versioned wording changed, and the `content_revision` increment. A failure or an interrupted process rolls the whole save back (WAL), so the previous content is intact (NFR-33). The in-memory snapshot is swapped only after the commit returns, and with `synchronous=FULL` a confirmed save survives a power cut.
+
+The version step triggers (appendix B) are a safety net: any update of `data` that does not raise `version` by exactly 1 aborts with `version_conflict`, so a code path that forgets the version cannot overwrite silently. They fire only when `data` (or the named columns) appear in the `SET` list, so foreign key actions such as `ON DELETE SET NULL` on `updated_by` are not blocked (tested).
+
+Not versioned, by design: `enquiry` changes (`status`, `data_protection`, `read_at` are idempotent flags), `subscriber`, `account` (rename, enable and disable; the last Administrator trigger protects the one dangerous combination). Last writer wins for these.
+
+## 7. Invariants enforced inside the database
+
+| Invariant | Mechanism | Source |
+| --- | --- | --- |
+| Exactly six rooms; no entry added or deleted | triggers on `content_entry` | FR-1, FR-36, OQ-20 |
+| A save cannot overwrite a newer one | `version` step triggers; `WHERE version = ?` in the update | NFR-33 |
+| Content documents are valid JSON of bounded size | `CHECK (json_valid(data) AND length(data) <= ...)` | NFR-24, NFR-35 |
+| At least one active Administrator remains | trigger `account_last_admin_update` and `account_last_admin_delete` | FR-34, AC-32.3 |
+| Sessions end when the password changes or the account stops being active | trigger `account_ends_sessions` | NFR-20, G-19, AC-32.6 |
+| A used photo cannot be deleted; a photo cannot be used without English alternative text; English alternative text of a used photo cannot be emptied | triggers on `media_asset` and `media_usage`, `RESTRICT` foreign key | FR-40, AC-38.3, AC-38.4 |
+| Security events cannot be edited | trigger `security_event_no_update` | NFR-34, AC-79.3 |
+| Consent and privacy wording versions never change once written | triggers on `legal_text_version` | NFR-14, LR-3 |
+| Every enquiry and subscriber points at an existing wording version | foreign keys to `legal_text_version(label)` | NFR-14 |
+| One subscriber record per address, whatever case or surrounding spaces | `UNIQUE (email_normalised)` | FR-22, G-12 |
+| One live account per address | partial unique index | FR-34 |
+| `unsubscribed_at` is set exactly when the status is `unsubscribed` | `CHECK` | FR-23 |
+| A data protection subject always carries the flag | `CHECK` on `enquiry` | LR-5, FR-42 |
+| Field lengths and formats equal the contract and the forms (name 2 to 100, message 10 to 2,000, telephone 7 to 20, alternative text 300, photo 10 MB and 40 megapixels, reference format) | `CHECK` constraints | FR-19, FR-40, NFR-23 |
+| Singleton rows stay singletons | `CHECK (id = 1)` | `site_state`, `settings`, `health` |
+
+Stay in code, because they depend on configuration or on registry knowledge the database does not have: the enquiry and subscriber caps (NFR-35), the media quota (NFR-23), rate limits, normalisation, registry validation of documents, minimum counts of lists (warnings, FR-36), and the retention periods.
+
+## 8. Normalisation, search and the subscriber flows
+
+### 8.1 Email normalisation (G-12, TM-19, NFR-28)
+
+One function, `normaliseEmail(s) = s.trim().normalize('NFC').toLowerCase().normalize('NFC')`, used for every comparison: sign in, account duplicates, enquiry search, subscriber sign up, unsubscribe, suppression hash, admin search, and the FR-44 tool later. Rules:
+
+- Surrounding whitespace (any Unicode space) is removed; internal characters are not touched.
+- `toLowerCase()` is Unicode aware and locale independent (Cyrillic works, ADR-0003); NFC makes composed and decomposed forms equal.
+- No provider specific rules: dots and `+tags` are significant, so `a.b@x` and `ab@x` are different addresses. This is stated in the code comment and the test.
+- The original trimmed text is stored too (`email`) and is what the CSV export shows; only `email_normalised` is ever compared.
+- The 254 character limit applies to the trimmed original.
+
+A unit test covers AC-15.9, AC-16.5, AC-40.7, AC-41.7 and AC-42.5 and adds Cyrillic, Turkish dotted I, German eszett and combining mark cases.
+
+### 8.2 Search fold for names and references (NFR-28)
+
+`fold(s)`: NFKD decompose, remove combining marks that follow a Latin letter, map `ß` to `ss`, `toLowerCase()`, NFC. `enquiry.search_text` is `lower(reference) + "\n" + fold(name) + "\n" + email_normalised`; the admin query `q` is folded the same way (trimmed, at most 254 characters) and matched with `instr(search_text, ?) > 0`. `instr` takes the text literally, so there is no `LIKE` wildcard escaping and no pattern to attack. Marks are removed only after Latin letters so that the Russian letters `й` and `ё` stay distinct from `и` and `е`; whether staff would rather match them is open question D-14. Display sorting never happens in SQL: lists are ordered by time or position, and any alphabetical order is `Intl.Collator(lang)` in TypeScript.
+
+### 8.3 Sign up, unsubscribe and the suppression entry (FR-22, FR-23, G-11, LR-19, LR-20)
+
+States of one address: no record; `active`; `unsubscribed` with a readable address (up to 30 days); suppression entry only (30 days up to 36 months); nothing.
+
+**Sign up** (one transaction, `BEGIN IMMEDIATE`, the same statements for new, existing and suppressed addresses):
+
+1. `n = normaliseEmail(email)`, `h = HMAC-SHA256(suppression key, n)`.
+2. Cap check first: if `count(*) FROM subscriber >= SUBSCRIBER_CAP`, refuse every address the same way (open question D-4).
+3. One statement:
+   `INSERT INTO subscriber (id, email, email_normalised, language, status, subscribed_at, unsubscribed_at, consent_version) SELECT ?, ?, ?, ?, 'active', ?, NULL, (SELECT label FROM legal_text_version WHERE kind = 'newsletter_consent' ORDER BY n DESC LIMIT 1) WHERE NOT EXISTS (SELECT 1 FROM suppression WHERE email_hash = ?) ON CONFLICT (email_normalised) DO NOTHING`.
+   An existing address, a suppressed address and a new address all run this statement; only the new, unsuppressed one inserts a row (checked).
+4. Commit, then the same confirmation message and a response padded to the 150 ms floor (ADR-0006).
+
+This is the policy that ADR-0006 and the Retention schedule imply: **a suppression entry blocks a new sign up of that address on this site** for 36 months, with the same confirmation shown. It protects someone who unsubscribed from being added again by a third party (sign up is single opt in, so anyone can type any address), at the price that a person who really wants to come back within 36 months is silently ignored. The alternative (a fresh, ticked consent deletes the suppression entry and subscribes) is a one statement change and is listed as decision D-3 for Steven and the Product Owner; the table supports either.
+
+**Unsubscribe** (one transaction):
+
+1. `INSERT OR IGNORE INTO suppression (email_hash, created_at) SELECT ?, ? WHERE EXISTS (SELECT 1 FROM subscriber WHERE email_normalised = ?)`
+2. `UPDATE subscriber SET status = 'unsubscribed', unsubscribed_at = ? WHERE email_normalised = ? AND status = 'active'`
+3. Commit; the same result page and the same floor whether or not the address was known. The two statements always run; for an unknown address both change zero rows, so unknown addresses never create suppression entries (ADR-0006 says the suppression insert always runs; it does, it just inserts nothing; decision D-3 covers whether unknown addresses should be suppressed).
+
+**Administrator removal** (FR-43): `DELETE FROM subscriber WHERE id = ?` plus a `subscriber_delete` security event. It does not create a suppression entry (removal is not an objection); an existing entry from an earlier unsubscribe stays.
+
+### 8.4 Account lifecycle
+
+1. **Create** (portal or `admin:create`): `status = 'active'`, `must_change_password = 1`, `password_hash` set. Admin access reports `setup_required` while no account with `status <> 'deleted'` exists.
+2. **Sign in**: look up `email_normalised` among non deleted accounts; if `locked_until > now` or unknown, verify against the fixed dummy hash and answer the one generic 401; on success insert the `session` row with `previous_sign_in_at` and `failed_attempts_before` copied from the account, set `last_sign_in_at`, zero `failed_since_last_success` and the window; on failure update the window columns and `failed_since_last_success`, and at the fifth failure set `locked_until` (events `sign_in` failure, `lockout`).
+3. **Change or reset password**: write the new `password_hash`; the trigger deletes every session of the account, including the current one (AC-32.6); `must_change_password` is 0 after an own change and 1 after a temporary password.
+4. **Disable, enable**: `status` change; disabling deletes sessions by trigger; refused by trigger for the last active account (contract `last_administrator`).
+5. **Delete**: `status = 'deleted'`, `deleted_at = now`, `password_hash = NULL`; sessions deleted by trigger. The row keeps `email` and `name` for 30 days (Retention schedule), then the purge sets `email`, `email_normalised` and `name` to `NULL`; the row stays as an id only tombstone so `security_event.account_id` still resolves and entries read "deleted user". The tombstone is removed when no `security_event` refers to it any more.
+6. **Inactivity**: an `active` account with no sign in for 365 days (from `created_at` if never) becomes `disabled` with `disabled_reason = 'inactive'`, unless it is the last active account (the trigger would refuse; the purge records it as skipped).
+
+### 8.5 Media lifecycle
+
+Upload: after the worker succeeds, one transaction inserts `media_asset` (`version 1`, `rev 1`) and up to eight `media_variant` rows, then bumps `content_revision`; files are written under temporary names first and renamed after the commit, and any failure deletes the partial files (ADR-0009). Replace file: `rev + 1`, `version + 1`, variant rows replaced, old public files removed after the commit. Delete: refused while `media_usage` has rows; otherwise `deleted_at = now`, `media_variant` rows deleted, public files removed at once; the original file and the row stay for `RETENTION_DELETED_MEDIA_ORIGINAL_DAYS` (30), then the purge unlinks the file and deletes the row. Storage used (contract `StorageUsage.usedBytes`) is `SUM(media_asset.size_bytes) + SUM(media_variant.bytes)`; tombstones count until their original is removed because the file is still on disk. The 80 percent warning and the refusal at 100 percent compare this with `MEDIA_QUOTA_MB`.
