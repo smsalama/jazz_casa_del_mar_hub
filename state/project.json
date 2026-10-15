@@ -300,7 +300,7 @@
       "role": "role-system-architect, role-requirements-analyst",
       "repo": "hub",
       "branch": "",
-      "status": "todo",
+      "status": "doing",
       "depends_on": [
         "P4-T3",
         "P4-T4"
@@ -404,6 +404,12 @@
       "decision": "OQ-21: Steven said \"ignore booking\"; read as keep the Book now default (resort page on jazhotels.com) and do not pursue the exact booking engine URL. Book now is not removed (that would be a scope change needing approval)",
       "by": "Steven (in chat), interpretation by Orchestrator",
       "file": "docs/requirements.md"
+    },
+    {
+      "date": "2026-10-15",
+      "decision": "Continue Phase 4 over its subagent budget for conflict fixes, design and architecture gate reviews (Steven: \"Continue\")",
+      "by": "Steven (in chat)",
+      "file": "state/project.json"
     }
   ],
   "open_questions": [
@@ -411,12 +417,6 @@
       "id": "Q12",
       "question": "Solicitor question pack Q1 to Q7 in docs/legal/questions-2026-10-15.md (needed before any hosting, not before the local build)",
       "for": "Steven (solicitor)",
-      "asked": "2026-10-15"
-    },
-    {
-      "id": "Q17",
-      "question": "Phase 4 subagent budget: 1,178,944 of 1,500,000 used before the gate reviews. Continue over budget for fixes and reviews (estimated 500000 to 700000 more)?",
-      "for": "Steven",
       "asked": "2026-10-15"
     }
   ]
