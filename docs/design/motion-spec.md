@@ -276,7 +276,7 @@ Run in this order; any failure leaves the poster and requests nothing:
 1. Reduced motion media query true.
 2. Visitor paused (session key present).
 3. `Save-Data` on, or `navigator.connection.effectiveType` is `2g` or `slow-2g` (browsers without that API pass this step).
-4. A probe `canvas.getContext('webgl2')` on an off DOM canvas succeeds (this creates a context; the probe context is released at once by `WEBGL_lose_context` and is not the engine's context; the engine's first real context is created later; at no time are two contexts alive together).
+4. The gate creates the engine's own canvas and calls `getContext('webgl2', { antialias })` on it (the antialias choice is made here, see 8.6). This costs no 3D code. If it succeeds, that same context is later handed to three's `WebGLRenderer` (the `canvas` and `context` options), so no second context is ever created and nothing needs a forced context loss. If a later step fails (the glb will not load, for example), the canvas is dropped and the context is released with it.
 5. The adaptive rule has not triggered earlier in this tab (flag in memory).
 
 The check re-runs when the visitor presses Resume, when the reduced motion setting changes live, and on every swup navigation (for the new page's scene).
