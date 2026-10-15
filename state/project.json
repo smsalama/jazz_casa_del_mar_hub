@@ -156,6 +156,18 @@
         "P3-T3"
       ],
       "evidence": "evidence/2-requirements/verify-jazz_casa_del_mar_hub-c21fb84-20261015T180601Z.log"
+    },
+    {
+      "id": "P2-T3",
+      "title": "Update backlog, MVP and change log after T1; re-check requirements for the gate",
+      "role": "role-product-owner",
+      "repo": "hub",
+      "branch": "p2-po-update",
+      "status": "doing",
+      "depends_on": [
+        "P2-T2"
+      ],
+      "evidence": ""
     }
   ],
   "decisions": [
@@ -212,6 +224,24 @@
       "decision": "Accepted risk: two step verification (US-31) deferred for local review only, enforced by G-22",
       "by": "Steven (in chat)",
       "file": "docs/t1-decisions.md"
+    },
+    {
+      "date": "2026-10-15",
+      "decision": "Continue Phase 2 over its subagent budget, then into Phase 4 (Steven: \"Continue\")",
+      "by": "Steven (in chat)",
+      "file": "state/project.json"
+    },
+    {
+      "date": "2026-10-15",
+      "decision": "OQ-20: staff cannot add a seventh room type; six fixed room pages (Steven: \"no\")",
+      "by": "Steven (in chat)",
+      "file": "docs/requirements.md"
+    },
+    {
+      "date": "2026-10-15",
+      "decision": "OQ-21: Steven said \"ignore booking\"; read as keep the Book now default (resort page on jazhotels.com) and do not pursue the exact booking engine URL. Book now is not removed (that would be a scope change needing approval)",
+      "by": "Steven (in chat), interpretation by Orchestrator",
+      "file": "docs/requirements.md"
     }
   ],
   "open_questions": [
@@ -219,24 +249,6 @@
       "id": "Q12",
       "question": "Solicitor question pack Q1 to Q7 in docs/legal/questions-2026-10-15.md (needed before any hosting, not before the local build)",
       "for": "Steven (solicitor)",
-      "asked": "2026-10-15"
-    },
-    {
-      "id": "Q14",
-      "question": "OQ-20: can staff add a seventh room type? Working answer: no, six fixed room pages",
-      "for": "Steven",
-      "asked": "2026-10-15"
-    },
-    {
-      "id": "Q15",
-      "question": "OQ-21: exact JAZ booking engine URL for Book now. Working answer: the resort page on jazhotels.com",
-      "for": "Steven",
-      "asked": "2026-10-15"
-    },
-    {
-      "id": "Q16",
-      "question": "Phase 2 subagent budget exceeded (about 607700 of 600000). Continue with the product owner re-check and requirements gate re-run (about 150000 to 200000 more)?",
-      "for": "Steven",
       "asked": "2026-10-15"
     }
   ]
