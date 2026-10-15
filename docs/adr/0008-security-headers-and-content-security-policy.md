@@ -48,7 +48,7 @@ upgrade-insecure-requests   (only when PUBLIC_ORIGIN is https)
 **Inline code rules**, enforced in tests rather than trust:
 
 - No inline `<script>` without `src` in any rendered page, other than `type="application/json"` data blocks if one is ever needed (none are planned; data goes in `data-*` attributes). A test renders all 84 pages, the error pages and the admin shell and fails on any inline script or inline event handler attribute.
-- No `<style>` elements and no `style=""` attributes in server rendered HTML (`build.inlineStylesheets: 'never'`). Scripts may still set styles through the CSSOM (for example `element.style.transform`), which CSP allows.
+- No `<style>` elements and no `style=""` attributes in server rendered HTML (`build.inlineStylesheets: 'never'`). The loader's no JavaScript rule is a `<noscript>` containing only a `<link rel="stylesheet">` to a same origin file, which `style-src 'self'` allows (motion specification section 4.1); the loader's 300 ms and 8,300 ms timings are CSS animations, so they need no script either. Scripts may still set styles through the CSSOM (for example `element.style.transform`), which CSP allows.
 - The Playwright suite listens for `securitypolicyviolation` events and console CSP messages on every page and fails on any (NFR-24, AC-69.x).
 
 **Noindex** (NFR-27): the layout always writes `<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">`; the header is set by middleware on every response. There is no setting, environment variable or code path that removes either. No `sitemap.xml`, canonical link, alternate language link to the JAZ domain, or structured data is produced. `robots.txt` is served with `Disallow: /admin/` only, so crawlers can fetch public pages and see the noindex rule.

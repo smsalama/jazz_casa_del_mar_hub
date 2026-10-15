@@ -169,8 +169,8 @@ Boundaries are enforced by an ESLint import rule (browser code cannot import ser
 - **CSS**: one stylesheet per page type built by Astro, no inline styles; design tokens from the UI/UX Designer (NFR-30); per language font face declarations (ADR-0011); `prefers-reduced-motion` handled in CSS first (NFR-11).
 - **Forms** (FR-19 to FR-23): the same validation module runs in the browser (for immediate messages) and on the server. Errors are listed next to fields and in a summary; the retry message element has `role="alert"` and `tabindex="-1"` and receives focus (AC-13.10). With JavaScript on, `@swup/forms-plugin` may submit through a transition; the endpoints are the same.
 - **Images**: `<picture>` with AVIF and WebP sources from the media pipeline or the build time image pipeline, explicit sizes, lazy below the fold (FR-41). Posters are the LCP elements on scene pages.
-- **Motion**: CSS first; Motion 13.4.6 only where CSS cannot do the job; pause control on every page with autonomous motion, kept in `sessionStorage` (FR-30).
-- **Transitions** (FR-29, NFR-9): swup swaps the `main` container, updates title and history, the a11y plugin announces and focuses the `h1`; the loader shows only after 300 ms and never longer than 8 s.
+- **Motion**: CSS first; Motion 13.4.6 only where CSS cannot do the job; pause control on every page with autonomous motion, kept in `sessionStorage` under `jcdm-motion-paused`; after a paused reload the poster shows with a visible Resume control (FR-30, section 13).
+- **Transitions** (FR-29, NFR-9): swup swaps the `main` container, updates title and history, the a11y plugin announces and focuses the `h1`; the loader shows only after 300 ms, never longer than 8 s, and ends when text, poster and fonts are ready, without waiting for 3D (section 13).
 
 ## 8. Backend
 
@@ -278,14 +278,16 @@ Language is the first path segment, slugs are shared English slugs (ADR-0011). E
 
 1. HTML arrives with the poster `<img>` (the LCP element) in the scene slot and `data-scene`, `data-poster` attributes.
 2. Text and poster paint. The public bundle starts.
-3. Capability gate: WebGL 2, no reduced motion, no `Save-Data`, effective type not 2g or slow-2g, motion not paused. If any fails, stop here: fallback mode, no 3D download (NFR-12).
-4. After `load` and the next idle callback, `import()` the 3D chunk (Three.js core, GLTFLoader, MeshoptDecoder, engine; 350 KB compressed at most) and the scene module.
-5. Fetch the scene's `.glb` (3 MB hero, 2 MB others at most), decode meshopt geometry (WebAssembly, needs `wasm-unsafe-eval`) and WebP textures (browser decoder, through `blob:` URLs).
-6. Render the first frame into the single persistent canvas, then fade the canvas over the poster (no layout shift, the slot has fixed dimensions).
-7. Quality governor and visibility handling run; context loss for more than 3 s, or slow frames at the lowest quality, switch to fallback (NFR-8, NFR-12).
-8. On swup navigation: dispose the old scene, move the canvas into the next page's slot, repeat from step 3 for that page's scene. One WebGL context for the whole tab.
+3. Capability gate, as soon as the poster has painted (LCP candidate reported, or `img.decode()` resolved plus one frame): no reduced motion, motion not paused (session key `jcdm-motion-paused` absent), no `Save-Data`, effective type not 2g or slow-2g, and a WebGL 2 context created on the engine's own canvas (that same context is later handed to three's `WebGLRenderer`, so no second context is ever created). If any check fails, stop here: fallback mode, no 3D download (NFR-12).
+4. At poster paint, not after `load` and idle: `import()` the 3D chunk (Three.js core, GLTFLoader, MeshoptDecoder, engine; 350 KB compressed at most) and fetch the scene's `.glb` in parallel. NFR-7 requires only that 3D is requested after the text and poster have rendered; starting here is what lets the first frame arrive within 4 s on profile L1 (`docs/design/budgets.md` section 6; motion spec decision D3).
+5. Decode the `.glb` (3 MB hero, 2 MB others at most): meshopt geometry (WebAssembly on the main thread, needs `wasm-unsafe-eval`) and WebP textures (browser decoder, through `blob:` URLs). Scene build and shader compilation are sliced into tasks of at most 50 ms with yields, to protect TBT and INP.
+6. Render the first frame into the single persistent canvas (still transparent), then fade the canvas in over the poster; the poster stays underneath for context loss recovery (no layout shift, the slot has fixed dimensions).
+7. Quality governor and visibility handling run; context loss for more than 3 s, a scene error, or slow frames at the lowest quality switch to fallback (NFR-8, NFR-12).
+8. On swup navigation: dispose the old scene, move the canvas into the next page's slot, and once the transition has finished (`is-animating` removed, then one idle callback or 200 ms, whichever first) repeat from step 3 for that page's scene, so scene work never lands inside the transition or adds to the next page's LCP (NFR-9). One WebGL context for the whole tab.
 
-The loader (first visit only, after 300 ms) waits for the hero's first frame or 8 s, whichever comes first (FR-29).
+**Loader** (FR-29, NFR-9; motion spec decision D2): shown on a full document load only, and only if the page is not ready after 300 ms. Its timing is pure CSS (visible from 300 ms, hidden at 8,300 ms at the latest, hidden entirely without JavaScript by a linked `noscript` stylesheet, never an inline style). "Ready" means the `h1` text is painted, the hero poster has decoded and the above the fold fonts are loaded (`document.fonts.ready`, or 1.5 s). The loader **does not wait for 3D**: it ends when the 2D hero is ready, and the scene fades in over the visible page afterwards (step 6). The poster is the hero asset of FR-29 in every mode.
+
+**Pause and resume** (FR-30, NFR-12; motion spec decision D4): Pause freezes the scene on its current frame, stops CSS motion and makes swup transitions instant swaps, and writes `jcdm-motion-paused` = `1` to `sessionStorage` (the key is removed on Resume; it is the only public storage item, FR-15). A reload or navigation in the same tab while the key is present shows the poster with no 3D download (fallback mode), and the **Resume motion control stays visible** on the poster even though 3D is not running, so the visitor always has a way back; pressing it removes the key, runs the capability gate and loads the scene exactly as on a fresh page. In every other case where 3D cannot run (reduced motion, no WebGL 2, data saving, adaptive fallback) the scene controls stay hidden.
 
 ## 14. Configuration, logging and environments
 
@@ -392,7 +394,7 @@ The loader (first visit only, after 300 ms) waits for the hero's first frame or 
 
 | Item | Trade-off or risk | Mitigation or owner |
 | --- | --- | --- |
-| RSK-3 3D budgets on mid range phones; Lighthouse renders WebGL in software | The 3D mode Performance score of 80 (NFR-6) may be hard to reach in Lighthouse even when real phones are smooth | Poster as LCP, 3D after `load` and idle, Phase 4 performance spike by the Performance Engineer and Motion Designer before Phase 6; if needed, re-baseline per A-12 |
+| RSK-3 3D budgets on mid range phones; Lighthouse renders WebGL in software | The 3D mode Performance score of 80 (NFR-6) may be hard to reach in Lighthouse even when real phones are smooth | Poster as LCP, 3D requested at poster paint (not earlier), Phase 4 performance spike by the Performance Engineer and Motion Designer before Phase 6; if needed, re-baseline per A-12 |
 | Astro instead of the agency default | Less familiar to agency roles than Next.js | ADR-0002, documentation links in the web repo `CLAUDE.md`; contract tests catch drift |
 | Astro 7 is recent | Upgrades may change behaviour | Exact pins, upgrades only through reviewed changes |
 | Single process | No redundancy; a crash stops the site | Accepted for local review; hosting guide adds a service manager with restart |
