@@ -64,6 +64,13 @@ At T1 (2026-10-15) Steven replied "Approve T1" (`approvals/T1-scope.md`), which 
 - **A-36 Text comparison method.** AC-21.4 compares lists of hashes of 8 word sequences rather than stored copies of the resort's text, so that no copied text is kept in the repository and the check can run offline from a saved list. Confirm: QA Tester.
 - **A-37 Complaint handling by form.** Data protection complaints and requests come in through the Contact Us form subject (FR-19), because no email is sent or received by the site. The controller still needs a way to receive complaints by email or post once there is a controller (LR-5). Confirm: UK legal role.
 - **A-38 Edit scope confirmed by approval.** OQ-4 narrows Steven's decision D3 and the T1 sheet asked him to confirm it explicitly; his "Approve T1" approves every item in section B, and the analyst has treated that as the confirmation (gate finding M2). If the Orchestrator reads it differently, EXC-15 needs a separate explicit confirmation from Steven. Confirm: Orchestrator.
+- **A-39 Wording version archive.** The label recorded with an enquiry or subscriber identifies an immutable archived copy of the consent or privacy text (glossary, D-2). Archiving is one small extra store; without it the version label proves nothing. Confirm: Steven at T2 (data model decision 2).
+- **A-40 Suppression at sign up.** The working answer for a suppressed address is to store nothing and show the same confirmation (OQ-22). The cost is that a change of mind is ignored for 36 months. Confirm: Steven at T2.
+- **A-41 Concept notice size.** 13 px below 640 px and 14 px above, exempt from the 16 px body minimum, at most 48 px tall at 390 px (OQ-24). Confirm: Steven at T2.
+- **A-42 Checkbox and radio targets.** A 24 px drawn control in a 44 px full-width row is accepted as meeting WCAG 2.5.8 (NFR-2, AC-47.7). Confirm: Accessibility Specialist.
+- **A-43 First frame limit.** 4 s on L1 stays; 4.5 s only if Steven approves at T2 (OQ-25). Confirm: Steven at T2, Performance Engineer.
+- **A-44 Cyrillic search.** Cyrillic letters stay distinct in admin search (OQ-23). Confirm: Steven or the UI/UX Designer.
+- **A-45 No source addresses in the security record.** Failed sign ins record the account identifier only (NFR-34, D-17). Investigations rely on the counters. If a source address is wanted, NFR-34 must change first. Confirm: Steven at T2, Security Engineer.
 
 ### Analyst additions beyond the brief
 
@@ -135,7 +142,7 @@ Added after T1 (P2-T2) from the approved legal and security reviews. These come 
 
 ## Dependencies
 
-- **DEP-1 Answers to open items.** OQ-1 to OQ-19 were settled at T1, and OQ-20 (seventh room type: no) and OQ-21 (booking engine address: keep the default) were answered by Steven later on 2026-10-15. Still open: OQ-12 only (controller name, solicitor Q3 and lawful basis for the contact form Q7). The solicitor's questions Q1 to Q7 (`docs/legal/questions-2026-10-15.md`) must all be answered before any hosting (OQ-13). The provisional criteria (AC-15.1 and AC-17.4) are re-checked once OQ-12 is answered.
+- **DEP-1 Answers to open items.** OQ-1 to OQ-19 were settled at T1, and OQ-20 (seventh room type: no) and OQ-21 (booking engine address: keep the default) were answered by Steven later on 2026-10-15. Still open: OQ-12 (controller name, solicitor Q3 and lawful basis for the contact form Q7), and four Phase 4 decisions for Steven at T2: OQ-22 (suppression at sign up), OQ-23 (Russian search), OQ-24 (concept notice size) and OQ-25 (4.5 s first frame). The solicitor's questions Q1 to Q7 (`docs/legal/questions-2026-10-15.md`) must all be answered before any hosting (OQ-13). The provisional criteria are re-checked once the questions are answered.
 - **DEP-2 UK legal review.** Phase 3 produced `docs/legal-register.md` (research, not legal advice). Rows needing a qualified lawyer, and the solicitor's answers, are still pending and gate any hosting. The UK legal role provides research support only.
 - **DEP-3 Brand extraction (Phase 4).** The UI/UX Designer extracts the brand from the current site (colours, fonts, tone); the brief says fonts and the full palette were not visible. NFR-30 cannot be fully checked until this is done.
 - **DEP-4 Architecture decisions (Phase 4).** The System Architect chooses the stack, data storage, authentication approach, 3D library, language handling and testing approach, and confirms or adjusts the budgets in A-12. Requirements avoid naming technology.
