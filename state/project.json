@@ -17,7 +17,7 @@
     "api": {
       "name": "",
       "url": "",
-      "status": "decided at architecture"
+      "status": "not used (ADR 0001 to 0015: single web repo)"
     }
   },
   "touchpoints": {
@@ -107,6 +107,20 @@
       "task": "P2-T5",
       "tokens": 60000,
       "note": "estimate: harness returned no subagent_tokens figure"
+    },
+    {
+      "date": "2026-10-15",
+      "phase": "4 Design and architecture",
+      "role": "role-ui-ux-designer",
+      "task": "P4-T1",
+      "tokens": 177931
+    },
+    {
+      "date": "2026-10-15",
+      "phase": "4 Design and architecture",
+      "role": "role-system-architect",
+      "task": "P4-T2",
+      "tokens": 373018
     }
   ],
   "tasks": [
@@ -223,11 +237,11 @@
       "role": "role-ui-ux-designer",
       "repo": "hub",
       "branch": "p4-design",
-      "status": "todo",
+      "status": "done",
       "depends_on": [
         "P2-T5"
       ],
-      "evidence": ""
+      "evidence": "evidence/4-design-architecture/verify-hub-p4-design-4020c59-20261015T212500Z.log"
     },
     {
       "id": "P4-T2",
@@ -235,9 +249,34 @@
       "role": "role-system-architect",
       "repo": "hub",
       "branch": "p4-architecture",
-      "status": "todo",
+      "status": "done",
       "depends_on": [
         "P2-T5"
+      ],
+      "evidence": "evidence/4-design-architecture/verify-hub-p4-arch-71a46f3-20261015T212533Z.log"
+    },
+    {
+      "id": "P4-T3",
+      "title": "Motion spec and performance budgets",
+      "role": "role-motion-designer",
+      "repo": "hub",
+      "branch": "p4-motion",
+      "status": "todo",
+      "depends_on": [
+        "P4-T1",
+        "P4-T2"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P4-T4",
+      "title": "Data model",
+      "role": "role-database-engineer",
+      "repo": "hub",
+      "branch": "p4-data",
+      "status": "todo",
+      "depends_on": [
+        "P4-T2"
       ],
       "evidence": ""
     }
