@@ -366,7 +366,7 @@ Alternative text and captions are eight columns, not JSON: the "usable on a publ
 
 Indexes: `(uploaded_at DESC, id DESC) WHERE deleted_at IS NULL` (library, newest first, 48 per page); `(deleted_at) WHERE deleted_at IS NOT NULL` (30 day purge).
 
-Triggers: `media_usage` rows cannot be inserted for a photo with empty English alternative text or a deleted photo (`media_not_usable`, FR-40, `media_missing_alt`); a photo that has `media_usage` rows cannot be soft deleted (`in_use`, contract 409 with the `usage` list); its English alternative text cannot be emptied while used. The code checks first and returns the contract errors; the triggers are the safety net.
+Triggers: `media_usage` rows cannot be inserted for a photo with empty English alternative text or for a deleted photo (error `media_not_usable`, FR-40); a photo that has `media_usage` rows cannot be soft deleted (error `in_use`, contract 409 with the `usage` list); its English alternative text cannot be emptied while it is used (error `media_missing_alt`). The code checks first and returns the contract errors; the triggers are the safety net.
 
 **`media_variant`**: `media_id TEXT FK media_asset ON DELETE CASCADE`, `width INTEGER CHECK IN (480,768,1280,1920)`, `format TEXT CHECK IN ('avif','webp')`, `bytes INTEGER >= 1`; `PRIMARY KEY (media_id, width, format)`, `WITHOUT ROWID`. At most 8 rows per photo (contract `variants` maxItems 8); fewer for small originals. The public file name is derived (`<file_key>-<rev>-<width>.<format>`), not stored, so it cannot drift.
 
@@ -781,7 +781,7 @@ Apply all migrations to an empty file and compare with the Drizzle schema (`driz
 
 ### 11.1 Access patterns and the index that serves each
 
-Every index below exists for a named pattern; the 11 foreign key and uniqueness indexes that come with constraints are listed too. Tables of fewer than 1,000 rows (`content_entry`, `list_item`, `settings`, `media_asset`, `media_variant`, `legal_text_version`, `account`, `job_run`) are read whole or by primary key, and need nothing else.
+Every index below exists for a named pattern; the indexes that come with uniqueness constraints and foreign keys are listed too. Tables of fewer than 1,000 rows (`content_entry`, `list_item`, `settings`, `media_asset`, `media_variant`, `legal_text_version`, `account`, `job_run`) are read whole or by primary key, and need nothing else.
 
 | # | Access pattern | Source | Statement shape | Index and expected plan |
 | --- | --- | --- | --- | --- |
@@ -891,3 +891,435 @@ Content rules for every generated value:
 - A test scans the generator output and `seed/*.json` for any address whose domain is not `example.invalid` or a reserved `example.*`, and any telephone number outside the reserved range, and fails the build on a hit.
 
 `npm run seed:fixtures -- --profile <name>` works only when `NODE_ENV` is not `production`, and refuses a non empty database unless `--append` is given. Fixture insertion uses the same domain modules as the application (so the constraints and triggers apply) except for the deliberately malformed `formula` rows, which use direct inserts.
+
+## 13. Contract coverage, differences, open questions and decisions
+
+### 13.1 Contract schemas and where each value comes from
+
+Checked field by field against `contract/openapi.yaml`; no contract schema lacks a source, and no table column exists that a contract schema or a requirement does not need.
+
+| Contract schema or error | Source in the model |
+| --- | --- |
+| `Account`, `AccountRef` | `account` (`locked` = `locked_until > now`; `isCurrent` from the session; `updatedBy` of a deleted account is returned as `null`) |
+| `Session` | `session` joined to `account` (`mustChangePassword` from `account`; `previousSignInAt` and `failedAttemptsSinceLastSignIn` from the session columns; expiry times computed from `last_seen_at`, `absolute_expires_at` and configuration; `csrfToken` derived from `csrf_secret`) |
+| `Overview` | counts on `enquiry` and `subscriber` against `ENQUIRY_CAP` and `SUBSCRIBER_CAP`; storage `SUM`s; `listsBelowMinimum` and `missingTranslations` from the snapshot; `jobs` from `job_run` (`never` when no row) |
+| `ContentEntry*`, `ContentField`, `Completeness`, `MissingTranslation` | `content_entry.data` plus the registry (descriptors, labels, limits, paths); counts computed |
+| `ListSummary`, `ListItem*`, `ListWithItems`, `ListOrderUpdate` | `list_item` plus registry (labels, `minItems`, `maxItems`); `label` is the English title field |
+| `Settings`, `SettingsValues`, `ProviderDetails` | `settings.data` and `version` |
+| `MediaAsset`, `MediaVariant`, `MediaUsage`, `MediaList`, `StorageUsage`, `MediaMetadataUpdate` | `media_asset`, `media_variant`, `media_usage`; `usableOnPublicPages` = `alt_en <> ''`; variant URLs derived from `file_key`, `rev`, width, format |
+| `Enquiry*`, `EnquiryUpdate` | `enquiry` (`read` = `read_at IS NOT NULL`; `acknowledgeBy` computed); `privacyTextVersion` = `privacy_text_version` |
+| `Subscriber`, `SubscriberList`, `SubscriberExportRequest` | `subscriber` (`consentVersion` = `consent_version`; `subscribedAt` is the consent time); export from the keyset query |
+| `Health` | `health` |
+| `ContactForm`, `NewsletterForm`, `UnsubscribeForm`, `FormToken` | become `enquiry`, `subscriber`, `suppression`, `used_form_token`; the honeypot and the token are never stored |
+| Problem codes | `version_conflict`: `changes() = 0` or the version trigger; `in_use`: `media_usage` or trigger; `last_administrator`: trigger; `duplicate`: account unique index; `cap_reached`: count against cap; `rate_limited`: `rate_limit`; `quota_exceeded`: storage sum; `setup_required`: no non deleted account; `not_found`: no row |
+
+### 13.2 Differences from ADR-0003 and `docs/architecture.md` section 10
+
+| Item | ADR or architecture says | This model | Reason |
+| --- | --- | --- | --- |
+| `login_attempt` table | listed, 24 hour retention | not created; four lockout columns on `account` | less personal data, no table to purge, the same behaviour (NFR-19, G-23) |
+| Added tables | not listed | `site_state`, `install_secret`, `legal_text_version`, `backup_archive` | content revision counter and schema version; suppression key out of the settings API; wording archive for consent (D-2); backup metadata |
+| Suppression key location | "stored inside the database settings" (ADR-0010) | `install_secret` | cannot reach the snapshot or `Settings` shape |
+| `list_item` columns | `list_key`, `id`, `position`, `data`, `version` | plus `slug`, `created_at`, `updated_at`, `updated_by` | dining anchors (FR-3), audit of who changed it |
+| Session `must_change_password` | on the session row (ADR-0006) | read from `account` | cannot go stale |
+| Rate limit key | "client address in counter key" | keyed hash of the address | data minimisation (D-9) |
+| CSV streaming | `.iterate()` (ADR-0003) | keyset chunks of 500 with `.all()` | `.iterate()` holds the connection busy between chunks (D-10) |
+| Pragmas | five listed | plus `secure_delete=ON` and a WAL checkpoint after purge | purged data really leaves the file (D-11) |
+| Purge transactions | one per category | one per batch of 1,000 rows | short write locks |
+| Unsubscribed subscriber after 30 days | "address removed" | the whole row is deleted | nothing left to read back; the suppression entry remains |
+| Media usage refresh | rebuilt from the snapshot on every save | refreshed per owner in the save transaction | same result, less work; a test compares with a full rebuild |
+| Daily purge only | purge every 24 hours | plus a 10 minute silent sweep for sessions, counters and tokens | NFR-21 24 hour bound (D-13) |
+
+### 13.3 Open questions and conflicts found
+
+Nothing in the contract has been edited. "Change" names the document and the ID that should change if the recommendation is accepted.
+
+| ID | Finding | Recommendation | Change |
+| --- | --- | --- | --- |
+| D-1 | **Contract against NFR-22.** `getEnquiry` (`GET /admin/api/enquiries/{enquiryId}`) "marks it read", which is a state change on GET; NFR-22 says state changing actions shall never use GET. | Keep `read_at` in the model. Either add `read` to `EnquiryUpdate` and let the portal send a `PATCH` when an enquiry is opened (the GET then changes nothing), or record an exception in NFR-22 for read receipts. The first is simpler for tests. | `contract/openapi.yaml` operations `getEnquiry` and schema `EnquiryUpdate`; or NFR-22 |
+| D-2 | **Where consent and privacy wording lives, and what "version" means.** FR-20, FR-22 and NFR-14 require the wording version and time to be stored, but editable form text (FR-35) lives in `content_entry`, so a version label alone proves nothing and nothing says who increments it. | Adopt `legal_text_version` (section 4.3): a content save that changes a versioned field appends an immutable row; enquiries and subscribers store its `label`. Also put the label in the signed form token payload (`v`) so the version recorded is the one on the page the visitor actually saw, not the newest at the moment of posting. | FR-20, FR-22, NFR-14 (wording on where the text is archived); ADR-0004 (registry flag "versioned"); ADR-0006 (token payload) |
+| D-3 | **What the suppression entry does at sign up.** The Retention schedule keeps it "so the address cannot be read back"; ADR-0006 computes the HMAC at sign up; nothing says whether a suppressed address may sign up again within 36 months. | Default in this model: sign up of a suppressed address is not stored and shows the same confirmation (it protects an objector from being added by a third party, single opt in being unverified). The cost is that a genuine change of mind is silently ignored for 36 months. Alternative: a fresh ticked consent removes the suppression entry. Unknown addresses never create suppression entries. Decision for Steven and the Product Owner. | FR-22, FR-23, Retention schedule row for suppression; ADR-0006 |
+| D-4 | **Subscriber cap against enumeration (G-11).** NFR-35 refuses new records at the cap; if only new addresses are refused, the response tells an attacker which addresses already exist. | At the cap, check the cap before looking up the address, and refuse every sign up the same way. | NFR-35, FR-22 |
+| D-5 | **Enquiry reference alphabet and collisions.** FR-20 says "A to Z and 2 to 9" (34 characters, includes `I` and `O`), AC-13.4 says `[A-HJ-NP-Z2-9]` (32), the contract pattern is `[A-Z2-9]`. With 6 characters a collision is expected about once per 50,000 enquiries. | Generate from the 32 character alphabet (satisfies all three), keep the `GLOB` check at the wider contract set, retry the insert on a unique violation. | FR-20 text or AC-13.4 (make them agree); no contract change |
+| D-6 | **"Disable after 12 months without sign in" is not in the FR-45 category list or US-43**, only in the Retention schedule; and disabling every inactive account could remove the last Administrator. | Add the row to FR-45 and a criterion to US-43; the purge skips the last active account (the trigger enforces it). | FR-45, US-43 |
+| D-7 | **`reorderList` has no version.** It is protected only by "`itemIds` equals the current set" (409), so two simultaneous reorders of the same set are last write wins. | Acceptable for ordering; if not, add a list level `version` to `ListOrderUpdate`. | contract `ListOrderUpdate` (optional) |
+| D-8 | Suppression key stored in `install_secret`, not "in the database settings" (ADR-0010, ADR-0015). | Informational; keeps it out of `SettingsValues`. | ADR-0010 wording |
+| D-9 | Rate limit key is a keyed hash of the address, not the address (`docs/architecture.md` section 10 lists "client address in counter key"). | Informational; the hash is still personal data, retained at most 24 hours. | architecture section 10 |
+| D-10 | CSV export reads in keyset chunks, not `.iterate()`. | Informational. | ADR-0003 and architecture section 8 wording |
+| D-11 | `secure_delete=ON` and a WAL checkpoint after purge are needed for purged data to leave the file. | Add to the pragma list. | ADR-0003 |
+| D-12 | Dining anchor `slug` is not in the contract (`ListItem` has no such field), so staff cannot see or edit it. | Fine for FR-3 (anchors stay stable when titles change). Add to the contract only if staff should control anchors. | none |
+| D-13 | FR-45 asks the purge to record counts for sessions and rate limit counters; the 10 minute sweep removes them first, so the recorded counts will usually be 0. | Accept, or have the sweep add its count to the next purge record. AC-43.6 is tested with the sweep disabled. | FR-45 note, AC-43.6 |
+| D-14 | **Cyrillic and search (NFR-28, G-12).** Removing all combining marks would make `й` match `и` and `ё` match `е`. The model keeps them distinct and folds accents on Latin letters only. | Confirm with the UI/UX Designer or Steven whether Russian staff expect `е` to find `ё`. | NFR-28 acceptance wording |
+| D-15 | **Photo captions and completeness.** If every empty caption counted as missing, each photo would add up to four missing items. | Count `alt` always and `caption` only when the English caption exists. | FR-37 wording, contract `MissingTranslation` semantics (no schema change) |
+| D-16 | FR-44 (not built) says it finds "audit log entries that name" an address, but `security_event` and FR-46 hold only account identifiers (NFR-34, legal register research view already notes this). The model satisfies AC-42.3 by pseudonymising the account row. | Reconcile the text when FR-44 is designed; also needs the erasure ledger for restores (section 9.3). | FR-44, AC-42.3 |
+| D-17 | NFR-34 forbids personal data beyond the account identifier, so the client address of a failed sign in is not recorded. | Accept: investigations rely on the counters and the account id. If the source address is wanted, NFR-34 must change first. | NFR-34 (only if wanted) |
+
+### 13.4 Decisions Steven should see at T2
+
+1. **Suppression behaviour at sign up** (D-3): block silently for 36 months (default here), or let a new ticked consent override.
+2. **A table that archives the consent and privacy wording** (D-2): needed to make "consent wording version" mean something; one small immutable table; recommended.
+3. **Rolling back a bad database change means restoring the backup taken just before** (section 10.4); down scripts exist for development only. This is the safe reading of the agency rule for a database with no server, and the cost is losing changes made after the migration.
+4. **The security record does not hold source addresses** (D-17), by NFR-34.
+
+### 13.5 Risks and assumptions
+
+- The reference SQL was verified on SQLite 3.45.1, not on better-sqlite3 13.0.3 with SQLite 3.53.4. Every feature used (partial indexes, row value comparison, `RETURNING`, `WITHOUT ROWID`, `json_valid`, triggers) exists in 3.35 or earlier; the plans must be re-read on the real engine (section 11.3).
+- Assumed that drizzle-orm 0.45.3 and drizzle-kit 0.31.11 express the `CHECK` constraints, partial indexes (`.where()`), composite primary keys and `WITHOUT ROWID` used here. Anything they cannot express moves to a custom migration; objects created that way are not in Drizzle's snapshot, so generation does not try to drop them. The first build task is to prove this with `drizzle-kit generate` producing no diff against `0000` plus `0001`.
+- The triggers rely on SQLite firing foreign key actions as ordinary updates; verified, and the version step triggers are written to allow `ON DELETE SET NULL`.
+- Content as JSON moves field level rules out of the database; a registry bug could store a bad shape. Mitigated by validation on save, on load and at start, and by the size and `json_valid` checks.
+- Single writer: a long server side command (restore, large export) can queue writes up to `busy_timeout` (5 s); backups use the stepped backup API; purge works in batches.
+- The model assumes the registry key set and the six room slugs given in the contract; a new page or room type is a migration plus registry change by design.
+- Retention periods are day counts; "12 months" is 365 days.
+
+## Appendix A. Reference SQL: tables, constraints and indexes
+
+Verified in SQLite 3.45.1 with `foreign_keys=ON`, `trusted_schema=OFF`, `secure_delete=ON` and WAL. This is the target for `0000_baseline`; the Drizzle schema in the web repo replaces it as the source of truth once built. Order matters for foreign keys.
+
+```sql
+CREATE TABLE site_state (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  content_revision INTEGER NOT NULL CHECK (content_revision >= 1),
+  schema_version INTEGER NOT NULL CHECK (schema_version >= 1),
+  seed_version TEXT,
+  seed_content_revision INTEGER,
+  installed_at INTEGER NOT NULL
+);
+CREATE TABLE health (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  checked_at INTEGER NOT NULL
+);
+CREATE TABLE install_secret (
+  name TEXT PRIMARY KEY CHECK (name IN ('suppression_hmac_key')),
+  value BLOB NOT NULL CHECK (length(value) = 32),
+  created_at INTEGER NOT NULL
+);
+
+CREATE TABLE account (
+  id TEXT PRIMARY KEY CHECK (length(id) = 36),
+  email TEXT CHECK (email IS NULL OR length(email) BETWEEN 3 AND 254),
+  email_normalised TEXT CHECK (email_normalised IS NULL OR length(email_normalised) BETWEEN 3 AND 254),
+  name TEXT CHECK (name IS NULL OR length(name) BETWEEN 1 AND 100),
+  password_hash TEXT,
+  status TEXT NOT NULL CHECK (status IN ('active','disabled','deleted')),
+  disabled_reason TEXT CHECK (disabled_reason IN ('manual','inactive')),
+  must_change_password INTEGER NOT NULL DEFAULT 1 CHECK (must_change_password IN (0,1)),
+  created_at INTEGER NOT NULL,
+  created_by TEXT REFERENCES account(id) ON DELETE SET NULL,
+  updated_at INTEGER NOT NULL,
+  password_changed_at INTEGER,
+  last_sign_in_at INTEGER,
+  failed_since_last_success INTEGER NOT NULL DEFAULT 0 CHECK (failed_since_last_success >= 0),
+  failed_window_started_at INTEGER,
+  failed_window_count INTEGER NOT NULL DEFAULT 0 CHECK (failed_window_count >= 0),
+  locked_until INTEGER,
+  deleted_at INTEGER,
+  CHECK ((status = 'deleted') = (deleted_at IS NOT NULL)),
+  CHECK (status = 'deleted' OR (email IS NOT NULL AND email_normalised IS NOT NULL AND name IS NOT NULL AND password_hash IS NOT NULL)),
+  CHECK (status <> 'deleted' OR password_hash IS NULL),
+  CHECK (disabled_reason IS NULL OR status = 'disabled')
+);
+CREATE UNIQUE INDEX account_email_live_uq ON account (email_normalised) WHERE status <> 'deleted';
+CREATE INDEX account_deleted_idx ON account (deleted_at) WHERE status = 'deleted';
+CREATE INDEX account_inactive_idx ON account (last_sign_in_at) WHERE status = 'active';
+
+CREATE TABLE session (
+  id_hash BLOB PRIMARY KEY CHECK (length(id_hash) = 32),
+  account_id TEXT NOT NULL REFERENCES account(id) ON DELETE CASCADE,
+  created_at INTEGER NOT NULL,
+  last_seen_at INTEGER NOT NULL,
+  absolute_expires_at INTEGER NOT NULL,
+  csrf_secret BLOB NOT NULL CHECK (length(csrf_secret) = 32),
+  previous_sign_in_at INTEGER,
+  failed_attempts_before INTEGER NOT NULL DEFAULT 0,
+  CHECK (absolute_expires_at > created_at)
+) WITHOUT ROWID;
+CREATE INDEX session_account_idx ON session (account_id);
+CREATE INDEX session_absolute_idx ON session (absolute_expires_at);
+CREATE INDEX session_seen_idx ON session (last_seen_at);
+
+CREATE TABLE content_entry (
+  key TEXT PRIMARY KEY CHECK (length(key) BETWEEN 6 AND 66 AND key NOT GLOB '*[^a-z0-9.-]*'),
+  kind TEXT NOT NULL CHECK (kind IN ('page','global','room')),
+  data TEXT NOT NULL CHECK (json_valid(data) AND length(data) <= 524288),
+  version INTEGER NOT NULL CHECK (version >= 1),
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  updated_by TEXT REFERENCES account(id) ON DELETE SET NULL,
+  CHECK ((kind = 'page' AND key GLOB 'page.*') OR (kind = 'global' AND key GLOB 'global.*') OR (kind = 'room' AND key GLOB 'room.*'))
+);
+CREATE TABLE list_item (
+  id TEXT PRIMARY KEY CHECK (length(id) = 36),
+  list_key TEXT NOT NULL CHECK (list_key IN ('dining-venues','pools-and-beach','activities','offers','gallery','faq','attractions')),
+  position INTEGER NOT NULL CHECK (position >= 0),
+  slug TEXT CHECK (slug IS NULL OR (length(slug) BETWEEN 1 AND 60 AND slug NOT GLOB '*[^a-z0-9-]*')),
+  data TEXT NOT NULL CHECK (json_valid(data) AND length(data) <= 262144),
+  version INTEGER NOT NULL CHECK (version >= 1),
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  updated_by TEXT REFERENCES account(id) ON DELETE SET NULL
+);
+CREATE UNIQUE INDEX list_item_position_uq ON list_item (list_key, position);
+CREATE UNIQUE INDEX list_item_slug_uq ON list_item (list_key, slug) WHERE slug IS NOT NULL;
+CREATE TABLE settings (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  data TEXT NOT NULL CHECK (json_valid(data) AND length(data) <= 65536),
+  version INTEGER NOT NULL CHECK (version >= 1),
+  updated_at INTEGER NOT NULL,
+  updated_by TEXT REFERENCES account(id) ON DELETE SET NULL
+);
+
+CREATE TABLE legal_text_version (
+  label TEXT PRIMARY KEY CHECK (length(label) BETWEEN 3 AND 50 AND label NOT GLOB '*[^a-z0-9-]*'),
+  kind TEXT NOT NULL CHECK (kind IN ('newsletter_consent','enquiry_privacy_info')),
+  n INTEGER NOT NULL CHECK (n >= 1),
+  text_en TEXT NOT NULL CHECK (length(text_en) BETWEEN 1 AND 2000),
+  text_de TEXT NOT NULL DEFAULT '' CHECK (length(text_de) <= 2000),
+  text_it TEXT NOT NULL DEFAULT '' CHECK (length(text_it) <= 2000),
+  text_ru TEXT NOT NULL DEFAULT '' CHECK (length(text_ru) <= 2000),
+  created_at INTEGER NOT NULL,
+  created_by TEXT REFERENCES account(id) ON DELETE SET NULL,
+  UNIQUE (kind, n)
+);
+
+CREATE TABLE media_asset (
+  id TEXT PRIMARY KEY CHECK (length(id) = 36),
+  file_key TEXT NOT NULL UNIQUE CHECK (length(file_key) = 26 AND file_key NOT GLOB '*[^0-9a-z]*'),
+  name TEXT NOT NULL CHECK (length(name) BETWEEN 1 AND 200),
+  mime_type TEXT NOT NULL CHECK (mime_type IN ('image/jpeg','image/png','image/webp','image/avif')),
+  size_bytes INTEGER NOT NULL CHECK (size_bytes BETWEEN 1 AND 10485760),
+  width INTEGER NOT NULL CHECK (width >= 1),
+  height INTEGER NOT NULL CHECK (height >= 1),
+  rev INTEGER NOT NULL DEFAULT 1 CHECK (rev >= 1),
+  version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
+  alt_en TEXT NOT NULL DEFAULT '' CHECK (length(alt_en) <= 300),
+  alt_de TEXT NOT NULL DEFAULT '' CHECK (length(alt_de) <= 300),
+  alt_it TEXT NOT NULL DEFAULT '' CHECK (length(alt_it) <= 300),
+  alt_ru TEXT NOT NULL DEFAULT '' CHECK (length(alt_ru) <= 300),
+  caption_en TEXT NOT NULL DEFAULT '' CHECK (length(caption_en) <= 300),
+  caption_de TEXT NOT NULL DEFAULT '' CHECK (length(caption_de) <= 300),
+  caption_it TEXT NOT NULL DEFAULT '' CHECK (length(caption_it) <= 300),
+  caption_ru TEXT NOT NULL DEFAULT '' CHECK (length(caption_ru) <= 300),
+  uploaded_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  uploaded_by TEXT REFERENCES account(id) ON DELETE SET NULL,
+  deleted_at INTEGER,
+  CHECK (width * height <= 40000000)
+);
+CREATE INDEX media_library_idx ON media_asset (uploaded_at DESC, id DESC) WHERE deleted_at IS NULL;
+CREATE INDEX media_deleted_idx ON media_asset (deleted_at) WHERE deleted_at IS NOT NULL;
+CREATE TABLE media_variant (
+  media_id TEXT NOT NULL REFERENCES media_asset(id) ON DELETE CASCADE,
+  width INTEGER NOT NULL CHECK (width IN (480,768,1280,1920)),
+  format TEXT NOT NULL CHECK (format IN ('avif','webp')),
+  bytes INTEGER NOT NULL CHECK (bytes >= 1),
+  PRIMARY KEY (media_id, width, format)
+) WITHOUT ROWID;
+CREATE TABLE media_usage (
+  owner_kind TEXT NOT NULL CHECK (owner_kind IN ('entry','list_item')),
+  owner_key TEXT NOT NULL,
+  field_path TEXT NOT NULL,
+  media_id TEXT NOT NULL REFERENCES media_asset(id) ON DELETE RESTRICT,
+  PRIMARY KEY (owner_kind, owner_key, field_path)
+) WITHOUT ROWID;
+CREATE INDEX media_usage_media_idx ON media_usage (media_id);
+
+CREATE TABLE enquiry (
+  id TEXT PRIMARY KEY CHECK (length(id) = 36),
+  reference TEXT NOT NULL UNIQUE CHECK (reference GLOB 'ENQ-[A-Z2-9][A-Z2-9][A-Z2-9][A-Z2-9][A-Z2-9][A-Z2-9]'),
+  name TEXT NOT NULL CHECK (length(name) BETWEEN 2 AND 100),
+  email TEXT NOT NULL CHECK (length(email) BETWEEN 3 AND 254),
+  email_normalised TEXT NOT NULL CHECK (length(email_normalised) BETWEEN 3 AND 254),
+  telephone TEXT CHECK (telephone IS NULL OR length(telephone) BETWEEN 7 AND 20),
+  subject TEXT NOT NULL CHECK (subject IN ('general','data_protection')),
+  message TEXT NOT NULL CHECK (length(message) BETWEEN 10 AND 2000),
+  language TEXT NOT NULL CHECK (language IN ('en','de','it','ru')),
+  received_at INTEGER NOT NULL,
+  privacy_text_version TEXT NOT NULL REFERENCES legal_text_version(label),
+  status TEXT NOT NULL DEFAULT 'unhandled' CHECK (status IN ('unhandled','handled')),
+  read_at INTEGER,
+  data_protection INTEGER NOT NULL DEFAULT 0 CHECK (data_protection IN (0,1)),
+  search_text TEXT NOT NULL,
+  CHECK (subject <> 'data_protection' OR data_protection = 1)
+);
+CREATE INDEX enquiry_received_idx ON enquiry (received_at DESC, id DESC);
+CREATE INDEX enquiry_status_idx ON enquiry (status, received_at DESC, id DESC);
+CREATE INDEX enquiry_dp_idx ON enquiry (received_at DESC, id DESC) WHERE data_protection = 1;
+CREATE INDEX enquiry_unread_idx ON enquiry (received_at) WHERE read_at IS NULL;
+CREATE INDEX enquiry_email_idx ON enquiry (email_normalised);
+
+CREATE TABLE subscriber (
+  id TEXT PRIMARY KEY CHECK (length(id) = 36),
+  email TEXT NOT NULL CHECK (length(email) BETWEEN 3 AND 254),
+  email_normalised TEXT NOT NULL UNIQUE CHECK (length(email_normalised) BETWEEN 3 AND 254),
+  language TEXT NOT NULL CHECK (language IN ('en','de','it','ru')),
+  status TEXT NOT NULL CHECK (status IN ('active','unsubscribed')),
+  subscribed_at INTEGER NOT NULL,
+  unsubscribed_at INTEGER,
+  consent_version TEXT NOT NULL REFERENCES legal_text_version(label),
+  CHECK ((status = 'active') = (unsubscribed_at IS NULL))
+);
+CREATE INDEX subscriber_recent_idx ON subscriber (subscribed_at DESC, id DESC);
+CREATE INDEX subscriber_status_idx ON subscriber (status, subscribed_at DESC, id DESC);
+CREATE INDEX subscriber_unsub_idx ON subscriber (unsubscribed_at) WHERE status = 'unsubscribed';
+
+CREATE TABLE suppression (
+  email_hash BLOB PRIMARY KEY CHECK (length(email_hash) = 32),
+  created_at INTEGER NOT NULL
+) WITHOUT ROWID;
+CREATE INDEX suppression_created_idx ON suppression (created_at);
+
+CREATE TABLE rate_limit (
+  rule TEXT NOT NULL,
+  client_key TEXT NOT NULL,
+  window_start INTEGER NOT NULL,
+  count INTEGER NOT NULL CHECK (count >= 1),
+  PRIMARY KEY (rule, client_key, window_start)
+) WITHOUT ROWID;
+CREATE INDEX rate_limit_window_idx ON rate_limit (window_start);
+CREATE TABLE used_form_token (
+  nonce BLOB PRIMARY KEY CHECK (length(nonce) = 16),
+  expires_at INTEGER NOT NULL,
+  enquiry_id TEXT REFERENCES enquiry(id) ON DELETE CASCADE
+) WITHOUT ROWID;
+CREATE INDEX used_form_token_exp_idx ON used_form_token (expires_at);
+CREATE INDEX used_form_token_enquiry_idx ON used_form_token (enquiry_id) WHERE enquiry_id IS NOT NULL;
+
+CREATE TABLE security_event (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  occurred_at INTEGER NOT NULL,
+  actor_type TEXT NOT NULL CHECK (actor_type IN ('account','anonymous','system')),
+  account_id TEXT REFERENCES account(id),
+  event TEXT NOT NULL CHECK (length(event) BETWEEN 1 AND 60 AND event NOT GLOB '*[^a-z0-9_]*'),
+  result TEXT NOT NULL CHECK (result IN ('success','failure','refused')),
+  target_type TEXT CHECK (target_type IS NULL OR length(target_type) <= 30),
+  target_id TEXT CHECK (target_id IS NULL OR length(target_id) <= 40),
+  detail TEXT CHECK (detail IS NULL OR (json_valid(detail) AND length(detail) <= 2000)),
+  CHECK ((actor_type = 'account') = (account_id IS NOT NULL))
+);
+CREATE INDEX security_event_time_idx ON security_event (occurred_at);
+CREATE INDEX security_event_account_idx ON security_event (account_id, occurred_at) WHERE account_id IS NOT NULL;
+CREATE INDEX security_event_event_idx ON security_event (event, occurred_at);
+
+CREATE TABLE job_run (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  job TEXT NOT NULL CHECK (job IN ('purge','backup')),
+  started_at INTEGER NOT NULL,
+  finished_at INTEGER,
+  result TEXT NOT NULL CHECK (result IN ('running','success','failed','skipped')),
+  message TEXT CHECK (message IS NULL OR length(message) <= 300),
+  counts TEXT CHECK (counts IS NULL OR (json_valid(counts) AND length(counts) <= 2000))
+);
+CREATE INDEX job_run_job_idx ON job_run (job, started_at DESC);
+CREATE TABLE backup_archive (
+  file_name TEXT PRIMARY KEY CHECK (file_name GLOB 'jcdm-backup-*-CONTAINS-PERSONAL-DATA.tar.gz*'),
+  created_at INTEGER NOT NULL,
+  bytes INTEGER NOT NULL CHECK (bytes >= 1),
+  sha256 TEXT NOT NULL CHECK (length(sha256) = 64),
+  encrypted INTEGER NOT NULL CHECK (encrypted IN (0,1)),
+  app_version TEXT NOT NULL,
+  schema_version INTEGER NOT NULL,
+  job_run_id INTEGER REFERENCES job_run(id) ON DELETE SET NULL
+);
+CREATE INDEX backup_archive_created_idx ON backup_archive (created_at);
+
+CREATE TABLE dsr_record (
+  id TEXT PRIMARY KEY CHECK (length(id) = 36),
+  reference TEXT NOT NULL UNIQUE CHECK (length(reference) BETWEEN 3 AND 40),
+  type TEXT NOT NULL CHECK (type IN ('access','erasure','rectification','restriction','objection','portability','complaint','other')),
+  received_at INTEGER NOT NULL,
+  acknowledged_at INTEGER,
+  closed_at INTEGER,
+  outcome TEXT CHECK (outcome IN ('fulfilled','partly_fulfilled','refused','withdrawn','no_data_held')),
+  recorded_by TEXT REFERENCES account(id) ON DELETE SET NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  CHECK ((closed_at IS NULL) = (outcome IS NULL))
+);
+CREATE INDEX dsr_closed_idx ON dsr_record (closed_at) WHERE closed_at IS NOT NULL;
+CREATE INDEX dsr_open_idx ON dsr_record (received_at) WHERE closed_at IS NULL;
+```
+
+## Appendix B. Reference SQL: triggers
+
+Target for `0001_integrity_triggers`. Each was exercised against a database holding the objects of appendix A (rejections raise the quoted message, which the application maps to the contract error code).
+
+```sql
+-- only the six fixed room keys can exist
+CREATE TRIGGER content_entry_room_insert BEFORE INSERT ON content_entry
+WHEN NEW.kind = 'room' AND NEW.key NOT IN ('room.family-suite','room.executive-suite','room.superior-twin-sea-view','room.superior-queen-sea-view','room.triple-deluxe-twin-pool-view','room.triple-deluxe-queen-pool-view')
+BEGIN SELECT RAISE(ABORT, 'room_entry_not_allowed'); END;
+
+-- no content entry is ever deleted
+CREATE TRIGGER content_entry_no_delete BEFORE DELETE ON content_entry
+BEGIN SELECT RAISE(ABORT, 'content_entry_delete_not_allowed'); END;
+
+-- key and kind never change
+CREATE TRIGGER content_entry_key_immutable BEFORE UPDATE OF key, kind ON content_entry
+BEGIN SELECT RAISE(ABORT, 'content_entry_key_immutable'); END;
+
+-- optimistic locking safety net
+CREATE TRIGGER content_entry_version_step BEFORE UPDATE OF data, version ON content_entry
+WHEN NEW.version <> OLD.version + 1
+BEGIN SELECT RAISE(ABORT, 'version_conflict'); END;
+
+-- optimistic locking safety net
+CREATE TRIGGER list_item_version_step BEFORE UPDATE OF data, version ON list_item
+WHEN NEW.version <> OLD.version + 1
+BEGIN SELECT RAISE(ABORT, 'version_conflict'); END;
+
+-- optimistic locking safety net
+CREATE TRIGGER settings_version_step BEFORE UPDATE OF data, version ON settings
+WHEN NEW.version <> OLD.version + 1
+BEGIN SELECT RAISE(ABORT, 'version_conflict'); END;
+
+-- optimistic locking safety net
+CREATE TRIGGER media_version_step BEFORE UPDATE OF name, alt_en, alt_de, alt_it, alt_ru, caption_en, caption_de, caption_it, caption_ru, rev, version ON media_asset
+WHEN NEW.version <> OLD.version + 1
+BEGIN SELECT RAISE(ABORT, 'version_conflict'); END;
+
+-- a deleted list item no longer uses any photo
+CREATE TRIGGER list_item_media_usage_cleanup AFTER DELETE ON list_item
+BEGIN DELETE FROM media_usage WHERE owner_kind = 'list_item' AND owner_key = OLD.id; END;
+
+-- a photo needs English alternative text and must not be deleted to be used
+CREATE TRIGGER media_usage_needs_alt BEFORE INSERT ON media_usage
+WHEN (SELECT alt_en FROM media_asset WHERE id = NEW.media_id) = '' OR (SELECT deleted_at FROM media_asset WHERE id = NEW.media_id) IS NOT NULL
+BEGIN SELECT RAISE(ABORT, 'media_not_usable'); END;
+
+-- a used photo cannot be soft deleted
+CREATE TRIGGER media_delete_in_use BEFORE UPDATE OF deleted_at ON media_asset
+WHEN NEW.deleted_at IS NOT NULL AND EXISTS (SELECT 1 FROM media_usage WHERE media_id = NEW.id)
+BEGIN SELECT RAISE(ABORT, 'in_use'); END;
+
+-- English alternative text of a used photo cannot be emptied
+CREATE TRIGGER media_alt_clear_in_use BEFORE UPDATE OF alt_en ON media_asset
+WHEN NEW.alt_en = '' AND EXISTS (SELECT 1 FROM media_usage WHERE media_id = NEW.id)
+BEGIN SELECT RAISE(ABORT, 'media_missing_alt'); END;
+
+-- the last active account cannot be disabled or deleted
+CREATE TRIGGER account_last_admin_update BEFORE UPDATE OF status ON account
+WHEN OLD.status = 'active' AND NEW.status <> 'active' AND NOT EXISTS (SELECT 1 FROM account WHERE status = 'active' AND id <> OLD.id)
+BEGIN SELECT RAISE(ABORT, 'last_administrator'); END;
+
+-- an active account cannot be hard deleted
+CREATE TRIGGER account_last_admin_delete BEFORE DELETE ON account
+WHEN OLD.status = 'active'
+BEGIN SELECT RAISE(ABORT, 'last_administrator'); END;
+
+-- sessions end when the password changes or the account stops being active
+CREATE TRIGGER account_ends_sessions AFTER UPDATE OF status, password_hash ON account
+WHEN NEW.status <> 'active' OR NEW.password_hash IS NOT OLD.password_hash
+BEGIN DELETE FROM session WHERE account_id = NEW.id; END;
+
+-- security events are append only
+CREATE TRIGGER security_event_no_update BEFORE UPDATE ON security_event
+BEGIN SELECT RAISE(ABORT, 'security_event_is_append_only'); END;
+
+-- wording versions are immutable
+CREATE TRIGGER legal_text_no_update BEFORE UPDATE ON legal_text_version
+BEGIN SELECT RAISE(ABORT, 'legal_text_version_is_immutable'); END;
+
+-- wording versions are immutable
+CREATE TRIGGER legal_text_no_delete BEFORE DELETE ON legal_text_version
+BEGIN SELECT RAISE(ABORT, 'legal_text_version_is_immutable'); END;
+```
