@@ -673,3 +673,106 @@ This is the policy that ADR-0006 and the Retention schedule imply: **a suppressi
 ### 8.5 Media lifecycle
 
 Upload: after the worker succeeds, one transaction inserts `media_asset` (`version 1`, `rev 1`) and up to eight `media_variant` rows, then bumps `content_revision`; files are written under temporary names first and renamed after the commit, and any failure deletes the partial files (ADR-0009). Replace file: `rev + 1`, `version + 1`, variant rows replaced, old public files removed after the commit. Delete: refused while `media_usage` has rows; otherwise `deleted_at = now`, `media_variant` rows deleted, public files removed at once; the original file and the row stay for `RETENTION_DELETED_MEDIA_ORIGINAL_DAYS` (30), then the purge unlinks the file and deletes the row. Storage used (contract `StorageUsage.usedBytes`) is `SUM(media_asset.size_bytes) + SUM(media_variant.bytes)`; tombstones count until their original is removed because the file is still on disk. The 80 percent warning and the refusal at 100 percent compare this with `MEDIA_QUOTA_MB`.
+
+## 9. Retention and deletion
+
+Periods are the Retention schedule in `docs/requirements.md` (approved at T1, OQ-10). Each is a configuration value in days (`docs/repo-plan.md` section 6); "12 months" is 365 days and "36 months" is 1,095 days, so a leap year makes the real period one day shorter than the calendar month count, which is within what the schedule intends. All cut-off times are `clock.now - days * 86,400,000 ms`, computed once per run from the injected `Clock`.
+
+### 9.1 How the purge runs
+
+- **Daily purge** (FR-45, ADR-0010): by default every 24 hours, and at start when overdue. It works through the categories below in this order, each category in its own transaction (or batches of at most 1,000 rows, each batch its own `BEGIN IMMEDIATE` transaction, so the single writer is never held for long; this refines ADR-0010's "one transaction per category" and counts are summed per category). A failing category is logged as failed, the others still run, `job_run.result` is `failed`, and the next scheduler check retries. The run ends with one `job_run` row and one `security_event` (`purge_run`, `detail` = rows removed per category), then `PRAGMA wal_checkpoint(TRUNCATE)` (section 9.2).
+- **Sweep** (new, every scheduler check, 10 minutes): deletes expired `session` rows, `used_form_token` rows past `expires_at`, and `rate_limit` rows with `window_start` older than 23 hours. Reason: a daily job alone could leave a counter 24 hours plus a window plus up to 24 more hours before it is removed, which breaks "counters shall be kept no longer than 24 hours" (NFR-21) and "deleted at session end" (Retention schedule). The sweep is silent (no security event). The daily purge repeats the same deletes, so its counts for these three categories are usually 0 (open question D-13; tests for AC-43.6 call the purge with the sweep disabled).
+- **Order inside the daily purge**: sessions, counters and tokens; `enquiry` (cascades `used_form_token`); `dsr_record`; unsubscribed `subscriber` rows; `suppression`; `security_event`; deleted account personal data; inactive account disabling; account tombstones with no remaining `security_event`; deleted photo originals; `job_run` trimming. Security events are purged before tombstones so that a tombstone can go as soon as nothing refers to it.
+
+### 9.2 What "deleted" means physically in SQLite
+
+A SQL `DELETE` normally leaves the old bytes in free pages of the file and in the write-ahead log. To make deletion real:
+
+- `PRAGMA secure_delete = ON` on every connection (new in this model; ADR-0003's pragma list should include it): deleted content is overwritten with zeros in the database file. The cost is small for these table sizes.
+- The purge finishes with `PRAGMA wal_checkpoint(TRUNCATE)` so the log no longer holds old page images. `VACUUM` is not needed for erasure.
+- Media files are removed with `unlink`; the file system may still hold the blocks until reused. Stated honestly in the hosting guide.
+- What the application cannot reach: backup archives (section 9.3), copies made by the operator, file system snapshots, and the host's web server logs (Retention schedule: 30 days, set by the host).
+
+### 9.3 The backup caveat
+
+Everything below except `session`, `rate_limit` and `used_form_token` is copied into each daily archive (ADR-0010), together with media originals. Rows purged or erased from the live database therefore remain in archives for up to `BACKUP_RETENTION_DAYS` (35) after the purge. The Privacy notice, the hosting guide and the backup command output say so (NFR-17, FR-14, LR-4, LR-8). Two consequences for the build:
+
+- A restore brings back data the live site had already purged. So the restore command ends by running the purge once, with the current clock, before the site starts (it must not rely on the scheduler, because the restored `job_run` table may say a purge ran an hour ago).
+- When FR-44 is built, an erasure done at a person's request must also survive a restore. That needs a small ledger of keyed hashes of erased addresses to re-apply after a restore (not built now; recorded so the FR-44 design does not forget it).
+
+### 9.4 Table by table
+
+"Erase" means the row (or file) is removed. "Pseudonymise" means the row stays but the personal fields are replaced by `NULL` or by a keyed hash. A keyed hash of an address is still personal data (S26, research view in the legal register).
+
+| Table (data) | Retention and config | Purge rule | Deletion means | Backup caveat | Legal register |
+| --- | --- | --- | --- | --- | --- |
+| `enquiry` (name, email, telephone, message) | 12 months after receipt; `RETENTION_ENQUIRY_DAYS` = 365 | `DELETE ... WHERE received_at < :cutoff` in batches; cascades `used_form_token`. Also deleted one by one by staff (FR-42), recorded as `enquiry_delete`. | Erase | In archives up to 35 days | LR-8 storage limitation; LR-10 rights (single record delete, FR-44 later); LR-18 free text may hold special category data; LR-5 for `data_protection = 1` rows (the complaint record is `dsr_record`, which outlives the enquiry) |
+| `dsr_record` (reference, type, dates, outcome; no text) | 24 months after closure; `RETENTION_DSR_RECORD_DAYS` = 730 | `DELETE ... WHERE closed_at < :cutoff`. Never-closed records are not purged. | Erase | In archives up to 35 days | LR-5, LR-10, LR-12 (shows how requests were handled) |
+| `subscriber`, status `active` (address, language, consent time and version) | Until the person unsubscribes or an Administrator removes it; no automatic expiry. The controller should review the list at least every 24 months (organisational step, legal register research view). | None by the purge. Admin removal: `DELETE ... WHERE id = ?` (FR-43), `subscriber_delete` event. | Erase | In archives up to 35 days | LR-3 valid consent record; LR-11 objection; LR-19 prior consent; LR-8 |
+| `subscriber`, status `unsubscribed` (readable address) | 30 days after unsubscribing; `RETENTION_UNSUBSCRIBED_ADDRESS_DAYS` = 30 | `DELETE ... WHERE status = 'unsubscribed' AND unsubscribed_at < :cutoff`: the whole row goes, so no address, language or consent time stays (the `suppression` entry created at unsubscribe carries on). | Erase the row (the keyed hash in `suppression` is the pseudonymised remainder) | In archives up to 35 days | LR-8, LR-11, LR-20 |
+| `suppression` (keyed hash of the address, time) | 36 months after unsubscribing; `RETENTION_SUPPRESSION_DAYS` = 1,095 | `DELETE ... WHERE created_at < :cutoff` | Erase. The entry is pseudonymised data (a keyed hash, key in `install_secret`), still personal data, listed in the Privacy notice. | In archives up to 35 days, with the key | LR-20 suppression list; LR-11; LR-8 |
+| `account` after deletion (name, email) | 30 days after deletion; `RETENTION_DELETED_ACCOUNT_DAYS` = 30 | `UPDATE account SET email = NULL, email_normalised = NULL, name = NULL WHERE status = 'deleted' AND deleted_at < :cutoff AND email IS NOT NULL`; later `DELETE` of the tombstone when no `security_event` refers to it. | Pseudonymise (id only row), then erase when unreferenced. `password_hash` is already `NULL` from the day of deletion. | In archives up to 35 days | LR-8, LR-9 |
+| `account`, no sign in (a disabled flag, not deleted) | Disabled after 12 months without sign in; `RETENTION_INACTIVE_ACCOUNT_DISABLE_DAYS` = 365; an Administrator then decides on deletion | `UPDATE account SET status = 'disabled', disabled_reason = 'inactive' WHERE status = 'active' AND coalesce(last_sign_in_at, created_at) < :cutoff`, one account at a time; the last active account is skipped (the trigger refuses) and counted as skipped. Writes `account_auto_disabled`. Not in the FR-45 category list (open question D-6). | Not a deletion (status change); sessions end by trigger | Not applicable | LR-9 security, LR-8 |
+| `session` (account id, times, CSRF secret, hashed identifier) | Until sign out, 30 minutes idle or 8 hours, whichever first; `SESSION_IDLE_MINUTES` = 30 | Sweep and daily purge: `DELETE ... WHERE absolute_expires_at < :now OR last_seen_at < :now - idle`; also on use of an expired session, and by trigger on password change, disable, delete | Erase | Not in archives (excluded, G-15) | LR-8, LR-9; LR-21 (the admin cookie is strictly necessary; the public site has none) |
+| `rate_limit` (keyed hash of client address, counts) | 24 hours (NFR-21) | Sweep: `DELETE ... WHERE window_start < :now - 23 h`; the daily purge repeats it | Erase | Not in archives | LR-7 minimisation (address not stored readable), LR-8 |
+| `used_form_token` (nonce, link to enquiry) | Until the token expires (8 hours after issue); removed within about 10 minutes | Sweep: `DELETE ... WHERE expires_at < :now`; cascade when its enquiry is deleted | Erase | Not in archives | LR-21 (token held in the form, no cookie), LR-8 |
+| `security_event` (account id, event, result, counts; the audit log of FR-46 when built) | 12 months; `RETENTION_SECURITY_EVENT_DAYS` = 365 | `DELETE ... WHERE occurred_at < :cutoff`, only from the purge module | Erase. Entries about a deleted account read "deleted user" because the account row is pseudonymised. | In archives up to 35 days | LR-13 breach scoping; LR-9; LR-8 |
+| `media_asset` original file and row (photos; may show people if staff upload one) | Public copies removed at once on deletion; original 30 days after deletion; `RETENTION_DELETED_MEDIA_ORIGINAL_DAYS` = 30. A photo that is in use is kept while in use (Retention schedule). | `SELECT ... WHERE deleted_at < :cutoff`, unlink `DATA_DIR/media/originals/<file_key>.<ext>`, then `DELETE` the row; a failed unlink keeps the row for the next run | Erase file and row | Originals are in archives up to 35 days | LR-36 image rights; LR-8; LR-7 (EXIF removed from every public copy, FR-41) |
+| `backup_archive` rows and the archive files | 35 days; `BACKUP_RETENTION_DAYS` = 35 | The backup job deletes files it created older than the limit and their rows | Erase (file unlink) | The archives are the backups | LR-8, LR-9, LR-4 |
+
+Tables with no personal data about visitors, and why they are not purged: `content_entry`, `list_item` (placeholder text in this release; if the operator later enters real business contact details in `settings`, those are the controller's own business data, kept while in use, LR-32, LR-47, LR-48); `legal_text_version` (wording only, kept as the proof of what was shown, LR-3, LR-4); `media_variant`, `media_usage`; `job_run` (newest 400 runs, messages hold no personal data); `site_state`, `health`, `install_secret` (a key, not data about a person), `__drizzle_migrations`.
+
+Not tables: **CSV exports** are never stored by the site (Retention schedule, FR-43); the hosting guide tells staff to delete the file after use. **Web server access logs** belong to the host (30 days, hosting guide). **Application logs** hold no personal data (NFR-14).
+
+## 10. Migrations plan
+
+### 10.1 Tooling and layout (web repo)
+
+- Source of truth for tables, columns, `CHECK`s, foreign keys and indexes: `src/lib/db/schema.ts`. `npm run db:generate -- --name <snake_case_name>` runs drizzle-kit and writes `migrations/NNNN_<name>.sql`, the journal `migrations/meta/_journal.json` and a snapshot. A check refuses Drizzle's random default names.
+- Triggers and any SQL that Drizzle cannot express: `drizzle-kit generate --custom --name <name>`, hand written, committed in the same sequence.
+- Down files: `migrations/down/NNNN_<name>.down.sql`, hand written, outside the folder Drizzle reads.
+- `npm run db:migrate` (and server start) applies pending migrations with Drizzle's runtime migrator, then sets `site_state.schema_version`.
+
+### 10.2 Ordering of the first migrations
+
+| Number and name | Content | Destructive? |
+| --- | --- | --- |
+| `0000_baseline` | All tables, `CHECK`s, foreign keys and indexes of appendix A, in dependency order (parents before children: `account` before `session`, `legal_text_version` before `enquiry` and `subscriber`, `media_asset` before `media_usage`, `job_run` before `backup_archive`) | No (empty database) |
+| `0001_integrity_triggers` | All triggers of appendix B (custom SQL) | No |
+| `0002_singleton_rows` | Inserts `site_state` (revision 1, schema version 3, `installed_at`) and `health`; creates nothing random | No |
+
+Content, settings, wording versions and placeholder photos are **seed**, not migrations (section 12): they depend on the registry version and need the image pipeline. The suppression key is generated by the application at first start (ADR-0015), not in SQL. After `0002`, the server refuses to start with `STARTUP-REFUSED: no content, run npm run seed` if `content_entry` is empty, and compares the key set with the registry (section 5.4).
+
+### 10.3 Rules for later migrations
+
+- One concern per migration; a name of the form `NNNN_verb_object`.
+- Immutable once merged to the main branch; a mistake is fixed by a new migration.
+- Drizzle's runtime migrator decides what to apply by comparing each journal entry's `when` with the newest applied one, so a migration generated on a branch can be skipped silently if another with a later `when` merged first. Checks in `scripts/verify.sh`: journal `when` strictly increases in file order; file numbers are contiguous; every `.sql` has a journal entry and a down file. Branches that both add migrations re-generate the later one before merging. Verify at build whether the migrator wraps the whole batch in one transaction; if it does not, wrap each file in `BEGIN` / `COMMIT` in the runner.
+- Prefer **expand and contract** over rewriting: add a nullable column or new table, backfill in the same migration or a script, switch the code, and remove the old column in a later, separately approved migration.
+- `ALTER TABLE` can add a column, rename a table or column and (SQLite 3.35 and later) drop a column that is not indexed, not in a `CHECK`, trigger or foreign key. Everything else (changing a type, a `CHECK`, `NOT NULL`, a primary key, or dropping an indexed column) is the table rebuild: create the new table, copy, drop the old, rename, recreate indexes **and triggers** (a drop removes the table's triggers; a test compares the trigger set before and after), with `PRAGMA defer_foreign_keys = ON` (the `foreign_keys` pragma cannot change inside a transaction) and `PRAGMA foreign_key_check` returning no rows before the commit.
+- Every migration is tested against a database filled by the `small` and `perf` fixtures (section 12), not only an empty one.
+
+### 10.4 Rollback
+
+SQLite has no transactional DDL across process failure beyond the single transaction, and Drizzle generates no down scripts, so rollback has two layers:
+
+1. **Failed migration at start**: each migration batch runs in one transaction, so a failure leaves the file as it was (ADR-0003), the server prints `STARTUP-REFUSED` and does not open a port. A backup archive has been written first (ADR-0010) whenever the database holds data and migrations are pending.
+2. **Going back after a migration that applied**: restore that pre-migration archive into an empty install with `npm run restore` (ADR-0010). Changes made after the migration are not in that archive; the operator is told so.
+3. **Down files** are for development and CI, never run automatically on an installed database. The migration test applies each migration, loads fixtures, applies its down file, compares `sqlite_schema` (tables, indexes, triggers, normalised) with the state before, checks the rows that must survive, then applies the migration again. A down file that cannot preserve data says so on its first line (`-- lossy: <what is lost>`) and exists only for migrations that are themselves destructive and approved. `npm run db:rollback` exists for development and refuses to run when `NODE_ENV=production`.
+
+### 10.5 Restore and schema version
+
+The backup manifest carries `schema_version` (ADR-0010). `restore` compares it with the highest migration the program knows: an archive newer than the program is refused (`archive is newer than this program`); an older one is restored, then migrated (with a backup of the restored file first). `PRAGMA integrity_check`, `PRAGMA foreign_key_check` and the key set check (section 5.4) run on the restored copy before the folders are swapped. The "empty install" test uses `site_state.seed_content_revision` (section 4.1).
+
+### 10.6 The destructive migration rule (role skill)
+
+A migration is **destructive** when it can lose or irreversibly change existing data or reject existing rows: `DROP TABLE`, `DROP COLUMN`, `DELETE` or `UPDATE` without a reversible inverse, a table rebuild that omits or narrows a column, adding `NOT NULL`, `UNIQUE`, `CHECK` or a shorter length to a table that may already hold violating rows, or truncating anything. Before such a migration is merged:
+
+1. The first line of the migration file is `-- destructive: <one line reason>`, and a second line `-- approved: approvals/<file>` naming the file in which the Orchestrator recorded Steven's own approval from chat, quoted verbatim.
+2. The task report contains a **written backup and recovery note**: what is lost or changed, the exact backup command run first (`npm run backup`) and where the archive is, how to recover (stop the site, `npm run restore -- <archive>` into an empty install, then what must be re-entered), how long it takes, and the queries that prove it worked.
+3. Steven approves before merge. This release has no destructive migration planned (the first three are additive).
+4. `scripts/check-migrations.mjs` (part of `bash scripts/verify.sh` in the web repo) scans every migration file for destructive statements and fails if one has no marker, or has a marker but no matching file in `approvals/`.
+
+### 10.7 Migration tests
+
+Apply all migrations to an empty file and compare with the Drizzle schema (`drizzle-kit generate` must report no changes); apply them one at a time with fixtures in between; run every down file; upgrade golden database files kept for each released schema version; `PRAGMA integrity_check` and `foreign_key_check` after each step; compare the trigger list with appendix B; run one test per invariant of section 7 asserting the exact error text; confirm the pre-migration backup is created and restores (AC-46.2).
