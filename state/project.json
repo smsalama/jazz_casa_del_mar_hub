@@ -48,7 +48,61 @@
     "10 Release readiness": 500000
   },
   "usage": [],
-  "tasks": [],
+  "tasks": [
+    {
+      "id": "P1-T1",
+      "title": "Client intake and project brief",
+      "role": "orchestrator",
+      "repo": "hub",
+      "branch": "main",
+      "status": "done",
+      "depends_on": [],
+      "evidence": "docs/brief.md"
+    }
+  ],
   "decisions": [],
-  "open_questions": []
+  "open_questions": [
+    {
+      "id": "Q1",
+      "question": "Personal data conflict: answer was no personal data, but contact form, newsletter and admin logins process personal data. Keep and govern, or avoid collection?",
+      "for": "Steven",
+      "asked": "2026-10-15"
+    },
+    {
+      "id": "Q2",
+      "question": "Brand and content rights: is Jaz Hotels the actual client and has it authorised use of the JAZ name, logo and branding, or is this a speculative or test build?",
+      "for": "Steven",
+      "asked": "2026-10-15"
+    },
+    {
+      "id": "Q3",
+      "question": "Admin portal scope: what can staff edit or see, and how many admin users?",
+      "for": "Steven",
+      "asked": "2026-10-15"
+    },
+    {
+      "id": "Q4",
+      "question": "Booking: link out to the existing JAZ booking engine, or no booking action?",
+      "for": "Steven",
+      "asked": "2026-10-15"
+    },
+    {
+      "id": "Q5",
+      "question": "Languages: English only, or which others?",
+      "for": "Steven",
+      "asked": "2026-10-15"
+    },
+    {
+      "id": "Q6",
+      "question": "Running cost ceiling: monthly figure?",
+      "for": "Steven",
+      "asked": "2026-10-15"
+    },
+    {
+      "id": "Q7",
+      "question": "Brand assets: supplied by client, or extracted from the current site by the designer?",
+      "for": "Steven",
+      "asked": "2026-10-15"
+    }
+  ]
 }
