@@ -2,17 +2,17 @@
 
 - Client slug: jazz_casa_del_mar
 - Project slug: site
-- Task: P2-T1b (Product Owner), updated by P2-T3 on 2026-10-15 after the T1 approval
-- Status: scope approved at T1 ("Approve T1", `approvals/T1-scope.md`). The MVP is the Must set in `docs/backlog.md` with the T1 promotions of US-46 and US-66 and the new story US-79. OQ-20 and OQ-21 were answered afterwards (`docs/change-log.md`, CL-3).
+- Task: P2-T1b (Product Owner), updated by P2-T3 and P2-T5 on 2026-10-15 after the T1 approval and the requirements gate re-check
+- Status: scope approved at T1 ("Approve T1", `approvals/T1-scope.md`). The MVP is the Must set in `docs/backlog.md` with the T1 promotions of US-46 and US-66 and the new stories US-79 and US-81. OQ-20 and OQ-21 were answered afterwards (`docs/change-log.md`, CL-3). US-81 was split out of US-36 at the requirements gate (CL-4).
 - Sources: `docs/backlog.md` (priorities and reasons), `docs/brief.md` (decisions D1 to D7), `docs/t1-decisions.md`, `docs/requirements.md`, `docs/stories.md`, `docs/assumptions.md`
 
 ## MVP scope
 
-The MVP is a locally installable, clearly marked, non indexed concept of the Jaz Elite Casa del Mar Beach resort website: 21 page types in English, German, Italian and Russian (84 public pages) built on placeholder text and images in a brand taken from the current page and enhanced for hospitality, with an immersive real time 3D hero and a distinct scene on each of the five section overview pages (six scenes), a branded loader and page transitions, a pause control, reduced motion support and a complete non 3D fallback, a Contact Us form (no consent tick, a privacy information line and a data protection complaint subject) and a newsletter sign up with recorded consent, an unsubscribe page, a privacy notice, automatic retention, rate limits and a daily automatic backup, Book now links out to the existing JAZ site with a visible external site label, and a staff admin portal with one Administrator role where signed-in staff edit all text, titles, images, links, list items and settings in all four languages inside fixed page designs, upload photos, read enquiries and export subscribers, with a record of security events, all at zero running cost, sending no email, and built to WCAG 2.2 AA and the agency performance and security baselines. The package refuses to start on any non local address. The MVP is every Must story in `docs/backlog.md`: 61 of 80 stories and 330 of 401 active acceptance criteria (22 small, 33 medium, 6 large).
+The MVP is a locally installable, clearly marked, non indexed concept of the Jaz Elite Casa del Mar Beach resort website: 21 page types in English, German, Italian and Russian (84 public pages) built on placeholder text and images in a brand taken from the current page and enhanced for hospitality, with an immersive real time 3D hero and a distinct scene on each of the five section overview pages (six scenes), a branded loader and page transitions, a pause control, reduced motion support and a complete non 3D fallback, a Contact Us form (no consent tick, a privacy information line and a data protection complaint subject) and a newsletter sign up with recorded consent, an unsubscribe page, a privacy notice, automatic retention, rate limits and a daily automatic backup, Book now links out to the existing JAZ site with a visible external site label, and a staff admin portal with one Administrator role where signed-in staff edit all text, titles, images, links, list items and settings in all four languages inside fixed page designs, upload photos, read enquiries and export subscribers, with a record of security events, all at zero running cost, sending no email, and built to WCAG 2.2 AA and the agency performance and security baselines. The package refuses to start on any non local address. The MVP is every Must story in `docs/backlog.md`: 62 of 81 stories and 336 of 402 active acceptance criteria (23 small, 33 medium, 6 large).
 
 ## Stories in the MVP
 
-61 stories. Sizes and reasons are in `docs/backlog.md`. 2 of the 330 criteria are provisional on an open question (AC-15.1 and AC-17.4 on OQ-12, pending the solicitor's answer to Q3) and keep their working answer until it arrives.
+62 stories. Sizes and reasons are in `docs/backlog.md`. 2 of the 336 criteria are provisional on an open question (AC-15.1 and AC-17.4 on OQ-12, pending the solicitor's answer to Q3) and keep their working answer until it arrives.
 
 ### Public site: pages and content
 
@@ -75,7 +75,8 @@ The MVP is a locally installable, clearly marked, non indexed concept of the Jaz
 | US-32 | Manage staff accounts | M | 7 |
 | US-33 | Edit every piece of text in every language | L | 5 |
 | US-34 | Add, remove and reorder items in lists | L | 6 |
-| US-37 | Keep contact details and site-wide settings up to date | M | 6 |
+| US-81 | Saved changes go live | S | 5 |
+| US-37 | Keep contact details and site-wide settings up to date | M | 7 |
 | US-38 | Upload and manage photos | M | 6 |
 | US-39 | Have uploaded photos prepared automatically | M | 5 |
 | US-40 | Read enquiries | M | 7 |
@@ -122,7 +123,7 @@ The MVP is a locally installable, clearly marked, non indexed concept of the Jaz
 
 - The one-time code parts of AC-30.2 and AC-51.1 apply only if two-step verification is built.
 - AC-39.1 formats, AC-57.2 Save-Data and 2g triggers, AC-46.3 and AC-46.4 real time waits: possible trims for the architect, not decided at T1 (`docs/backlog.md`, "Complexity worth cutting").
-- AC-36.2, AC-36.4 and AC-36.5 to AC-36.7 (live on save) sit in the Won't story US-36 but describe behaviour the Must admin stories deliver. They are tested with US-33, US-34, US-37 and US-38 (`docs/backlog.md`, Consistency notes).
+- Live on save (FR-38) is now carried by the built story US-81 (AC-81.1 to AC-81.5). US-36 (Won't) keeps no active criteria.
 
 **Out by the brief and the analyst's exclusions** (`docs/assumptions.md`, EXC-1 to EXC-27): a booking engine, availability, prices and payment; JAZ group pages; guest accounts; analytics, advertising and social widgets; live chat; any email sent by the site; replying to enquiries or sending newsletters from the site; reviews, ratings, awards and eco or quality badges; search engine optimisation and site search (the concept is noindex); native apps; an admin interface in languages other than English; admin control of page layout, navigation structure, colours, fonts and 3D scene settings; adding or deleting a room type; separate Editor and Administrator roles; video; right to left languages; hosting by the agency; legal advice.
 
@@ -136,7 +137,7 @@ The brief's success measure is "Modernised Design and client feedback". Criteria
 | 2 | Client feedback handled | Every change listed in an "Approve with changes" verdict is either done and shown again to Steven, or recorded in the change log as declined by him; zero open must-fix items at T3 | Change log and the T3 approval file | NFR-36, AC-75.6 |
 | 3 | Pages complete in four languages | 84 of 84 public URLs return HTTP 200 with exactly one `h1`; every language has the same number of non-empty strings as English | AC-1.1, AC-45.4, AC-73.1 | FR-1, FR-24, NFR-28 |
 | 4 | Primary action works | A valid contact form in each of the four languages stores one enquiry and shows an `ENQ-` reference; a submission under 2 seconds shows the retry message and stores nothing, and a resend is accepted | AC-13.4, AC-13.5, AC-13.10 | FR-19, FR-20 |
-| 5 | Staff can run the content | A test Administrator changes a heading in two languages and sees it live within 60 seconds; uploads 3 photos; reads an enquiry; exports a subscriber CSV with the right rows | AC-33.1, AC-37.1, AC-38.1, AC-40.1, AC-41.1 | FR-35, FR-38 to FR-43 |
+| 5 | Staff can run the content | A test Administrator changes a heading in two languages and sees it live within 60 seconds with no rebuild or restart; uploads 3 photos; reads an enquiry; exports a subscriber CSV with the right rows | AC-33.1, AC-81.1, AC-81.3, AC-37.1, AC-38.1, AC-40.1, AC-41.1 | FR-35, FR-38 to FR-43 |
 | 6 | Accessibility | Zero axe-core violations (wcag2a, wcag2aa, wcag21aa, wcag22aa) on all pages and states in 3D and fallback mode; Lighthouse Accessibility at least 95 on every public page; no failed WCAG 2.2 A or AA criterion in the manual report | AC-50.1 to AC-50.3 | NFR-1 |
 | 7 | Speed | On L1 (and R1 if available), every public page: Largest Contentful Paint at most 2.5 s, Cumulative Layout Shift at most 0.1, Total Blocking Time at most 300 ms; Lighthouse mobile Performance at least 80 in 3D mode and 90 in fallback mode; Best Practices at least 95 | AC-52.1 to AC-52.3 | NFR-6 |
 | 8 | Smooth 3D | First 3D frame within 4 s on L1; median at least 50 frames per second and slowest 1 percent no slower than 30; at most 150,000 triangles and 100 draw calls. If no physical R1 phone exists, the lab profile L2 result is labelled "emulated" and confirmation on a phone is an open item for T3 | AC-53.1 to AC-53.3 | NFR-8 |
@@ -146,7 +147,7 @@ The brief's success measure is "Modernised Design and client feedback". Criteria
 | 12 | Security hygiene | Secret scan reports zero findings; dependency audit reports zero high or critical; every admin route returns 401 or a redirect without a session | AC-71.1, AC-71.3, AC-70.1 | NFR-25, NFR-26 |
 | 13 | Abuse limits and records | The 21st sign in attempt in 15 minutes and the 6th contact form in an hour receive HTTP 429; one entry per sign in, lockout, export, enquiry deletion and purge run exists in the security event record with no personal data | AC-66.1, AC-66.2, AC-79.1, AC-79.2 | NFR-21, NFR-34 |
 | 14 | Recovery and safe start | A backup is created without anyone running the command and restores into an empty install with all records; the package exits with `STARTUP-REFUSED` on any non local listen address | AC-46.2, AC-46.4, AC-63.2 | FR-48, NFR-18 |
-| 15 | Acceptance | Every active acceptance criterion in the 61 Must stories passes, or is listed with a waiver Steven has approved; the two provisional criteria are re-checked after the solicitor answers Q3 | QA traceability table in `docs/traceability.md` | Gate: testing |
+| 15 | Acceptance | Every active acceptance criterion in the 62 Must stories passes, or is listed with a waiver Steven has approved; the two provisional criteria are re-checked after the solicitor answers Q3 | QA traceability table in `docs/traceability.md` | Gate: testing |
 | 16 | Runs for review | A reviewer installs from the package with the documented commands, creates the first Administrator with the setup code or command and sees the full site; the site makes no outside connection | AC-45.1, AC-45.3, AC-45.5 | FR-47 |
 
 ## Decisions the MVP needed from Steven at T1: resolved
