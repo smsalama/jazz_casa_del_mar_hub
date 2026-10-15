@@ -3,7 +3,7 @@
 - Task: P2-T1a (Requirements Analyst), amended by P2-T2 after the T1 scope approval
 - Source: `docs/requirements.md` (requirements FR-n and NFR-n, open questions OQ-n)
 - Format: each story has an ID (US-n) and numbered acceptance criteria (AC-n.m). Every criterion is written as Given / When / Then, is tagged with the requirement or requirements it checks (in square brackets), and can be decided pass or fail by a person or a test without interpretation.
-- A criterion marked **Provisional (OQ-n)** depends on an item still listed under "Open after T1" in `docs/requirements.md` (after the answers to OQ-20 and OQ-21 only OQ-12 remains) and must be re-checked when it is answered. A criterion shown as **WITHDRAWN** keeps its number but is no longer a requirement of this release. A criterion shown as **MOVED** keeps its number but now lives under another number (for example in the story that carries the built behaviour); neither WITHDRAWN nor MOVED criteria are counted in coverage. Stories marked "Status at T1" are not built in the first release; their criteria apply if the story is reinstated. Priority notes at T1 are the analyst's record only; the backlog belongs to the Product Owner.
+- A criterion marked **Provisional (OQ-n)** depends on an item still listed under "Open after T1" in `docs/requirements.md` (OQ-12, and OQ-22 to OQ-25 for decisions Steven takes at T2) and must be re-checked when it is answered. A criterion shown as **WITHDRAWN** keeps its number but is no longer a requirement of this release. A criterion shown as **MOVED** keeps its number but now lives under another number (for example in the story that carries the built behaviour); neither WITHDRAWN nor MOVED criteria are counted in coverage. Stories marked "Status at T1" are not built in the first release; their criteria apply if the story is reinstated. Priority notes at T1 are the analyst's record only; the backlog belongs to the Product Owner.
 - Test data is synthetic only (for example `Test Visitor`, `visitor.one@example.com`, `+44 20 7946 0000`).
 - Terms such as R1, L1, 3D mode, fallback mode, four languages and page inventory are defined in the glossary of `docs/requirements.md`.
 
@@ -123,7 +123,7 @@ Requirements: FR-19, FR-20
 - AC-13.1 [FR-19] Given the Contact Us form, when a tester inspects it, then it has the fields name, email, telephone (marked optional), subject (the choices "General enquiry", selected by default, and "Data protection request or complaint"), message and a privacy information line next to the send button that links to the Privacy notice; it has no checkbox of any kind and no other field a person can see.
 - AC-13.2 [FR-19] Given the form, when a tester submits it empty, then it is not accepted, and an error summary at the top and a message beside each of name, email and message name the field and the problem, in the page language.
 - AC-13.3 [FR-19] Given the form, when a tester enters a name of 1 character, an email of `not-an-email`, a telephone of `abc`, a message of 9 characters and a message of 2001 characters in turn, then each is refused with a message naming that field, in browser and on the server (the server check is tested with the browser check bypassed).
-- AC-13.4 [FR-19, FR-20] Given the form filled with `Test Visitor`, `visitor.one@example.com`, `+44 20 7946 0000`, and a message of 40 characters, when the tester submits, then a confirmation page in the page language shows a reference matching `ENQ-[A-HJ-NP-Z2-9]{6}`.
+- AC-13.4 [FR-19, FR-20] Given the form filled with `Test Visitor`, `visitor.one@example.com`, `+44 20 7946 0000`, and a message of 40 characters, when the tester submits, then a confirmation page in the page language shows a reference matching `ENQ-[A-HJ-NP-Z2-9]{6}` (the 32 character alphabet of FR-20, which also matches the wider contract pattern `ENQ-[A-Z2-9]{6}`).
 - AC-13.5 [FR-20] Given the submission in AC-13.4, when an Administrator opens the enquiry list, then an enquiry with that reference exists holding the name, email, telephone, subject, message, page language, time received and privacy information version.
 - AC-13.6 [FR-20] Given the hidden spam trap field is filled in by a script, or the form token is altered, when it submits, then no enquiry is stored, the visible retry message of AC-13.10 is shown, the typed values are kept, and the response does not say which test failed.
 - AC-13.7 [FR-20] Given JavaScript is turned off, when a tester completes AC-13.4, then the same confirmation is shown.
@@ -131,6 +131,8 @@ Requirements: FR-19, FR-20
 - AC-13.9 WITHDRAWN at T1 (LR-2: the contact form has no consent tick, see AC-13.1).
 - AC-13.10 [FR-20] Given a visitor submits a valid form 1 second after it was displayed, when the server responds, then no enquiry is stored, a visible message in the page language ("We could not send your message. Please check it and send it again.") is shown, every typed value is still in its field and keyboard focus is on the retry message element (the element with `role="alert"` at the top of the form, which has `tabindex="-1"`); and when the visitor sends again 2 or more seconds later, then the enquiry is stored and the confirmation is shown.
 - AC-13.11 [FR-19, FR-20] Given the subject "Data protection request or complaint" is chosen and the form is otherwise valid, when it is submitted, then the stored enquiry has that subject.
+- AC-13.12 [FR-20, NFR-14] Given an Administrator changes the privacy information line of the contact form and saves, when one visitor posts a form that was displayed before the save and another posts a form displayed after it, then each stored enquiry carries the wording version of the text on the page that visitor was shown, and the earlier version's archived text is unchanged and can still be read.
+- AC-13.13 [FR-20] Given a test hook that makes the first generated reference collide with an existing one, when a valid form is submitted, then the enquiry is stored with a different reference, the visitor sees one confirmation and one reference, and exactly one new enquiry exists.
 
 ## US-14 Let staff know by email when an enquiry arrives (optional)
 As resort staff, I want an email when a new enquiry arrives, so that I can reply quickly without watching the admin portal.
@@ -156,6 +158,7 @@ Requirements: FR-22
 - AC-15.7 [FR-22] Given 50 sign ups for an address that is already subscribed and 50 for new addresses, when a tester compares the median response times, then they differ by at most 100 ms.
 - AC-15.8 [FR-22] Given the sign-up form is submitted with the spam trap field filled in, or 1 second after it was displayed, or with an altered form token, when it is submitted, then nothing is stored, a visible retry message in the page language is shown with the typed address kept, and a resubmission 2 or more seconds later is accepted.
 - AC-15.9 [FR-22] Given `visitor.two@example.com` is subscribed, when a tester submits ` Visitor.Two@Example.COM ` (with a surrounding space and capital letters), then the same confirmation is shown and the subscriber list still has one record for it.
+- AC-15.10 [FR-22, FR-23] Given `visitor.two@example.com` unsubscribed 10 days ago and a suppression entry exists, when a tester signs up that address with consent ticked, then the same confirmation message is shown, no subscriber record is created, and a sign up of a never-seen address still creates a record. Provisional (OQ-22).
 
 ## US-16 Unsubscribe from the newsletter
 As a subscriber, I want to unsubscribe easily, so that I stop receiving the newsletter.
@@ -200,9 +203,10 @@ Requirements: FR-17
 
 - AC-20.1 [FR-17] Given any public page, error page, form result page or admin screen on load, when a tester views the first screen without scrolling at 1280 and at 390 CSS pixels wide, then the concept notice is visible and begins with the fixed concept sentence in the page language (English on admin screens), and the same notice appears again in the footer.
 - AC-20.2 [FR-17] Given any page loaded with JavaScript on and with JavaScript off, when a tester inspects the concept notice element, then it is present, displayed and has a non-zero size, its computed position is static or relative (not fixed or sticky), and it contains no button, link, input or other focusable element.
-- AC-20.3 [FR-17] Given a viewport 390 CSS pixels wide and no optional sentence set, when a tester measures the notice in each language, then its height is at most 48 CSS pixels.
+- AC-20.3 [FR-17] Given a viewport 390 CSS pixels wide and no optional sentence set, when a tester measures the notice in each language, then its height is at most 48 CSS pixels. Provisional (OQ-24).
 - AC-20.4 [FR-17, FR-35] Given any page in any language, when a tester reads the browser title, then it ends with a space, a vertical bar, a space and the title suffix for that language (Concept, Konzept, Concept, Концепт); and given an Administrator saves a page title of "Test Title" or an empty page title, then the public browser title is "Test Title" followed by the suffix, or the default page title followed by the suffix, and never lacks the suffix.
 - AC-20.5 [FR-17, FR-39] Given the settings screen, when a tester looks for a field that edits the fixed concept sentence, then there is none; and given an Administrator saves an optional sentence of 200 characters, then it appears after the fixed sentence on every page in that language; and given 201 characters or any markup, then the save is refused with a message; and given the optional sentence is empty, then only the fixed sentence is shown.
+- AC-20.6 [FR-17, NFR-4] Given the concept notice in each language, when a tester measures its computed font size at 375 and at 639 CSS pixels wide, then it is at least 13 CSS pixels, and at 640 and at 1280 CSS pixels wide it is at least 14 CSS pixels; and its text contrast against its background is at least 4.5 to 1. Provisional (OQ-24).
 
 ## US-21 Be sure all content is placeholder content
 As the agency and the client, we want all content to be demonstrably placeholder content, so that no one's rights are infringed.
@@ -265,13 +269,14 @@ Requirements: FR-28
 As a visitor, I want a branded loader and a transition between pages, so that moving around feels polished, not abrupt.
 Requirements: FR-29
 
-- AC-27.1 [FR-29] Given a first visit in a new tab on L1 (where the page is not ready within 300 ms), when a tester loads the site, then a loader with the resort name shows until the hero assets are ready and then disappears.
+- AC-27.1 [FR-29] Given a first visit in a new tab on L1 (where the page is not ready within 300 ms), when a tester loads the site, then a loader with the resort name shows and disappears at the moment the main heading text is painted, the hero poster has decoded and the above-the-fold fonts are loaded, whether or not the 3D scene has drawn a frame.
 - AC-27.2 [FR-29] Given the Home page, when a tester activates the Rooms link, then a transition screen with the resort name and a progress or motion indicator appears and then the Rooms page shows; the browser address and title update to Rooms.
 - AC-27.3 [FR-29] Given a transition has completed, when a tester inspects the keyboard focus, then focus is on the new page's main heading; and when the tester presses the browser back button, then the previous page returns with the previous address.
 - AC-27.4 [FR-29] Given the loader or a transition is showing, when a tester inspects it with a screen reader, then it announces "Loading" (translated) and the announcement stops when the page appears.
 - AC-27.5 [FR-29] Given the network is stalled by a test hook so the next page's 3D assets never finish, when 8 seconds have passed since the transition began, then the page is shown with the poster image and the loader is gone.
 - AC-27.6 [FR-29] Given JavaScript is turned off, when a tester follows a link, then the browser loads the target page normally with no transition.
 - AC-27.7 [FR-29] Given a tester moved from Home to Rooms and then pressed the browser back button, when the tester presses the browser forward button, then the Rooms page is shown again with its address and title, a transition completes, and focus is on the Rooms main heading.
+- AC-27.8 [FR-29, NFR-9] Given L1 and the Home page, when a tester records the time the loader disappears and the time of the first 3D frame, then the loader is gone before the first 3D frame (or when 3D is not running), and the scene then fades in over the visible page without the loader reappearing.
 
 ## US-28 Pause the motion
 As a visitor who finds motion distracting, I want a control to pause it, so that I can read in peace.
@@ -279,8 +284,9 @@ Requirements: FR-30
 
 - AC-28.1 [FR-30] Given any page with a 3D scene, a scroll-driven scene or a looping effect, when a tester tabs through the page, then a control labelled in the page language to pause motion can be focused and operated with Enter or Space, and its state (paused or running) is exposed to assistive technology.
 - AC-28.2 [FR-30] Given the control is activated, when a tester watches the page for 10 seconds, then the 3D scene shows no frame change, no CSS animation or scroll-driven effect runs, and a following link click swaps pages with no transition animation.
-- AC-28.3 [FR-30] Given motion is paused, when the tester reloads the page in the same tab, then motion remains paused; and when the tester opens the site in a new browser session, then motion runs again.
+- AC-28.3 [FR-30] Given motion is paused, when the tester reloads the page in the same tab, then motion remains paused: the poster is shown, no 3D code or asset is requested, a visible Resume control is present, and the session storage item `jcdm-motion-paused` has the value `1`; and when the tester opens the site in a new browser session, then motion runs again.
 - AC-28.4 [FR-30] Given a page with no motion longer than 5 seconds, when a tester looks for the control, then it is not required.
+- AC-28.5 [FR-30, NFR-12] Given a running 3D scene, when the tester activates Pause in the middle of the page, then the canvas keeps its last frame on screen (no blank, no switch to the poster) and the page does not enter fallback mode; and when the tester activates Resume after a reload while paused, then the scene loads and runs as on a fresh page and the session storage item is removed.
 
 ## US-29 Receive 3D content the agency created
 As the client, I want the 3D models made by the agency and delivered with their sources, so that we own them and can change them later.
@@ -357,6 +363,7 @@ Requirements: FR-37
 - AC-35.1 [FR-37] Given a page whose Russian title is empty and other languages complete, when an Administrator opens the page's edit screen, then it shows "3 of 4 languages complete" and the four language values side by side.
 - AC-35.2 [FR-37] Given the missing translations screen, when an Administrator filters by Russian, then it lists every field with no Russian value and no field that has one.
 - AC-35.3 [FR-37] Given a field is filled in for the missing language and saved, when the Administrator reloads the missing translations screen filtered by that language, then the field is no longer listed.
+- AC-35.4 [FR-37] Given a photo with alt text in all four languages and no caption in any language, when an Administrator opens the missing translations screen, then the photo adds no entry; and given the photo has an English caption and no Russian caption, then exactly one entry (Russian caption) is listed; and given the photo has no Russian alt text, then one entry (Russian alt text) is listed.
 
 ## US-36 Preview and publish changes safely, with version history
 As a member of resort staff, I want to preview my changes before the public sees them, publish them as a separate step and restore an earlier version, so that mistakes can be undone.
@@ -409,12 +416,13 @@ As a member of resort staff, I want to read the enquiries visitors send, so that
 Requirements: FR-42
 
 - AC-40.1 [FR-42] Given 60 enquiries exist, when an Administrator opens the enquiries screen, then the 25 newest are listed first, with 25 per page and 3 pages.
-- AC-40.2 [FR-42] Given a new enquiry, when the Administrator views the main screen, then an unread count including it is shown; and when the Administrator opens the enquiry, the count falls by one.
+- AC-40.2 [FR-42] Given a new enquiry, when the Administrator views the main screen, then an unread count including it is shown; and when the Administrator opens the enquiry and the portal shows it, then the portal sends an explicit mark-as-read request, and the count falls by one.
 - AC-40.3 [FR-42] Given an enquiry, when the Administrator marks it Handled, then it shows in the Handled filter and not in the Unhandled filter, and can be set back.
 - AC-40.4 [FR-42] Given enquiries from `Test Visitor` and `Other Visitor`, when the Administrator searches by `ENQ-` reference, by name and by email address in turn, then each search returns exactly the matching enquiry.
 - AC-40.5 [FR-42] Given an enquiry, when the Administrator selects Delete and confirms, then it is removed from the list and is no longer retrievable by its address.
 - AC-40.6 [FR-42] Given an enquiry received with the subject "Data protection request or complaint" on a known date, when an Administrator opens it, then it shows that label and an "acknowledge by" date 30 calendar days after the date received, and the subject filter lists it; and when the Administrator marks a General enquiry as one, then the label and date show on it.
 - AC-40.7 [FR-42] Given an enquiry from `visitor.one@example.com`, when an Administrator searches for `VISITOR.ONE@EXAMPLE.COM`, then the enquiry is found.
+- AC-40.8 [FR-42, NFR-22] Given an unread enquiry, when a tester requests it with GET by tool (not through the portal screen), then the enquiry is returned and it is still unread afterwards; and when the tester sends the explicit mark-as-read request with a valid token, then it becomes read; and when the tester sends that request without a token, then the response is HTTP 403 and it stays unread.
 
 ## US-41 Export subscribers
 As a member of resort staff, I want to download the subscriber list, so that I can use it in our own newsletter tool.
@@ -432,12 +440,13 @@ Requirements: FR-43
 As the resort's administrator, I want to find, export and delete everything held about one person, so that I can answer their rights request.
 Requirements: FR-44, NFR-16
 
-- AC-42.1 [FR-44] Given enquiries and a subscriber record for `visitor.one@example.com`, when an Administrator enters that address in the data subject tool, then all enquiries, the subscriber record and any admin account or audit log entry naming it are listed.
+- AC-42.1 [FR-44] Given enquiries and a subscriber record for `visitor.one@example.com`, when an Administrator enters that address in the data subject tool, then all enquiries, the subscriber record and any admin account for that address are listed, together with the number of security event or audit log entries that carry that account's identifier (the logs hold account identifiers only, never an email address).
 - AC-42.2 [FR-44] Given the result in AC-42.1, when the Administrator selects Download, then a JSON file is saved containing exactly those records.
-- AC-42.3 [FR-44] Given the result in AC-42.1, when the Administrator selects Delete and confirms, then the enquiries and subscriber record are deleted, any audit log entries naming the address have the name replaced by "deleted user", and a second search finds nothing readable.
+- AC-42.3 [FR-44] Given the result in AC-42.1, when the Administrator selects Delete and confirms, then the enquiries and subscriber record are deleted, the admin account row is pseudonymised ("deleted user") so log entries that carry its identifier no longer identify a person, and a second search finds nothing readable.
 - AC-42.4 [NFR-16] Given 5,000 enquiries and 10,000 subscribers, when the Administrator searches an address, then the results appear within 5 seconds.
 - AC-42.5 [FR-44] Given enquiries and a subscriber record for `visitor.one@example.com`, when an Administrator enters ` VISITOR.ONE@Example.com ` in the data subject tool, then the same records are listed as for the lower case address.
 - AC-42.6 [FR-44] Given an Administrator records a request with type "access" and dates received, acknowledged and closed, when the Administrator views the request list, then the record shows no message text; and when the purge job runs under a test configuration of 1 day for such records and the closed date is 2 days ago, then the record is deleted.
+- AC-42.7 [FR-44, FR-48] Given the enquiry for `visitor.one@example.com` was deleted through the data subject tool after a backup was taken, when the backup is restored into an empty install, then the enquiry is not present after the restore completes.
 
 ## US-43 Have old personal data deleted automatically
 As the client, I want personal data to be deleted when its retention period ends, so that we comply with our own rules and the law.
@@ -449,6 +458,8 @@ Requirements: FR-45
 - AC-43.4 [FR-45] Given the default configuration, when a tester reads the retention settings, then they equal the Retention schedule in `docs/requirements.md`, or the values confirmed in the answer to OQ-10.
 - AC-43.5 [FR-45] Given the scheduler is left running for 48 hours with the test configuration, when a tester counts purge runs, then there are at least 2.
 - AC-43.6 [FR-45] Given a test configuration of 1 day and one record dated 2 days ago in each of these categories (a closed request record, the original of an image deleted from the library, an expired session, a security event record) and one dated today in each, when the purge job runs, then the four older records are deleted and the four newer remain.
+- AC-43.7 [FR-45] Given a test configuration of 1 day for inactive accounts, two active Administrator accounts and one with its last sign in 2 days ago, when the purge job runs, then the older account is disabled and the other two are not; and a disabled account cannot sign in until an Administrator enables it.
+- AC-43.8 [FR-45] Given only one active Administrator account whose last sign in is older than the inactivity period, when the purge job runs, then that account stays active.
 
 ## US-44 Review who did what
 As the resort's administrator, I want a log of admin activity, so that I can see changes and spot misuse.
@@ -493,8 +504,9 @@ Requirements: NFR-2
 - AC-47.2 [NFR-2] Given each page, when a tester presses Tab once after loading, then the first focused element is a link "Skip to main content" (translated) that, when activated, moves focus to the main content.
 - AC-47.3 [NFR-2] Given each focusable element, when it has focus, then a visible indicator at least 2 CSS pixels thick with a contrast ratio of at least 3 to 1 against adjacent colours is shown, and the element is not wholly hidden behind the concept notice or a sticky header.
 - AC-47.4 [NFR-2] Given the 3D hero, the menu and the lightbox, when a tester tabs through and leaves each with Tab or Escape, then no keyboard trap exists.
-- AC-47.5 [NFR-2] Given every button, link and form control on a 390 CSS pixel wide viewport, when a tester measures the pointer target, then it is at least 24 by 24 CSS pixels (or has equivalent spacing under WCAG 2.5.8).
+- AC-47.5 [NFR-2] Given every button, link and form control on a 390 CSS pixel wide viewport, when a tester measures the pointer target, then it is at least 24 by 24 CSS pixels, or has equivalent spacing under WCAG 2.5.8, or (for checkboxes and radio buttons) follows the accepted pattern in AC-47.7.
 - AC-47.6 [NFR-2] Given any function that can be done by dragging (the 3D drag, any reordering of lists in the admin portal), when a tester looks for an alternative, then a single-pointer or keyboard alternative exists (for list reordering, Move up and Move down controls).
+- AC-47.7 [NFR-2] Given every checkbox and radio button, when a tester measures it at 390 CSS pixels wide, then the drawn control is 24 by 24 CSS pixels, the row containing it is at least 44 CSS pixels tall, and a click on any part of the row, including the label text, toggles the control.
 
 ## US-48 Use the site with a screen reader
 As a blind visitor or staff member, I want the site to be understandable with a screen reader, so that I can find information and use the forms.
@@ -515,8 +527,9 @@ Requirements: NFR-4
 - AC-49.2 [NFR-4] Given text over the hero poster and over each scene, when a tester captures 20 frames at 1 second intervals during a scripted 20 second run, then for every text element and every frame the contrast between the text colour and the lightest pixel (for light text) or darkest pixel (for dark text) inside the text's box is at least 4.5 to 1.
 - AC-49.3 [NFR-4] Given each page at 320 CSS pixels wide, when a tester scrolls, then there is no horizontal scrolling and no content is cut off; and at browser zoom 200 percent, all content and functions remain available.
 - AC-49.4 [NFR-4] Given the WCAG text spacing override (line height 1.5, paragraph spacing 2 times, letter spacing 0.12 em, word spacing 0.16 em), when a tester applies it, then no text is clipped or overlaps.
-- AC-49.5 [NFR-4] Given body text, when a tester measures it, then it is at least 16 CSS pixels.
+- AC-49.5 [NFR-4] Given body text (every text element other than the concept notice, whose size is covered by AC-20.6), when a tester measures it, then it is at least 16 CSS pixels. Provisional (OQ-24).
 - AC-49.6 [NFR-4] Given form errors and required-field indications, when a tester views them in greyscale, then they can still be identified without colour.
+- AC-49.7 [NFR-4] Given the real scene poster images rendered from the scenes (not the prototype illustrations), when a tester finds the brightest frame of each scene in the scripted run and measures text contrast over it as in AC-49.2, then the contrast is at least 4.5 to 1 for every text element over that frame and over the poster.
 
 ## US-50 Meet WCAG 2.2 AA across the whole site
 As the client, I want proof that the site meets the accessibility standard, so that I can stand behind it.
@@ -556,7 +569,7 @@ Requirements: NFR-8
 
 - AC-53.1 [NFR-8] Given each scene on R1 (or, when R1 is not available, on lab profile L2, with the result labelled "emulated" and confirmation on R1 listed as an open item for T3) during a scripted 20 second run with interaction, when a tester records frame times, then the median frame rate is at least 50 frames per second and the slowest 1 percent of frames are no slower than 30 frames per second.
 - AC-53.2 [NFR-8] Given each scene, when a tester reads the renderer statistics in any frame during the run, then there are at most 150,000 triangles and at most 100 draw calls, and the device pixel ratio is at most 1.5 on a touch device and 2 elsewhere.
-- AC-53.3 [NFR-8] Given the Home page on L1, when a tester measures it, then the first rendered 3D frame appears within 4 s of navigation start.
+- AC-53.3 [NFR-8] Given the Home page on L1, when a tester measures it, then the first rendered 3D frame appears within 4 s of navigation start. This is the tightest budget (margin of about 0.3 s on paper). A fallback limit of 4.5 s is proposed and applies only if Steven approves it at T2. Provisional (OQ-25).
 - AC-53.4 [NFR-8] Given a test hook that slows rendering so the median frame time exceeds 22 ms over 2 seconds, when a tester watches, then the scene reduces quality by one step; and after three steps with the median still above 33 ms for 3 seconds, the page switches to fallback mode.
 - AC-53.5 [NFR-8] Given a scene is running, when the tab is hidden or the scene scrolls fully out of view, then the number of frames rendered in the following second is zero; and when the tab is shown or the scene returns, rendering resumes.
 - AC-53.6 [NFR-8] Given a tester navigates among pages 20 times, when the tester counts WebGL contexts at each step and compares the JavaScript heap after a forced garbage collection, then there is never more than one context and heap growth from first load is at most 25 MB.
@@ -568,7 +581,7 @@ Requirements: NFR-9
 - AC-54.1 [NFR-9] Given a page whose next page is ready, when a tester times a transition on R1 or L1, then exit plus entry takes at most 800 ms.
 - AC-54.2 [NFR-9] Given a transition in progress, when a tester measures input blocking, then total blocked input time is at most 100 ms.
 - AC-54.3 [NFR-9] Given the same page loaded with and without the transition, when a tester measures Largest Contentful Paint, then the transition adds at most 200 ms.
-- AC-54.4 [NFR-9] Given a page that is ready in under 300 ms, when a tester loads it, then no loader screen is shown; and given a page that takes 10 seconds, then the loader is gone no later than 8 seconds after it appeared.
+- AC-54.4 [NFR-9] Given a page that is ready in under 300 ms, when a tester loads it, then no loader screen is shown; and given a page that takes 10 seconds, then the loader is gone no later than 8 seconds after it appeared, and for a page whose 2D hero is ready sooner, the loader is gone as soon as it is ready.
 
 ## US-55 Have the server and admin portal respond briskly
 As a staff member, I want the admin portal to be responsive, so that I can work without delay.
@@ -587,6 +600,7 @@ Requirements: NFR-11
 - AC-56.2 [NFR-11] Given reduced motion is on, when a tester scrolls and navigates, then no parallax, scroll-driven animation, auto-playing or looping animation runs, and no element zooms, slides or spins.
 - AC-56.3 [NFR-11] Given reduced motion is on, when a tester navigates between pages, then the loader and transition are replaced by an instant swap or an opacity change of at most 150 ms.
 - AC-56.4 [NFR-11] Given reduced motion is on, when a tester uses all links, forms, menus, the lightbox and the FAQ, then all work as with motion on.
+- AC-56.5 [NFR-11, FR-30] Given reduced motion is on, when a tester looks on every page for a control that turns on 3D or the scene, then none exists.
 
 ## US-57 Get a complete site when 3D cannot run
 As a visitor with an older or restricted device, I want the full site without 3D, so that I can still get everything I need.
@@ -773,6 +787,7 @@ Requirements: NFR-28
 - AC-73.3 [NFR-28] Given pages in all four languages, when a tester checks the character encoding, then it is UTF-8; and the test text `ä ö ü ß à è é ì ò ù Привет, мир` displays with no missing glyph and no fallback font box.
 - AC-73.4 [NFR-28] Given every string made 40 percent longer by a test script, when a tester views all pages at 320, 768, 1280 and 1920 CSS pixels, then no text is clipped, overlaps or overflows its container.
 - AC-73.5 [NFR-28] Given the admin enquiries and subscribers search, when a tester searches for `Привет` and for `Müller` created as test data, then each is found.
+- AC-73.6 [NFR-28] Given admin test data `Ёж` and `Йод` and `Муха`, when an Administrator searches for `ёж`, `еж`, `йод` and `иод`, then `ёж` finds `Ёж`, `йод` finds `Йод`, `еж` does not find `Ёж` and `иод` does not find `Йод`; and given `Müller`, then `muller` finds it. Provisional (OQ-23).
 
 ## US-74 Use the site on the browsers and devices people actually have
 As a visitor, I want the site to work on my browser and screen, so that I am not left out.
@@ -835,6 +850,7 @@ Priority note at T1: Must (G-2).
 - AC-79.2 [NFR-34] Given the events in AC-79.1, when a tester searches the record for the wrong password, a one-time code, a session identifier, an enquiry message text and a subscriber email address, then none appears.
 - AC-79.3 [NFR-34] Given the audit log screen (FR-46) is not built, when a tester performs a sign in, then an entry is still recorded; and no admin function edits or deletes an entry.
 - AC-79.4 [NFR-34] Given a test configuration of 1 day for the record and an entry dated 2 days ago, when the purge job runs, then that entry is deleted and an entry dated today remains.
+- AC-79.5 [NFR-34] Given a failed sign in made from the address 203.0.113.9, when a tester inspects the security event record, then the entry holds the account identifier, event and result, and neither that address nor any other source address appears anywhere in the record.
 
 ## US-80 Stay up under heavy or hostile traffic
 As the client, I want the small server to protect itself from oversized, slow and bulk requests, so that one visitor or bot cannot take the site down or fill its storage.
@@ -845,6 +861,7 @@ Requirements: NFR-35
 - AC-80.3 [NFR-35] Given 5 simultaneous image uploads and 5 simultaneous sign ins, when a tester watches the processes, then at most 1 image job and 2 password hash computations run at once, the rest are queued, and all requests complete.
 - AC-80.4 [NFR-35] Given any fingerprinted static or 3D asset, when a tester inspects the response, then `Cache-Control` has a `max-age` of at least 31,536,000 seconds and the file name changes when the content changes.
 - AC-80.5 [NFR-35, FR-20] Given the cap on stored enquiries is set to 10 in a test configuration, when 8 enquiries are stored then an admin warning shows; and when 10 are stored then the next submission is refused with the visible error message of FR-20 and nothing is stored.
+- AC-80.6 [NFR-35, FR-22] Given the subscriber cap is set to 3 in a test configuration with 3 subscribers stored, when a tester signs up an address that already exists and then a new address, then both receive the same refusal message and the same response status, and the response times differ by at most 100 ms at the median over 50 pairs.
 
 ## US-81 Saved changes go live
 As a member of resort staff, I want a change I save to appear on the public site at once without a rebuild or restart, so that visitors always see current information.
