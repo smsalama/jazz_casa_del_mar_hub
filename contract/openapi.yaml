@@ -1,0 +1,3516 @@
+openapi: 3.1.0
+info:
+  title: Jazz Casa del Mar concept site
+  version: 0.1.0
+  summary: Every HTTP endpoint of the single web application (public pages, public forms, operations, admin portal and admin JSON API).
+  description: |
+    Source of truth for the web repo `smsalama/jazz_casa_del_mar_web` (ADR-0005, ADR-0013).
+    The web repo keeps a byte identical copy and generates its typed admin client from it
+    with openapi-typescript; contract tests validate every handler against it.
+
+    Conventions
+    - Public pages and public forms speak HTML (`text/html`) and work without JavaScript (NFR-13).
+      Public forms post `application/x-www-form-urlencoded` and use a signed `formToken`
+      hidden field, never a cookie (NFR-22, LR-21).
+    - The admin API speaks JSON under `/admin/api/`. Errors use RFC 9457 problem details
+      (`application/problem+json`, schema `Problem`).
+    - Every response carries the security headers of ADR-0008 and `X-Robots-Tag`
+      (NFR-24, NFR-27). They are listed once in `components/headers` and repeated on the
+      main responses; contract tests check them on every response.
+    - Every admin response carries `Cache-Control: no-store` (NFR-20).
+    - State changing admin requests need the session cookie and `X-CSRF-Token`
+      (`adminSession` plus `csrfToken`). Sign in needs `X-Requested-With: jcdm-admin`
+      (`adminClient`) and a matching `Origin` (ADR-0006).
+    - Identifiers are UUID version 7 strings. A missing record returns 404 (NFR-25).
+    - Times are RFC 3339 in UTC.
+  license:
+    name: Proprietary, client project (speculative concept)
+    url: https://github.com/smsalama/jazz_casa_del_mar_hub
+servers:
+  - url: http://127.0.0.1:4321
+    description: Local review (the only environment allowed in this release, NFR-18)
+security:
+  - adminSession: []
+tags:
+  - name: public-pages
+    description: The 84 public pages (21 page types in four languages) and the root language redirect.
+  - name: public-forms
+    description: Contact form, newsletter sign up and unsubscribe. HTML in, HTML out.
+  - name: operations
+    description: Health check, robots file, static and media files.
+  - name: admin-shell
+    description: HTML shell pages of the admin portal (the React application).
+  - name: admin-session
+    description: Sign in, sign out, session information and own password.
+  - name: admin-accounts
+    description: Staff accounts (one Administrator role in this release).
+  - name: admin-overview
+    description: Main screen counts and warnings.
+  - name: admin-content
+    description: Page, global and room content entries and translation completeness.
+  - name: admin-lists
+    description: List items (venues, pools and beach, activities, offers, gallery, FAQ, attractions).
+  - name: admin-settings
+    description: Site settings.
+  - name: admin-media
+    description: Photo upload and library.
+  - name: admin-enquiries
+    description: Contact form enquiries.
+  - name: admin-subscribers
+    description: Newsletter subscribers and CSV export.
+
+paths:
+  /:
+    get:
+      tags: [public-pages]
+      operationId: redirectToLanguage
+      summary: Redirect the site root to a language page
+      description: |
+        Chooses the first of en, de, it or ru in `Accept-Language` (quality values respected),
+        English otherwise (FR-25). Sets no cookie.
+      security: []
+      parameters:
+        - name: Accept-Language
+          in: header
+          required: false
+          schema:
+            type: string
+            maxLength: 1024
+      responses:
+        '302':
+          description: Redirect to `/{lang}`
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+            Vary:
+              $ref: '#/components/headers/VaryAcceptLanguage'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+            X-Robots-Tag:
+              $ref: '#/components/headers/XRobotsTag'
+
+  /{lang}:
+    get:
+      tags: [public-pages]
+      operationId: getHomePage
+      summary: Home page with the 3D hero (FR-5, FR-27)
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Lang'
+        - $ref: '#/components/parameters/IfNoneMatch'
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlPage'
+        '304':
+          $ref: '#/components/responses/NotModified'
+        '404':
+          $ref: '#/components/responses/HtmlNotFound'
+        '500':
+          $ref: '#/components/responses/HtmlServerError'
+
+  /{lang}/{page}:
+    get:
+      tags: [public-pages]
+      operationId: getSectionOrLegalPage
+      summary: Section, list and legal pages (FR-1)
+      description: |
+        `rooms`, `dining`, `pools-and-beach`, `activities` and `location` carry a 3D scene (FR-28).
+        `privacy`, `cookies`, `terms` and `accessibility` are the legal pages (FR-14 to FR-16).
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Lang'
+        - name: page
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - rooms
+              - dining
+              - pools-and-beach
+              - activities
+              - location
+              - offers
+              - gallery
+              - faq
+              - privacy
+              - cookies
+              - terms
+              - accessibility
+        - $ref: '#/components/parameters/IfNoneMatch'
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlPage'
+        '304':
+          $ref: '#/components/responses/NotModified'
+        '404':
+          $ref: '#/components/responses/HtmlNotFound'
+        '500':
+          $ref: '#/components/responses/HtmlServerError'
+
+  /{lang}/rooms/{room}:
+    get:
+      tags: [public-pages]
+      operationId: getRoomPage
+      summary: One of the six fixed room pages (FR-2, OQ-20)
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Lang'
+        - name: room
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RoomSlug'
+        - $ref: '#/components/parameters/IfNoneMatch'
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlPage'
+        '304':
+          $ref: '#/components/responses/NotModified'
+        '404':
+          $ref: '#/components/responses/HtmlNotFound'
+        '500':
+          $ref: '#/components/responses/HtmlServerError'
+
+  /{lang}/contact:
+    get:
+      tags: [public-pages]
+      operationId: getContactPage
+      summary: Contact Us page with the enquiry form (FR-19)
+      description: The form carries a freshly signed `formToken` and the honeypot field `website`.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Lang'
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlPage'
+        '404':
+          $ref: '#/components/responses/HtmlNotFound'
+        '500':
+          $ref: '#/components/responses/HtmlServerError'
+    post:
+      tags: [public-forms]
+      operationId: submitEnquiry
+      summary: Send an enquiry (FR-19, FR-20)
+      description: |
+        Validates with the same rules as the browser. Token, honeypot and timing failures all give
+        the same retry message with typed values kept and a fresh token (FR-20, AC-13.10).
+        An accepted token nonce is recorded so a refresh cannot create a duplicate (ADR-0006).
+        Rate limit: 5 per hour per client address (NFR-21). Body limit 64 KB (NFR-35).
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Lang'
+        - $ref: '#/components/parameters/Origin'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ContactForm'
+      responses:
+        '200':
+          description: Confirmation page stating the reference `ENQ-XXXXXX` (FR-20)
+          headers:
+            Content-Security-Policy:
+              $ref: '#/components/headers/ContentSecurityPolicyPublic'
+            X-Robots-Tag:
+              $ref: '#/components/headers/XRobotsTag'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HtmlDocument'
+        '400':
+          $ref: '#/components/responses/HtmlFormRetry'
+        '403':
+          $ref: '#/components/responses/HtmlForbiddenOrigin'
+        '413':
+          $ref: '#/components/responses/HtmlPayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/HtmlFormInvalid'
+        '429':
+          $ref: '#/components/responses/HtmlRateLimited'
+        '503':
+          $ref: '#/components/responses/HtmlFormUnavailable'
+
+  /{lang}/newsletter:
+    post:
+      tags: [public-forms]
+      operationId: subscribeNewsletter
+      summary: Newsletter sign up from the footer form (FR-22)
+      description: |
+        Single opt in with a required consent tick. An address already subscribed (compared after
+        trimming and ignoring case) gets the same confirmation and no second record. Median time is
+        the same for both cases within 100 ms (G-11). Rate limit 5 per hour (NFR-21).
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Lang'
+        - $ref: '#/components/parameters/Origin'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/NewsletterForm'
+      responses:
+        '200':
+          description: Confirmation page in the page language
+          headers:
+            Content-Security-Policy:
+              $ref: '#/components/headers/ContentSecurityPolicyPublic'
+            X-Robots-Tag:
+              $ref: '#/components/headers/XRobotsTag'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HtmlDocument'
+        '400':
+          $ref: '#/components/responses/HtmlFormRetry'
+        '403':
+          $ref: '#/components/responses/HtmlForbiddenOrigin'
+        '413':
+          $ref: '#/components/responses/HtmlPayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/HtmlFormInvalid'
+        '429':
+          $ref: '#/components/responses/HtmlRateLimited'
+        '503':
+          $ref: '#/components/responses/HtmlFormUnavailable'
+
+  /{lang}/newsletter/unsubscribe:
+    get:
+      tags: [public-pages]
+      operationId: getUnsubscribePage
+      summary: Newsletter unsubscribe page (FR-23)
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Lang'
+      responses:
+        '200':
+          $ref: '#/components/responses/HtmlPage'
+        '404':
+          $ref: '#/components/responses/HtmlNotFound'
+        '500':
+          $ref: '#/components/responses/HtmlServerError'
+    post:
+      tags: [public-forms]
+      operationId: unsubscribeNewsletter
+      summary: Unsubscribe an address (FR-23)
+      description: |
+        Sets any active record for the address to unsubscribed. The same result page and the same
+        median time whether or not the address was subscribed (G-11). Rate limit 10 per hour (NFR-21).
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Lang'
+        - $ref: '#/components/parameters/Origin'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UnsubscribeForm'
+      responses:
+        '200':
+          description: Result page, identical for subscribed and unknown addresses
+          headers:
+            Content-Security-Policy:
+              $ref: '#/components/headers/ContentSecurityPolicyPublic'
+            X-Robots-Tag:
+              $ref: '#/components/headers/XRobotsTag'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HtmlDocument'
+        '400':
+          $ref: '#/components/responses/HtmlFormRetry'
+        '403':
+          $ref: '#/components/responses/HtmlForbiddenOrigin'
+        '413':
+          $ref: '#/components/responses/HtmlPayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/HtmlFormInvalid'
+        '429':
+          $ref: '#/components/responses/HtmlRateLimited'
+        '503':
+          $ref: '#/components/responses/HtmlFormUnavailable'
+
+  /healthz:
+    get:
+      tags: [operations]
+      operationId: getHealth
+      summary: Health check (NFR-32)
+      description: 200 only when the data store is readable and writable (a read and a one row write in a transaction).
+      security: []
+      responses:
+        '200':
+          description: Data store readable and writable
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+            X-Robots-Tag:
+              $ref: '#/components/headers/XRobotsTag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '503':
+          description: Data store not readable or not writable
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+            X-Robots-Tag:
+              $ref: '#/components/headers/XRobotsTag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthFailure'
+
+  /robots.txt:
+    get:
+      tags: [operations]
+      operationId: getRobots
+      summary: Robots file (disallows only `/admin/`, so crawlers can see the noindex rules, NFR-27)
+      security: []
+      responses:
+        '200':
+          description: Robots rules
+          headers:
+            X-Robots-Tag:
+              $ref: '#/components/headers/XRobotsTag'
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /media/{file}:
+    get:
+      tags: [operations]
+      operationId: getMediaVariant
+      summary: Public resized copy of an uploaded photo (FR-41)
+      description: Only re-encoded, metadata free copies are served. Originals have no URL (NFR-18).
+      security: []
+      parameters:
+        - name: file
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9a-z]{26}-[0-9]{1,4}-(480|768|1280|1920)\.(avif|webp)$'
+      responses:
+        '200':
+          description: Image file
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlImmutable'
+            X-Content-Type-Options:
+              $ref: '#/components/headers/XContentTypeOptions'
+            X-Robots-Tag:
+              $ref: '#/components/headers/XRobotsTag'
+          content:
+            image/avif:
+              schema:
+                $ref: '#/components/schemas/BinaryFile'
+            image/webp:
+              schema:
+                $ref: '#/components/schemas/BinaryFile'
+        '404':
+          $ref: '#/components/responses/HtmlNotFound'
+
+  /_astro/{file}:
+    get:
+      tags: [operations]
+      operationId: getBuiltAsset
+      summary: Fingerprinted build assets (scripts, styles, fonts, posters, 3D models)
+      description: Served from the build output with precompressed variants when the client accepts them (NFR-35).
+      security: []
+      parameters:
+        - name: file
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[A-Za-z0-9_.-]{1,200}$'
+      responses:
+        '200':
+          description: Asset file
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlImmutable'
+            X-Content-Type-Options:
+              $ref: '#/components/headers/XContentTypeOptions'
+            X-Robots-Tag:
+              $ref: '#/components/headers/XRobotsTag'
+          content:
+            application/javascript:
+              schema:
+                type: string
+            text/css:
+              schema:
+                type: string
+            font/woff2:
+              schema:
+                $ref: '#/components/schemas/BinaryFile'
+            model/gltf-binary:
+              schema:
+                $ref: '#/components/schemas/BinaryFile'
+            image/avif:
+              schema:
+                $ref: '#/components/schemas/BinaryFile'
+            image/webp:
+              schema:
+                $ref: '#/components/schemas/BinaryFile'
+        '404':
+          $ref: '#/components/responses/HtmlNotFound'
+
+  /admin:
+    get:
+      tags: [admin-shell]
+      operationId: getAdminShell
+      summary: Admin portal shell page
+      description: |
+        Redirects to `/admin/sign-in` without a valid session (FR-32). Shows a "setup required"
+        page until the first Administrator is created by the server command (FR-47, G-1).
+      security: []
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminShell'
+        '303':
+          $ref: '#/components/responses/AdminSignInRedirect'
+        '503':
+          $ref: '#/components/responses/AdminSetupRequired'
+
+  /admin/{section}:
+    get:
+      tags: [admin-shell]
+      operationId: getAdminSectionShell
+      summary: Admin portal shell page for a top level screen
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/AdminSection'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminShell'
+        '303':
+          $ref: '#/components/responses/AdminSignInRedirect'
+        '404':
+          $ref: '#/components/responses/HtmlNotFound'
+        '503':
+          $ref: '#/components/responses/AdminSetupRequired'
+
+  /admin/{section}/{itemId}:
+    get:
+      tags: [admin-shell]
+      operationId: getAdminItemShell
+      summary: Admin portal shell page for one item screen
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/AdminSection'
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[A-Za-z0-9._-]{1,100}$'
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminShell'
+        '303':
+          $ref: '#/components/responses/AdminSignInRedirect'
+        '404':
+          $ref: '#/components/responses/HtmlNotFound'
+        '503':
+          $ref: '#/components/responses/AdminSetupRequired'
+
+  /admin/api/session:
+    get:
+      tags: [admin-session]
+      operationId: getSession
+      summary: Current session, including the CSRF token for later requests
+      responses:
+        '200':
+          description: Signed in
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/SetupRequired'
+    post:
+      tags: [admin-session]
+      operationId: signIn
+      summary: Sign in with email address and password (FR-32, NFR-19)
+      description: |
+        Every failure, including an unknown account, a wrong password, a disabled or a locked
+        account, returns the same 401 problem with the same median time (NFR-19).
+        On success a new session cookie is set (rotation, NFR-20).
+        Rate limit 20 attempts per 15 minutes per client address (NFR-21).
+      security:
+        - adminClient: []
+      parameters:
+        - $ref: '#/components/parameters/Origin'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignInRequest'
+      responses:
+        '200':
+          description: Signed in
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/SetSessionCookie'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          $ref: '#/components/responses/SignInFailed'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags: [admin-session]
+      operationId: signOut
+      summary: Sign out and end the session on the server (FR-32)
+      security:
+        - adminSession: []
+          csrfToken: []
+      responses:
+        '204':
+          description: Signed out; the cookie is cleared
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/ClearSessionCookie'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/api/session/extend:
+    post:
+      tags: [admin-session]
+      operationId: extendSession
+      summary: Extend the idle timeout after the two minute warning (NFR-5)
+      description: The absolute limit of 8 hours after sign in is never extended (NFR-20).
+      security:
+        - adminSession: []
+          csrfToken: []
+      responses:
+        '200':
+          description: Idle timeout extended
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/api/me/password:
+    post:
+      tags: [admin-session]
+      operationId: changeOwnPassword
+      summary: Change own password; ends every session of the account (FR-34, NFR-20, G-19)
+      description: |
+        `currentPassword` is required except during the forced change at first sign in, which is
+        one process and does not ask again for the temporary password (NFR-5).
+        After success every session of the account ends, including this one, and the cookie is cleared.
+      security:
+        - adminSession: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+      responses:
+        '204':
+          description: Password changed; all sessions ended
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/ClearSessionCookie'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /admin/api/overview:
+    get:
+      tags: [admin-overview]
+      operationId: getOverview
+      summary: Main screen counts and warnings (FR-36, FR-42, NFR-23, NFR-35)
+      responses:
+        '200':
+          description: Overview
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Overview'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/SetupRequired'
+
+  /admin/api/accounts:
+    get:
+      tags: [admin-accounts]
+      operationId: listAccounts
+      summary: List staff accounts (FR-34)
+      responses:
+        '200':
+          description: Accounts
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    maxItems: 100
+                    items:
+                      $ref: '#/components/schemas/Account'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+    post:
+      tags: [admin-accounts]
+      operationId: createAccount
+      summary: Create an account with a temporary password that must be changed at first sign in (FR-34)
+      security:
+        - adminSession: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountCreateRequest'
+      responses:
+        '201':
+          description: Created
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /admin/api/accounts/{accountId}:
+    parameters:
+      - $ref: '#/components/parameters/AccountId'
+    patch:
+      tags: [admin-accounts]
+      operationId: updateAccount
+      summary: Rename, disable or enable an account (FR-34)
+      description: Disabling ends every session of the account (G-19). The last active Administrator cannot be disabled (409 `last_administrator`).
+      security:
+        - adminSession: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountUpdateRequest'
+      responses:
+        '200':
+          description: Updated
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+    delete:
+      tags: [admin-accounts]
+      operationId: deleteAccount
+      summary: Delete an account (FR-34)
+      description: Ends every session of the account. The last active Administrator cannot be deleted (409 `last_administrator`).
+      security:
+        - adminSession: []
+          csrfToken: []
+      responses:
+        '204':
+          description: Deleted
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /admin/api/accounts/{accountId}/password-reset:
+    parameters:
+      - $ref: '#/components/parameters/AccountId'
+    post:
+      tags: [admin-accounts]
+      operationId: resetAccountPassword
+      summary: Set a new temporary password for another account (FR-34); ends its sessions (G-19)
+      security:
+        - adminSession: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+      responses:
+        '204':
+          description: Password reset; the account must change it at next sign in
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+
+  /admin/api/content:
+    get:
+      tags: [admin-content]
+      operationId: listContentEntries
+      summary: Every editable page, global and room entry with completeness (FR-35, FR-37)
+      responses:
+        '200':
+          description: Entry index
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [entries, lists]
+                properties:
+                  entries:
+                    type: array
+                    maxItems: 200
+                    items:
+                      $ref: '#/components/schemas/ContentEntrySummary'
+                  lists:
+                    type: array
+                    maxItems: 50
+                    items:
+                      $ref: '#/components/schemas/ListSummary'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+
+  /admin/api/content/{entryKey}:
+    parameters:
+      - $ref: '#/components/parameters/EntryKey'
+    get:
+      tags: [admin-content]
+      operationId: getContentEntry
+      summary: One entry with its field descriptors and values in four languages
+      responses:
+        '200':
+          description: Entry
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentEntry'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [admin-content]
+      operationId: saveContentEntry
+      summary: Save an entry; live on the public site at once, within 60 seconds at most (FR-38)
+      description: |
+        All or nothing (NFR-33). `version` must equal the stored version, otherwise 409
+        `version_conflict` with the current entry in `current` (NFR-33).
+        Rich text is checked against the allow-list schema for every language (NFR-24, ADR-0005).
+        Plain text rejects Unicode format characters (category Cf) except the soft hyphen (G-7).
+      security:
+        - adminSession: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentEntryUpdate'
+      responses:
+        '200':
+          description: Saved
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentEntry'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /admin/api/translations/missing:
+    get:
+      tags: [admin-content]
+      operationId: listMissingTranslations
+      summary: Every field missing a value in any language, filterable by language (FR-37)
+      parameters:
+        - name: lang
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/LanguageCode'
+      responses:
+        '200':
+          description: Missing fields
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    maxItems: 10000
+                    items:
+                      $ref: '#/components/schemas/MissingTranslation'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+
+  /admin/api/lists/{listKey}:
+    parameters:
+      - $ref: '#/components/parameters/ListKey'
+    get:
+      tags: [admin-lists]
+      operationId: getList
+      summary: A list with its items in saved order (FR-36)
+      responses:
+        '200':
+          description: List
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListWithItems'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/api/lists/{listKey}/items:
+    parameters:
+      - $ref: '#/components/parameters/ListKey'
+    post:
+      tags: [admin-lists]
+      operationId: createListItem
+      summary: Add an item at the end of the list (FR-36)
+      security:
+        - adminSession: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListItemCreate'
+      responses:
+        '201':
+          description: Created
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListItem'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /admin/api/lists/{listKey}/items/{itemId}:
+    parameters:
+      - $ref: '#/components/parameters/ListKey'
+      - $ref: '#/components/parameters/ItemId'
+    get:
+      tags: [admin-lists]
+      operationId: getListItem
+      summary: One list item with field descriptors and values
+      responses:
+        '200':
+          description: Item
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListItem'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [admin-lists]
+      operationId: saveListItem
+      summary: Save a list item; live at once (FR-38, NFR-33)
+      security:
+        - adminSession: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListItemUpdate'
+      responses:
+        '200':
+          description: Saved
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListItem'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    delete:
+      tags: [admin-lists]
+      operationId: deleteListItem
+      summary: Delete a list item (the portal asks for confirmation naming the item first, FR-36)
+      security:
+        - adminSession: []
+          csrfToken: []
+      parameters:
+        - name: version
+          in: query
+          required: true
+          description: The version the deletion is based on (NFR-33)
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '204':
+          description: Deleted
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /admin/api/lists/{listKey}/order:
+    parameters:
+      - $ref: '#/components/parameters/ListKey'
+    put:
+      tags: [admin-lists]
+      operationId: reorderList
+      summary: Save a new order for every item of the list (FR-36)
+      description: '`itemIds` must contain exactly the current items; otherwise 409 `version_conflict`.'
+      security:
+        - adminSession: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListOrderUpdate'
+      responses:
+        '200':
+          description: Reordered
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListWithItems'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+
+  /admin/api/settings:
+    get:
+      tags: [admin-settings]
+      operationId: getSettings
+      summary: Site settings (FR-39)
+      responses:
+        '200':
+          description: Settings
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+    put:
+      tags: [admin-settings]
+      operationId: saveSettings
+      summary: Save site settings; live on all 84 pages at once (FR-38, FR-39, AC-81.4)
+      description: |
+        There is no setting for the fixed concept sentence, the title suffix or noindex (FR-39, NFR-27).
+        Invalid values are rejected with a message naming the field (422).
+      security:
+        - adminSession: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettingsUpdate'
+      responses:
+        '200':
+          description: Saved
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+
+  /admin/api/media:
+    get:
+      tags: [admin-media]
+      operationId: listMedia
+      summary: Media library, newest first, with storage use (FR-40, NFR-23)
+      parameters:
+        - $ref: '#/components/parameters/Page'
+      responses:
+        '200':
+          description: Media page
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+    post:
+      tags: [admin-media]
+      operationId: uploadMedia
+      summary: Upload one photo (one file per request; a batch is up to 20 requests) (FR-40, FR-41, NFR-23)
+      description: |
+        The body is the raw file. Its content must be JPEG, PNG, WebP or AVIF (checked from the bytes,
+        not the name), at most 10 MB and 40 megapixels. Processing (resize to 480, 768, 1280 and 1920
+        wide in AVIF and WebP, orientation applied, all metadata removed) runs in an isolated worker
+        with a 60 s and 256 MB limit, one job at a time (ADR-0009). Rate limit 30 per hour per account.
+      security:
+        - adminSession: []
+          csrfToken: []
+      parameters:
+        - name: name
+          in: query
+          required: true
+          description: Display name shown in the library; never used as a file name
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+        - name: batch
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: index
+          in: query
+          required: false
+          description: Position of this file in its batch, 0 to 19
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 19
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              $ref: '#/components/schemas/BinaryFile'
+      responses:
+        '201':
+          description: Uploaded and processed
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaAsset'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '507':
+          $ref: '#/components/responses/QuotaExceeded'
+
+  /admin/api/media/{mediaId}:
+    parameters:
+      - $ref: '#/components/parameters/MediaId'
+    get:
+      tags: [admin-media]
+      operationId: getMedia
+      summary: One photo with variants and where it is used
+      responses:
+        '200':
+          description: Photo
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaAsset'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [admin-media]
+      operationId: updateMediaMetadata
+      summary: Edit display name, alternative text and caption in four languages (FR-40); live at once (AC-81.5)
+      security:
+        - adminSession: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MediaMetadataUpdate'
+      responses:
+        '200':
+          description: Saved
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaAsset'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+    delete:
+      tags: [admin-media]
+      operationId: deleteMedia
+      summary: Delete a photo; refused while used on a public page (FR-40)
+      description: 409 `in_use` lists the pages that use it in `usage`. Public copies are removed at once; the original after 30 days (Retention schedule).
+      security:
+        - adminSession: []
+          csrfToken: []
+      responses:
+        '204':
+          description: Deleted
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /admin/api/media/{mediaId}/file:
+    parameters:
+      - $ref: '#/components/parameters/MediaId'
+    put:
+      tags: [admin-media]
+      operationId: replaceMediaFile
+      summary: Replace the image file while keeping its uses, text and id (FR-40)
+      description: Same checks and processing as upload. New variant URLs are issued; the old ones are removed.
+      security:
+        - adminSession: []
+          csrfToken: []
+      parameters:
+        - name: version
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              $ref: '#/components/schemas/BinaryFile'
+      responses:
+        '200':
+          description: Replaced and processed
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaAsset'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '507':
+          $ref: '#/components/responses/QuotaExceeded'
+
+  /admin/api/enquiries:
+    get:
+      tags: [admin-enquiries]
+      operationId: listEnquiries
+      summary: Enquiries newest first, 25 per page, with filters and search (FR-42)
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/EnquiryStatus'
+        - name: subject
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/EnquirySubject'
+        - name: dataProtection
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: q
+          in: query
+          required: false
+          description: Reference, name or email address; compared ignoring case and accents (NFR-28, G-12)
+          schema:
+            type: string
+            maxLength: 254
+      responses:
+        '200':
+          description: Enquiry page
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnquiryList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+
+  /admin/api/enquiries/{enquiryId}:
+    parameters:
+      - $ref: '#/components/parameters/EnquiryId'
+    get:
+      tags: [admin-enquiries]
+      operationId: getEnquiry
+      summary: Read one enquiry in full; marks it read (FR-42)
+      responses:
+        '200':
+          description: Enquiry
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Enquiry'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [admin-enquiries]
+      operationId: updateEnquiry
+      summary: Mark handled or unhandled, or mark as a data protection request (FR-42)
+      security:
+        - adminSession: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnquiryUpdate'
+      responses:
+        '200':
+          description: Updated
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Enquiry'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+    delete:
+      tags: [admin-enquiries]
+      operationId: deleteEnquiry
+      summary: Delete one enquiry after confirmation (FR-42); recorded as a security event (NFR-34)
+      security:
+        - adminSession: []
+          csrfToken: []
+      responses:
+        '204':
+          description: Deleted
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/api/subscribers:
+    get:
+      tags: [admin-subscribers]
+      operationId: listSubscribers
+      summary: Subscribers with search by address (FR-43)
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/SubscriberStatus'
+        - name: q
+          in: query
+          required: false
+          description: Email address or part of it, compared after trimming and ignoring case (G-12)
+          schema:
+            type: string
+            maxLength: 254
+      responses:
+        '200':
+          description: Subscriber page
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriberList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+
+  /admin/api/subscribers/{subscriberId}:
+    parameters:
+      - $ref: '#/components/parameters/SubscriberId'
+    delete:
+      tags: [admin-subscribers]
+      operationId: deleteSubscriber
+      summary: Remove one subscriber after confirmation (FR-43)
+      security:
+        - adminSession: []
+          csrfToken: []
+      responses:
+        '204':
+          description: Removed
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/api/subscribers/export:
+    post:
+      tags: [admin-subscribers]
+      operationId: exportSubscribers
+      summary: Download subscribers as CSV (FR-43)
+      description: |
+        UTF-8 with a byte order mark; columns `email`, `language`, `status`, `subscribed_at`,
+        `consent_version`; every cell quoted; a cell starting with `=`, `+`, `-`, `@`, tab or carriage
+        return is prefixed with a single quote (G-4). Active subscribers only unless
+        `includeUnsubscribed` is true. Recorded as a security event with the row count (NFR-34).
+        The site keeps no copy of the file.
+      security:
+        - adminSession: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriberExportRequest'
+      responses:
+        '200':
+          description: CSV file
+          headers:
+            Content-Disposition:
+              $ref: '#/components/headers/ContentDispositionCsv'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControlNoStore'
+          content:
+            text/csv:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+components:
+  securitySchemes:
+    adminSession:
+      type: apiKey
+      in: cookie
+      name: __Host-jcdm_admin
+      description: |
+        Server side session (256-bit random id, only its SHA-256 stored). `HttpOnly; SameSite=Strict`,
+        plus `Secure` and the `__Host-` prefix whenever `PUBLIC_ORIGIN` is https. On a loopback
+        `http://` origin during local review the cookie is named `jcdm_admin` without `Secure` (RSK-10).
+        Idle limit 30 minutes, absolute limit 8 hours (NFR-20).
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+      description: Session bound anti forgery token from `Session.csrfToken`, required on every non GET admin request (NFR-22).
+    adminClient:
+      type: apiKey
+      in: header
+      name: X-Requested-With
+      description: Must be `jcdm-admin`. With `Content-Type application/json` and a matching `Origin` it blocks login forgery (TM-27).
+
+  parameters:
+    Lang:
+      name: lang
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/LanguageCode'
+    IfNoneMatch:
+      name: If-None-Match
+      in: header
+      required: false
+      schema:
+        type: string
+        maxLength: 200
+    Origin:
+      name: Origin
+      in: header
+      required: false
+      description: When present it must equal the configured site origin, otherwise 403 (NFR-22).
+      schema:
+        type: string
+        maxLength: 200
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 10000
+        default: 1
+    AdminSection:
+      name: section
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+          - sign-in
+          - password
+          - content
+          - lists
+          - translations
+          - settings
+          - media
+          - enquiries
+          - subscribers
+          - accounts
+    AccountId:
+      name: accountId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Id'
+    EntryKey:
+      name: entryKey
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/EntryKey'
+    ListKey:
+      name: listKey
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/ListKey'
+    ItemId:
+      name: itemId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Id'
+    MediaId:
+      name: mediaId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Id'
+    EnquiryId:
+      name: enquiryId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Id'
+    SubscriberId:
+      name: subscriberId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Id'
+
+  headers:
+    ContentSecurityPolicyPublic:
+      description: Public policy of ADR-0008 (`default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; ...; frame-ancestors 'none'`)
+      schema:
+        type: string
+    ContentSecurityPolicyAdmin:
+      description: Admin policy of ADR-0008 (as public, without `wasm-unsafe-eval` and without `blob:` in `connect-src`)
+      schema:
+        type: string
+    XRobotsTag:
+      description: Always `noindex, nofollow, noarchive, nosnippet` (NFR-27)
+      schema:
+        type: string
+        const: noindex, nofollow, noarchive, nosnippet
+    XContentTypeOptions:
+      schema:
+        type: string
+        const: nosniff
+    CacheControlNoStore:
+      schema:
+        type: string
+        const: no-store
+    CacheControlNoCache:
+      description: Pages revalidate on every request so saved edits show at once (FR-38)
+      schema:
+        type: string
+        const: no-cache
+    CacheControlImmutable:
+      schema:
+        type: string
+        const: public, max-age=31536000, immutable
+    ETag:
+      schema:
+        type: string
+    Location:
+      schema:
+        type: string
+    VaryAcceptLanguage:
+      schema:
+        type: string
+        const: Accept-Language
+    RetryAfter:
+      description: Seconds until the rate limit window allows another request (NFR-21)
+      schema:
+        type: integer
+        minimum: 1
+    SetSessionCookie:
+      description: The new session cookie (rotated at every sign in)
+      schema:
+        type: string
+    ClearSessionCookie:
+      description: Expires the session cookie
+      schema:
+        type: string
+    ContentDispositionCsv:
+      description: '`attachment; filename="subscribers-<yyyymmdd>.csv"`'
+      schema:
+        type: string
+
+  responses:
+    HtmlPage:
+      description: Rendered page (noindex, concept notice, title suffix)
+      headers:
+        Content-Security-Policy:
+          $ref: '#/components/headers/ContentSecurityPolicyPublic'
+        X-Robots-Tag:
+          $ref: '#/components/headers/XRobotsTag'
+        X-Content-Type-Options:
+          $ref: '#/components/headers/XContentTypeOptions'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoCache'
+        ETag:
+          $ref: '#/components/headers/ETag'
+      content:
+        text/html:
+          schema:
+            $ref: '#/components/schemas/HtmlDocument'
+    NotModified:
+      description: Content unchanged since the given ETag
+      headers:
+        ETag:
+          $ref: '#/components/headers/ETag'
+        X-Robots-Tag:
+          $ref: '#/components/headers/XRobotsTag'
+    HtmlNotFound:
+      description: Localised "page not found" page (FR-13)
+      headers:
+        Content-Security-Policy:
+          $ref: '#/components/headers/ContentSecurityPolicyPublic'
+        X-Robots-Tag:
+          $ref: '#/components/headers/XRobotsTag'
+      content:
+        text/html:
+          schema:
+            $ref: '#/components/schemas/HtmlDocument'
+    HtmlServerError:
+      description: Localised "something went wrong" page with a correlation id and no technical detail (FR-13, NFR-26)
+      headers:
+        Content-Security-Policy:
+          $ref: '#/components/headers/ContentSecurityPolicyPublic'
+        X-Robots-Tag:
+          $ref: '#/components/headers/XRobotsTag'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        text/html:
+          schema:
+            $ref: '#/components/schemas/HtmlDocument'
+    HtmlFormRetry:
+      description: |
+        Spam trap filled, token missing, altered, expired or younger than 2 seconds. The form is shown
+        again with typed values kept, a fresh token and the single retry message in a `role="alert"`
+        element that receives focus (FR-20, AC-13.10). Nothing is stored.
+      headers:
+        Content-Security-Policy:
+          $ref: '#/components/headers/ContentSecurityPolicyPublic'
+        X-Robots-Tag:
+          $ref: '#/components/headers/XRobotsTag'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        text/html:
+          schema:
+            $ref: '#/components/schemas/HtmlDocument'
+    HtmlFormInvalid:
+      description: Validation errors next to each field and in a summary at the top, values kept (FR-19)
+      headers:
+        Content-Security-Policy:
+          $ref: '#/components/headers/ContentSecurityPolicyPublic'
+        X-Robots-Tag:
+          $ref: '#/components/headers/XRobotsTag'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        text/html:
+          schema:
+            $ref: '#/components/schemas/HtmlDocument'
+    HtmlForbiddenOrigin:
+      description: '`Origin` or `Referer` does not match the site origin (NFR-22). Nothing is stored.'
+      headers:
+        X-Robots-Tag:
+          $ref: '#/components/headers/XRobotsTag'
+      content:
+        text/html:
+          schema:
+            $ref: '#/components/schemas/HtmlDocument'
+    HtmlPayloadTooLarge:
+      description: Body over 64 KB (NFR-35)
+      headers:
+        X-Robots-Tag:
+          $ref: '#/components/headers/XRobotsTag'
+      content:
+        text/html:
+          schema:
+            $ref: '#/components/schemas/HtmlDocument'
+    HtmlRateLimited:
+      description: Too many submissions from this address; localised page (NFR-21)
+      headers:
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+        X-Robots-Tag:
+          $ref: '#/components/headers/XRobotsTag'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        text/html:
+          schema:
+            $ref: '#/components/schemas/HtmlDocument'
+    HtmlFormUnavailable:
+      description: |
+        The record could not be stored (data store error, or the cap of NFR-35 reached). The form is
+        shown again with an error message and typed values kept; no confirmation (FR-20).
+      headers:
+        Content-Security-Policy:
+          $ref: '#/components/headers/ContentSecurityPolicyPublic'
+        X-Robots-Tag:
+          $ref: '#/components/headers/XRobotsTag'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        text/html:
+          schema:
+            $ref: '#/components/schemas/HtmlDocument'
+    AdminShell:
+      description: Shell page that loads the admin application bundle (no inline script)
+      headers:
+        Content-Security-Policy:
+          $ref: '#/components/headers/ContentSecurityPolicyAdmin'
+        X-Robots-Tag:
+          $ref: '#/components/headers/XRobotsTag'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        text/html:
+          schema:
+            $ref: '#/components/schemas/HtmlDocument'
+    AdminSignInRedirect:
+      description: Not signed in; redirect to `/admin/sign-in` (FR-32)
+      headers:
+        Location:
+          $ref: '#/components/headers/Location'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+        X-Robots-Tag:
+          $ref: '#/components/headers/XRobotsTag'
+    AdminSetupRequired:
+      description: No Administrator exists yet; the page names the server command to run (FR-47, G-1)
+      headers:
+        Content-Security-Policy:
+          $ref: '#/components/headers/ContentSecurityPolicyAdmin'
+        X-Robots-Tag:
+          $ref: '#/components/headers/XRobotsTag'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        text/html:
+          schema:
+            $ref: '#/components/schemas/HtmlDocument'
+    Unauthenticated:
+      description: Not signed in or the session has ended (NFR-25)
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    SignInFailed:
+      description: One generic message for every sign in failure (FR-32, NFR-19)
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Forbidden:
+      description: Missing or invalid CSRF token, wrong `Origin`, or missing `X-Requested-With` (NFR-22); `setup_required` before the first Administrator exists
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    SetupRequired:
+      description: No Administrator exists yet (FR-47, G-1); code `setup_required`
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: No such record or route (NFR-25)
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: '`version_conflict` (stale save, `current` holds the stored value), `in_use` (media used on pages, `usage` lists them), `last_administrator`, or `duplicate` (email address already has an account)'
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    PayloadTooLarge:
+      description: Body over 1 MB for admin requests or 10 MB for uploads (NFR-23, NFR-35)
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    UnsupportedMediaType:
+      description: File content is not JPEG, PNG, WebP or AVIF, or disagrees with its name (NFR-23)
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    ValidationFailed:
+      description: One or more fields invalid; `errors` names each field (and language) and the problem
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    RateLimited:
+      description: Rate limit exceeded (NFR-21)
+      headers:
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    QuotaExceeded:
+      description: Media storage limit reached (NFR-23); code `quota_exceeded`
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControlNoStore'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+
+  schemas:
+    Id:
+      type: string
+      format: uuid
+      description: UUID version 7
+    LanguageCode:
+      type: string
+      enum: [en, de, it, ru]
+    RoomSlug:
+      type: string
+      enum:
+        - family-suite
+        - executive-suite
+        - superior-twin-sea-view
+        - superior-queen-sea-view
+        - triple-deluxe-twin-pool-view
+        - triple-deluxe-queen-pool-view
+    EntryKey:
+      type: string
+      description: Registry key of a page, global group or room entry, for example `page.home`, `global.footer`, `room.family-suite`
+      pattern: '^(page|global|room)\.[a-z0-9-]{1,60}$'
+    ListKey:
+      type: string
+      enum:
+        - dining-venues
+        - pools-and-beach
+        - activities
+        - offers
+        - gallery
+        - faq
+        - attractions
+    HtmlDocument:
+      type: string
+      description: A complete UTF-8 HTML document with `lang`, the robots meta tag, the concept notice and no inline script
+    BinaryFile:
+      type: string
+      contentMediaType: application/octet-stream
+    Timestamp:
+      type: string
+      format: date-time
+
+    Problem:
+      type: object
+      description: RFC 9457 problem details
+      additionalProperties: false
+      required: [type, title, status, code]
+      properties:
+        type:
+          type: string
+          description: '`about:blank` or a stable URI per code'
+          maxLength: 200
+        title:
+          type: string
+          maxLength: 200
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        code:
+          $ref: '#/components/schemas/ProblemCode'
+        detail:
+          type: string
+          maxLength: 1000
+        correlationId:
+          type: string
+          maxLength: 64
+        errors:
+          type: array
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/FieldError'
+        retryAfterSeconds:
+          type: integer
+          minimum: 1
+        current:
+          description: For `version_conflict`, the stored entry, item or settings the save was refused against
+          type: object
+        usage:
+          description: For `in_use`, where the media is used
+          type: array
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/MediaUsage'
+    ProblemCode:
+      type: string
+      enum:
+        - validation_failed
+        - unauthenticated
+        - sign_in_failed
+        - password_change_required
+        - csrf_failed
+        - origin_mismatch
+        - setup_required
+        - not_found
+        - version_conflict
+        - in_use
+        - last_administrator
+        - duplicate
+        - password_rejected
+        - payload_too_large
+        - unsupported_media_type
+        - image_too_large
+        - processing_failed
+        - quota_exceeded
+        - cap_reached
+        - rate_limited
+        - server_error
+    FieldError:
+      type: object
+      additionalProperties: false
+      required: [field, code, message]
+      properties:
+        field:
+          type: string
+          description: Field path, for example `fields[3].value.de` or `bookNowUrl`
+          maxLength: 300
+        language:
+          $ref: '#/components/schemas/LanguageCode'
+        code:
+          type: string
+          enum:
+            - required
+            - too_short
+            - too_long
+            - invalid_format
+            - invalid_url
+            - invalid_scheme
+            - forbidden_characters
+            - not_allowed_markup
+            - unknown_field
+            - media_missing_alt
+            - media_not_found
+            - out_of_range
+            - common_password
+            - contains_email
+        message:
+          type: string
+          maxLength: 500
+
+    Health:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: ok
+    HealthFailure:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: unavailable
+
+    ContactForm:
+      type: object
+      description: Same rules run in the browser and on the server (FR-19)
+      additionalProperties: false
+      required: [name, email, subject, message, formToken]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        telephone:
+          type: string
+          description: Optional; empty or 7 to 20 characters from digits, spaces, plus, brackets and hyphens
+          pattern: '^$|^[0-9 +()-]{7,20}$'
+        subject:
+          $ref: '#/components/schemas/EnquirySubject'
+        message:
+          type: string
+          minLength: 10
+          maxLength: 2000
+        website:
+          type: string
+          description: Spam trap; must be empty
+          maxLength: 200
+        formToken:
+          $ref: '#/components/schemas/FormToken'
+    NewsletterForm:
+      type: object
+      additionalProperties: false
+      required: [email, consent, formToken]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        consent:
+          type: string
+          description: The unticked by default consent box; required (FR-22)
+          const: 'yes'
+        website:
+          type: string
+          description: Spam trap; must be empty
+          maxLength: 200
+        formToken:
+          $ref: '#/components/schemas/FormToken'
+    UnsubscribeForm:
+      type: object
+      additionalProperties: false
+      required: [email, formToken]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        website:
+          type: string
+          description: Spam trap; must be empty
+          maxLength: 200
+        formToken:
+          $ref: '#/components/schemas/FormToken'
+    FormToken:
+      type: string
+      description: base64url payload (form, language, issued time, nonce), a dot, and its HMAC-SHA256 (ADR-0006)
+      pattern: '^[A-Za-z0-9_-]{20,400}\.[A-Za-z0-9_-]{43}$'
+
+    SignInRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          maxLength: 254
+        password:
+          type: string
+          maxLength: 256
+          writeOnly: true
+    Session:
+      type: object
+      additionalProperties: false
+      required:
+        - account
+        - mustChangePassword
+        - previousSignInAt
+        - failedAttemptsSinceLastSignIn
+        - idleExpiresAt
+        - absoluteExpiresAt
+        - csrfToken
+      properties:
+        account:
+          $ref: '#/components/schemas/AccountRef'
+        mustChangePassword:
+          type: boolean
+          description: When true every admin request except the password change and sign out returns 403 `password_change_required`
+        previousSignInAt:
+          description: Time of the previous successful sign in (G-23)
+          oneOf:
+            - $ref: '#/components/schemas/Timestamp'
+            - type: 'null'
+        failedAttemptsSinceLastSignIn:
+          type: integer
+          minimum: 0
+        idleExpiresAt:
+          $ref: '#/components/schemas/Timestamp'
+        absoluteExpiresAt:
+          $ref: '#/components/schemas/Timestamp'
+        csrfToken:
+          type: string
+          minLength: 43
+          maxLength: 128
+    PasswordChangeRequest:
+      type: object
+      additionalProperties: false
+      required: [newPassword]
+      properties:
+        currentPassword:
+          type: string
+          maxLength: 256
+          writeOnly: true
+        newPassword:
+          type: string
+          description: 12 to 128 characters, not a common password, not containing the account email (NFR-19)
+          minLength: 12
+          maxLength: 128
+          writeOnly: true
+    PasswordResetRequest:
+      type: object
+      additionalProperties: false
+      required: [temporaryPassword]
+      properties:
+        temporaryPassword:
+          type: string
+          minLength: 12
+          maxLength: 128
+          writeOnly: true
+
+    AccountRef:
+      type: object
+      additionalProperties: false
+      required: [id, email, name]
+      properties:
+        id:
+          $ref: '#/components/schemas/Id'
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        name:
+          type: string
+          maxLength: 100
+    Account:
+      type: object
+      additionalProperties: false
+      required: [id, email, name, status, locked, mustChangePassword, createdAt, lastSignInAt, isCurrent]
+      properties:
+        id:
+          $ref: '#/components/schemas/Id'
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        name:
+          type: string
+          maxLength: 100
+        status:
+          type: string
+          enum: [active, disabled]
+        locked:
+          type: boolean
+          description: True while a lockout of NFR-19 is in force
+        mustChangePassword:
+          type: boolean
+        createdAt:
+          $ref: '#/components/schemas/Timestamp'
+        lastSignInAt:
+          oneOf:
+            - $ref: '#/components/schemas/Timestamp'
+            - type: 'null'
+        isCurrent:
+          type: boolean
+          description: True for the signed in account
+    AccountCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [email, name, temporaryPassword]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        temporaryPassword:
+          type: string
+          minLength: 12
+          maxLength: 128
+          writeOnly: true
+    AccountUpdateRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        status:
+          type: string
+          enum: [active, disabled]
+
+    Overview:
+      type: object
+      additionalProperties: false
+      required: [unreadEnquiries, enquiries, subscribers, media, listsBelowMinimum, missingTranslations, jobs]
+      properties:
+        unreadEnquiries:
+          type: integer
+          minimum: 0
+        enquiries:
+          $ref: '#/components/schemas/CapUsage'
+        subscribers:
+          $ref: '#/components/schemas/CapUsage'
+        media:
+          $ref: '#/components/schemas/StorageUsage'
+        listsBelowMinimum:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/ListSummary'
+        missingTranslations:
+          type: object
+          additionalProperties: false
+          required: [de, it, ru]
+          properties:
+            de:
+              type: integer
+              minimum: 0
+            it:
+              type: integer
+              minimum: 0
+            ru:
+              type: integer
+              minimum: 0
+        jobs:
+          type: object
+          additionalProperties: false
+          required: [purge, backup]
+          properties:
+            purge:
+              $ref: '#/components/schemas/JobStatus'
+            backup:
+              $ref: '#/components/schemas/JobStatus'
+    CapUsage:
+      type: object
+      additionalProperties: false
+      required: [count, cap, warning]
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        cap:
+          type: integer
+          minimum: 1
+        warning:
+          type: boolean
+          description: True at 80 percent of the cap or above (NFR-35)
+    StorageUsage:
+      type: object
+      additionalProperties: false
+      required: [usedBytes, limitBytes, warning]
+      properties:
+        usedBytes:
+          type: integer
+          minimum: 0
+        limitBytes:
+          type: integer
+          minimum: 1
+        warning:
+          type: boolean
+          description: True at 80 percent of the limit or above (NFR-23)
+    JobStatus:
+      type: object
+      additionalProperties: false
+      required: [lastResult, lastRunAt, lastSuccessAt]
+      properties:
+        lastResult:
+          type: string
+          enum: [never, success, failed, skipped]
+        lastRunAt:
+          oneOf:
+            - $ref: '#/components/schemas/Timestamp'
+            - type: 'null'
+        lastSuccessAt:
+          oneOf:
+            - $ref: '#/components/schemas/Timestamp'
+            - type: 'null'
+        message:
+          type: string
+          maxLength: 300
+
+    LocalisedText:
+      type: object
+      description: Plain text in four languages; an empty string means missing (shown in English on the public site, FR-26). No Unicode category Cf except soft hyphen (G-7).
+      additionalProperties: false
+      required: [en, de, it, ru]
+      properties:
+        en:
+          type: string
+          maxLength: 20000
+        de:
+          type: string
+          maxLength: 20000
+        it:
+          type: string
+          maxLength: 20000
+        ru:
+          type: string
+          maxLength: 20000
+    LocalisedRichText:
+      type: object
+      description: Rich text in four languages; null means missing
+      additionalProperties: false
+      required: [en, de, it, ru]
+      properties:
+        en:
+          $ref: '#/components/schemas/NullableRichTextDoc'
+        de:
+          $ref: '#/components/schemas/NullableRichTextDoc'
+        it:
+          $ref: '#/components/schemas/NullableRichTextDoc'
+        ru:
+          $ref: '#/components/schemas/NullableRichTextDoc'
+    NullableRichTextDoc:
+      oneOf:
+        - $ref: '#/components/schemas/RichTextDoc'
+        - type: 'null'
+    RichTextDoc:
+      type: object
+      description: Allow-listed ProseMirror document (ADR-0005). Anything else is rejected with 422.
+      additionalProperties: false
+      required: [type, content]
+      properties:
+        type:
+          type: string
+          const: doc
+        content:
+          type: array
+          maxItems: 200
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/RichParagraph'
+              - $ref: '#/components/schemas/RichBulletList'
+    RichParagraph:
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          type: string
+          const: paragraph
+        content:
+          type: array
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/RichTextRun'
+    RichBulletList:
+      type: object
+      additionalProperties: false
+      required: [type, content]
+      properties:
+        type:
+          type: string
+          const: bulletList
+        content:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/RichListItem'
+    RichListItem:
+      type: object
+      additionalProperties: false
+      required: [type, content]
+      properties:
+        type:
+          type: string
+          const: listItem
+        content:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/RichParagraph'
+    RichTextRun:
+      type: object
+      additionalProperties: false
+      required: [type, text]
+      properties:
+        type:
+          type: string
+          const: text
+        text:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        marks:
+          type: array
+          maxItems: 3
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/RichMarkSimple'
+              - $ref: '#/components/schemas/RichMarkLink'
+    RichMarkSimple:
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [bold, italic]
+    RichMarkLink:
+      type: object
+      additionalProperties: false
+      required: [type, attrs]
+      properties:
+        type:
+          type: string
+          const: link
+        attrs:
+          type: object
+          additionalProperties: false
+          required: [href]
+          properties:
+            href:
+              type: string
+              description: Parsed with the WHATWG URL parser on the server; scheme must be https, http, mailto or tel
+              maxLength: 2048
+              pattern: '^(https?://|mailto:|tel:)'
+    MediaRef:
+      type: object
+      additionalProperties: false
+      required: [mediaId]
+      properties:
+        mediaId:
+          $ref: '#/components/schemas/Id'
+
+    LanguageCompleteness:
+      type: object
+      additionalProperties: false
+      required: [complete, total]
+      properties:
+        complete:
+          type: integer
+          minimum: 0
+        total:
+          type: integer
+          minimum: 0
+    Completeness:
+      type: object
+      description: Shown as "3 of 4 languages complete" per entry or item (FR-37)
+      additionalProperties: false
+      required: [en, de, it, ru, languagesComplete]
+      properties:
+        en:
+          $ref: '#/components/schemas/LanguageCompleteness'
+        de:
+          $ref: '#/components/schemas/LanguageCompleteness'
+        it:
+          $ref: '#/components/schemas/LanguageCompleteness'
+        ru:
+          $ref: '#/components/schemas/LanguageCompleteness'
+        languagesComplete:
+          type: integer
+          minimum: 0
+          maximum: 4
+
+    ContentField:
+      description: One editable field with its descriptor and current value (ADR-0004); the `type` constant tells the variants apart
+      oneOf:
+        - $ref: '#/components/schemas/TextField'
+        - $ref: '#/components/schemas/RichTextField'
+        - $ref: '#/components/schemas/MediaField'
+        - $ref: '#/components/schemas/TextListField'
+    TextField:
+      type: object
+      additionalProperties: false
+      required: [type, path, label, required, maxLength, multiline, value]
+      properties:
+        type:
+          type: string
+          const: text
+        path:
+          type: string
+          description: Stable field path inside the entry or item, for example `hero.heading`
+          pattern: '^[a-zA-Z][a-zA-Z0-9]*(\.[a-zA-Z][a-zA-Z0-9]*)*$'
+          maxLength: 200
+        label:
+          type: string
+          maxLength: 200
+        help:
+          type: string
+          maxLength: 500
+        required:
+          type: boolean
+          description: Whether English must be non empty to save
+        maxLength:
+          type: integer
+          minimum: 1
+          maximum: 20000
+        multiline:
+          type: boolean
+        value:
+          $ref: '#/components/schemas/LocalisedText'
+    RichTextField:
+      type: object
+      additionalProperties: false
+      required: [type, path, label, required, maxLength, value]
+      properties:
+        type:
+          type: string
+          const: richText
+        path:
+          type: string
+          description: Stable field path inside the entry or item, for example `hero.heading`
+          pattern: '^[a-zA-Z][a-zA-Z0-9]*(\.[a-zA-Z][a-zA-Z0-9]*)*$'
+          maxLength: 200
+        label:
+          type: string
+          maxLength: 200
+        help:
+          type: string
+          maxLength: 500
+        required:
+          type: boolean
+          description: Whether English must be non empty to save
+        maxLength:
+          type: integer
+          description: Maximum characters of text per language
+          minimum: 1
+          maximum: 50000
+        value:
+          $ref: '#/components/schemas/LocalisedRichText'
+    MediaField:
+      type: object
+      additionalProperties: false
+      required: [type, path, label, required, value]
+      properties:
+        type:
+          type: string
+          const: media
+        path:
+          type: string
+          description: Stable field path inside the entry or item, for example `hero.heading`
+          pattern: '^[a-zA-Z][a-zA-Z0-9]*(\.[a-zA-Z][a-zA-Z0-9]*)*$'
+          maxLength: 200
+        label:
+          type: string
+          maxLength: 200
+        help:
+          type: string
+          maxLength: 500
+        required:
+          type: boolean
+          description: Whether English must be non empty to save
+        value:
+          oneOf:
+            - $ref: '#/components/schemas/MediaRef'
+            - type: 'null'
+        preview:
+          description: Thumbnail and alternative text of the chosen photo, for display
+          oneOf:
+            - $ref: '#/components/schemas/MediaPreview'
+            - type: 'null'
+    TextListField:
+      type: object
+      additionalProperties: false
+      required: [type, path, label, required, maxLength, minItems, maxItems, value]
+      properties:
+        type:
+          type: string
+          const: textList
+        path:
+          type: string
+          description: Stable field path inside the entry or item, for example `hero.heading`
+          pattern: '^[a-zA-Z][a-zA-Z0-9]*(\.[a-zA-Z][a-zA-Z0-9]*)*$'
+          maxLength: 200
+        label:
+          type: string
+          maxLength: 200
+        help:
+          type: string
+          maxLength: 500
+        required:
+          type: boolean
+          description: Whether English must be non empty to save
+        maxLength:
+          type: integer
+          minimum: 1
+          maximum: 2000
+        minItems:
+          type: integer
+          minimum: 0
+          description: Below this the portal warns; saving is never blocked (FR-36)
+        maxItems:
+          type: integer
+          minimum: 1
+          maximum: 100
+        value:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/LocalisedText'
+    FieldValueUpdate:
+      type: object
+      additionalProperties: false
+      required: [path, value]
+      properties:
+        path:
+          type: string
+          maxLength: 200
+        value:
+          anyOf:
+            - $ref: '#/components/schemas/LocalisedText'
+            - $ref: '#/components/schemas/LocalisedRichText'
+            - $ref: '#/components/schemas/MediaRef'
+            - type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/LocalisedText'
+            - type: 'null'
+
+    ContentEntryBase:
+      type: object
+      required: [key, kind, label, publicPaths, version, updatedAt, completeness]
+      properties:
+        key:
+          $ref: '#/components/schemas/EntryKey'
+        kind:
+          type: string
+          enum: [page, global, room]
+        label:
+          type: string
+          maxLength: 200
+        publicPaths:
+          type: array
+          description: English public paths where this entry is shown, for "view page" links
+          maxItems: 21
+          items:
+            type: string
+            maxLength: 200
+        version:
+          type: integer
+          minimum: 1
+        updatedAt:
+          $ref: '#/components/schemas/Timestamp'
+        updatedBy:
+          oneOf:
+            - $ref: '#/components/schemas/AccountRef'
+            - type: 'null'
+        completeness:
+          $ref: '#/components/schemas/Completeness'
+    ContentEntrySummary:
+      allOf:
+        - $ref: '#/components/schemas/ContentEntryBase'
+      type: object
+      unevaluatedProperties: false
+    ContentEntry:
+      type: object
+      unevaluatedProperties: false
+      allOf:
+        - $ref: '#/components/schemas/ContentEntryBase'
+        - type: object
+          required: [fields]
+          properties:
+            fields:
+              type: array
+              maxItems: 300
+              items:
+                $ref: '#/components/schemas/ContentField'
+    ContentEntryUpdate:
+      type: object
+      additionalProperties: false
+      required: [version, fields]
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        fields:
+          type: array
+          minItems: 1
+          maxItems: 300
+          items:
+            $ref: '#/components/schemas/FieldValueUpdate'
+
+    ListSummary:
+      type: object
+      additionalProperties: false
+      required: [key, label, itemLabel, minItems, maxItems, count, belowMinimum, publicPaths]
+      properties:
+        key:
+          $ref: '#/components/schemas/ListKey'
+        label:
+          type: string
+          maxLength: 200
+        itemLabel:
+          type: string
+          maxLength: 100
+        minItems:
+          type: integer
+          minimum: 0
+          description: Minimum from FR-2 to FR-9; the portal warns below it (FR-36)
+        maxItems:
+          type: integer
+          minimum: 1
+        count:
+          type: integer
+          minimum: 0
+        belowMinimum:
+          type: boolean
+        publicPaths:
+          type: array
+          maxItems: 21
+          items:
+            type: string
+            maxLength: 200
+    ListItemBase:
+      type: object
+      required: [id, position, version, label, completeness]
+      properties:
+        id:
+          $ref: '#/components/schemas/Id'
+        position:
+          type: integer
+          minimum: 0
+        version:
+          type: integer
+          minimum: 1
+        label:
+          type: string
+          description: The English title of the item, for lists and confirmations
+          maxLength: 300
+        completeness:
+          $ref: '#/components/schemas/Completeness'
+    ListItemSummary:
+      allOf:
+        - $ref: '#/components/schemas/ListItemBase'
+      type: object
+      unevaluatedProperties: false
+    ListItem:
+      type: object
+      unevaluatedProperties: false
+      allOf:
+        - $ref: '#/components/schemas/ListItemBase'
+        - type: object
+          required: [listKey, fields, updatedAt]
+          properties:
+            listKey:
+              $ref: '#/components/schemas/ListKey'
+            updatedAt:
+              $ref: '#/components/schemas/Timestamp'
+            fields:
+              type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/ContentField'
+    ListWithItems:
+      type: object
+      additionalProperties: false
+      required: [list, items]
+      properties:
+        list:
+          $ref: '#/components/schemas/ListSummary'
+        items:
+          type: array
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/ListItemSummary'
+    ListItemCreate:
+      type: object
+      additionalProperties: false
+      required: [fields]
+      properties:
+        fields:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/FieldValueUpdate'
+    ListItemUpdate:
+      type: object
+      additionalProperties: false
+      required: [version, fields]
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        fields:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/FieldValueUpdate'
+    ListOrderUpdate:
+      type: object
+      additionalProperties: false
+      required: [itemIds]
+      properties:
+        itemIds:
+          type: array
+          minItems: 1
+          maxItems: 500
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/Id'
+    MissingTranslation:
+      type: object
+      additionalProperties: false
+      required: [owner, ownerLabel, fieldPath, fieldLabel, missing, adminPath]
+      properties:
+        owner:
+          type: string
+          description: Entry key, or `<listKey>/<itemId>` for a list item, or `media/<mediaId>` for alternative text and captions
+          maxLength: 200
+        ownerLabel:
+          type: string
+          maxLength: 300
+        fieldPath:
+          type: string
+          maxLength: 200
+        fieldLabel:
+          type: string
+          maxLength: 200
+        missing:
+          type: array
+          minItems: 1
+          maxItems: 4
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/LanguageCode'
+        adminPath:
+          type: string
+          description: Portal path that opens the field
+          maxLength: 300
+
+    HttpsUrl:
+      type: string
+      description: Absolute https URL without user name or password, at most 2,048 characters (FR-39, G-5)
+      format: uri
+      maxLength: 2048
+      pattern: '^https://[^/@\s]+(/[^\s]*)?$'
+    NullableHttpsUrl:
+      oneOf:
+        - $ref: '#/components/schemas/HttpsUrl'
+        - type: 'null'
+    PhoneNumber:
+      type: string
+      description: Digits, spaces and a leading plus sign only (FR-39)
+      pattern: '^\+?[0-9 ]{5,30}$'
+    SettingsValues:
+      type: object
+      required:
+        - bookNowUrl
+        - mapsUrl
+        - social
+        - telephone
+        - whatsapp
+        - email
+        - postalAddress
+        - conceptSentence
+        - provider
+      properties:
+        bookNowUrl:
+          $ref: '#/components/schemas/HttpsUrl'
+        mapsUrl:
+          $ref: '#/components/schemas/HttpsUrl'
+        social:
+          type: object
+          description: Empty (null) links are not rendered (FR-12)
+          additionalProperties: false
+          required: [instagram, facebook, linkedin, x, youtube]
+          properties:
+            instagram:
+              $ref: '#/components/schemas/NullableHttpsUrl'
+            facebook:
+              $ref: '#/components/schemas/NullableHttpsUrl'
+            linkedin:
+              $ref: '#/components/schemas/NullableHttpsUrl'
+            x:
+              $ref: '#/components/schemas/NullableHttpsUrl'
+            youtube:
+              $ref: '#/components/schemas/NullableHttpsUrl'
+        telephone:
+          $ref: '#/components/schemas/PhoneNumber'
+        whatsapp:
+          oneOf:
+            - $ref: '#/components/schemas/PhoneNumber'
+            - type: 'null'
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        postalAddress:
+          type: string
+          minLength: 1
+          maxLength: 500
+        conceptSentence:
+          description: Optional plain sentence after the fixed concept sentence, at most 200 characters per language (FR-17)
+          type: object
+          additionalProperties: false
+          required: [en, de, it, ru]
+          properties:
+            en:
+              type: string
+              maxLength: 200
+            de:
+              type: string
+              maxLength: 200
+            it:
+              type: string
+              maxLength: 200
+            ru:
+              type: string
+              maxLength: 200
+        provider:
+          $ref: '#/components/schemas/ProviderDetails'
+    ProviderDetails:
+      type: object
+      description: The "Who runs this site" section of the Terms (FR-16, FR-39, LR-32); defaults are marked placeholders
+      additionalProperties: false
+      required:
+        - legalName
+        - geographicAddress
+        - contactEmail
+        - tradeRegister
+        - supervisoryAuthority
+        - professionalDetails
+        - vatNumber
+      properties:
+        legalName:
+          type: string
+          maxLength: 200
+        geographicAddress:
+          type: string
+          maxLength: 500
+        contactEmail:
+          type: string
+          maxLength: 254
+        tradeRegister:
+          type: string
+          maxLength: 300
+        supervisoryAuthority:
+          type: string
+          maxLength: 300
+        professionalDetails:
+          type: string
+          maxLength: 500
+        vatNumber:
+          type: string
+          maxLength: 50
+    Settings:
+      type: object
+      unevaluatedProperties: false
+      allOf:
+        - $ref: '#/components/schemas/SettingsValues'
+        - type: object
+          required: [version, updatedAt]
+          properties:
+            version:
+              type: integer
+              minimum: 1
+            updatedAt:
+              $ref: '#/components/schemas/Timestamp'
+    SettingsUpdate:
+      type: object
+      unevaluatedProperties: false
+      allOf:
+        - $ref: '#/components/schemas/SettingsValues'
+        - type: object
+          required: [version]
+          properties:
+            version:
+              type: integer
+              minimum: 1
+
+    MediaVariant:
+      type: object
+      additionalProperties: false
+      required: [width, format, url, bytes]
+      properties:
+        width:
+          type: integer
+          enum: [480, 768, 1280, 1920]
+        format:
+          type: string
+          enum: [avif, webp]
+        url:
+          type: string
+          maxLength: 200
+        bytes:
+          type: integer
+          minimum: 1
+    MediaUsage:
+      type: object
+      additionalProperties: false
+      required: [owner, ownerLabel, publicPaths]
+      properties:
+        owner:
+          type: string
+          maxLength: 200
+        ownerLabel:
+          type: string
+          maxLength: 300
+        publicPaths:
+          type: array
+          maxItems: 84
+          items:
+            type: string
+            maxLength: 200
+    MediaPreview:
+      type: object
+      additionalProperties: false
+      required: [mediaId, thumbnailUrl, altEn]
+      properties:
+        mediaId:
+          $ref: '#/components/schemas/Id'
+        thumbnailUrl:
+          type: string
+          maxLength: 200
+        altEn:
+          type: string
+          maxLength: 300
+    MediaAsset:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - mimeType
+        - sizeBytes
+        - width
+        - height
+        - uploadedAt
+        - updatedAt
+        - version
+        - alt
+        - caption
+        - usableOnPublicPages
+        - thumbnailUrl
+        - variants
+        - usage
+      properties:
+        id:
+          $ref: '#/components/schemas/Id'
+        name:
+          type: string
+          maxLength: 200
+        mimeType:
+          type: string
+          enum: [image/jpeg, image/png, image/webp, image/avif]
+        sizeBytes:
+          type: integer
+          minimum: 1
+          maximum: 10485760
+        width:
+          type: integer
+          minimum: 1
+        height:
+          type: integer
+          minimum: 1
+        uploadedAt:
+          $ref: '#/components/schemas/Timestamp'
+        updatedAt:
+          $ref: '#/components/schemas/Timestamp'
+        version:
+          type: integer
+          minimum: 1
+        alt:
+          description: Alternative text, at most 300 characters per language
+          $ref: '#/components/schemas/LocalisedText'
+        caption:
+          description: Caption, at most 300 characters per language
+          $ref: '#/components/schemas/LocalisedText'
+        usableOnPublicPages:
+          type: boolean
+          description: False until English alternative text exists (FR-40)
+        thumbnailUrl:
+          type: string
+          maxLength: 200
+        variants:
+          type: array
+          maxItems: 8
+          items:
+            $ref: '#/components/schemas/MediaVariant'
+        usage:
+          type: array
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/MediaUsage'
+    MediaList:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, storage]
+      properties:
+        items:
+          type: array
+          maxItems: 48
+          items:
+            $ref: '#/components/schemas/MediaAsset'
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          const: 48
+        total:
+          type: integer
+          minimum: 0
+        storage:
+          $ref: '#/components/schemas/StorageUsage'
+    MediaMetadataUpdate:
+      type: object
+      additionalProperties: false
+      required: [version, name, alt, caption]
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        alt:
+          $ref: '#/components/schemas/LocalisedText'
+        caption:
+          $ref: '#/components/schemas/LocalisedText'
+
+    EnquiryStatus:
+      type: string
+      enum: [unhandled, handled]
+    EnquirySubject:
+      type: string
+      description: '`general` is "General enquiry" (default); `data_protection` is "Data protection request or complaint" (FR-19, LR-5)'
+      enum: [general, data_protection]
+    EnquiryBase:
+      type: object
+      required: [id, reference, name, email, subject, language, receivedAt, status, read, dataProtection, acknowledgeBy]
+      properties:
+        id:
+          $ref: '#/components/schemas/Id'
+        reference:
+          type: string
+          pattern: '^ENQ-[A-Z2-9]{6}$'
+        name:
+          type: string
+          maxLength: 100
+        email:
+          type: string
+          maxLength: 254
+        subject:
+          $ref: '#/components/schemas/EnquirySubject'
+        language:
+          $ref: '#/components/schemas/LanguageCode'
+        receivedAt:
+          $ref: '#/components/schemas/Timestamp'
+        status:
+          $ref: '#/components/schemas/EnquiryStatus'
+        read:
+          type: boolean
+        dataProtection:
+          type: boolean
+          description: Subject was data protection, or an Administrator marked it so (FR-42)
+        acknowledgeBy:
+          description: Received date plus 30 calendar days when `dataProtection` is true (LR-5)
+          oneOf:
+            - type: string
+              format: date
+            - type: 'null'
+    EnquirySummary:
+      allOf:
+        - $ref: '#/components/schemas/EnquiryBase'
+      type: object
+      unevaluatedProperties: false
+    Enquiry:
+      type: object
+      unevaluatedProperties: false
+      allOf:
+        - $ref: '#/components/schemas/EnquiryBase'
+        - type: object
+          required: [telephone, message, privacyTextVersion]
+          properties:
+            telephone:
+              oneOf:
+                - type: string
+                  maxLength: 20
+                - type: 'null'
+            message:
+              type: string
+              maxLength: 2000
+            privacyTextVersion:
+              type: string
+              maxLength: 50
+    EnquiryList:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, unreadCount]
+      properties:
+        items:
+          type: array
+          maxItems: 25
+          items:
+            $ref: '#/components/schemas/EnquirySummary'
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          const: 25
+        total:
+          type: integer
+          minimum: 0
+        unreadCount:
+          type: integer
+          minimum: 0
+    EnquiryUpdate:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        status:
+          $ref: '#/components/schemas/EnquiryStatus'
+        dataProtection:
+          type: boolean
+
+    SubscriberStatus:
+      type: string
+      enum: [active, unsubscribed]
+    Subscriber:
+      type: object
+      additionalProperties: false
+      required: [id, email, language, status, subscribedAt, unsubscribedAt, consentVersion]
+      properties:
+        id:
+          $ref: '#/components/schemas/Id'
+        email:
+          type: string
+          maxLength: 254
+        language:
+          $ref: '#/components/schemas/LanguageCode'
+        status:
+          $ref: '#/components/schemas/SubscriberStatus'
+        subscribedAt:
+          $ref: '#/components/schemas/Timestamp'
+        unsubscribedAt:
+          oneOf:
+            - $ref: '#/components/schemas/Timestamp'
+            - type: 'null'
+        consentVersion:
+          type: string
+          maxLength: 50
+    SubscriberList:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, activeTotal]
+      properties:
+        items:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/Subscriber'
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          const: 50
+        total:
+          type: integer
+          minimum: 0
+        activeTotal:
+          type: integer
+          minimum: 0
+    SubscriberExportRequest:
+      type: object
+      additionalProperties: false
+      required: [includeUnsubscribed]
+      properties:
+        includeUnsubscribed:
+          type: boolean
