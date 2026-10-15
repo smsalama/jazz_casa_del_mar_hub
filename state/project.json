@@ -135,6 +135,22 @@
       "role": "role-database-engineer",
       "task": "P4-T4",
       "tokens": 355625
+    },
+    {
+      "date": "2026-10-15",
+      "phase": "4 Design and architecture",
+      "role": "role-system-architect",
+      "task": "P4-T5a",
+      "tokens": 90000,
+      "note": "estimate: no subagent_tokens figure returned"
+    },
+    {
+      "date": "2026-10-15",
+      "phase": "4 Design and architecture",
+      "role": "role-requirements-analyst",
+      "task": "P4-T5b",
+      "tokens": 80000,
+      "note": "estimate: no subagent_tokens figure returned"
     }
   ],
   "tasks": [
@@ -300,7 +316,7 @@
       "role": "role-system-architect, role-requirements-analyst",
       "repo": "hub",
       "branch": "",
-      "status": "doing",
+      "status": "done",
       "depends_on": [
         "P4-T3",
         "P4-T4"
@@ -326,6 +342,18 @@
       "repo": "hub",
       "branch": "",
       "status": "todo",
+      "depends_on": [
+        "P4-T5"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P4-T8",
+      "title": "Data model: list order version (D-7) and D-2/D-3 follow-ups",
+      "role": "role-database-engineer",
+      "repo": "hub",
+      "branch": "p4-data-fix",
+      "status": "doing",
       "depends_on": [
         "P4-T5"
       ],
@@ -417,6 +445,30 @@
       "id": "Q12",
       "question": "Solicitor question pack Q1 to Q7 in docs/legal/questions-2026-10-15.md (needed before any hosting, not before the local build)",
       "for": "Steven (solicitor)",
+      "asked": "2026-10-15"
+    },
+    {
+      "id": "Q18",
+      "question": "OQ-22 suppression at newsletter sign-up (silent block for 36 months, or fresh consent overrides)",
+      "for": "Steven (T2)",
+      "asked": "2026-10-15"
+    },
+    {
+      "id": "Q19",
+      "question": "OQ-23 Russian \u0439 and \u0451 search handling (working answer: kept distinct)",
+      "for": "Steven (T2)",
+      "asked": "2026-10-15"
+    },
+    {
+      "id": "Q20",
+      "question": "OQ-24 concept notice 13 px below 640 px and 14 px above, exempt from 16 px minimum",
+      "for": "Steven (T2)",
+      "asked": "2026-10-15"
+    },
+    {
+      "id": "Q21",
+      "question": "OQ-25 first 3D frame budget 4 s, or 4.5 s if the spike misses",
+      "for": "Steven (T2)",
       "asked": "2026-10-15"
     }
   ]
