@@ -2,8 +2,8 @@
 
 - Client slug: jazz_casa_del_mar
 - Project slug: site
-- Task: P2-T1b (Product Owner), updated by P2-T3 on 2026-10-15 after the T1 approval
-- Status: updated after T1. Steven replied "Approve T1" (`approvals/T1-scope.md`), which approved section A of `docs/t1-decisions.md` (the MVP, the backlog promotions in C2 and the Won't list), his answers to OQ-1 to OQ-19, the legal and security adoptions, the accepted deferral of two-step verification and the repo names. He later answered OQ-20 ("no") and OQ-21 ("ignore booking"). See `docs/change-log.md` (CL-2, CL-3).
+- Task: P2-T1b (Product Owner), updated by P2-T3 and P2-T5 on 2026-10-15 after the T1 approval and the requirements gate re-check
+- Status: updated after T1. Steven replied "Approve T1" (`approvals/T1-scope.md`), which approved section A of `docs/t1-decisions.md` (the MVP, the backlog promotions in C2 and the Won't list), his answers to OQ-1 to OQ-19, the legal and security adoptions, the accepted deferral of two-step verification and the repo names. He later answered OQ-20 ("no") and OQ-21 ("ignore booking"). See `docs/change-log.md` (CL-2, CL-3, CL-4).
 - Sources: `docs/brief.md` (its "Decisions from Steven" section is authoritative), `docs/requirements.md`, `docs/stories.md`, `docs/assumptions.md`, `docs/traceability.md`, `docs/t1-decisions.md`, `docs/threat-model.md`, `docs/legal-register.md`.
 - Companion files: `docs/mvp.md` (the MVP built from the Must stories), `docs/change-log.md` (scope decisions).
 
@@ -16,25 +16,25 @@ The brief's goal is "Modernise and Re-design with high quality, modern, professi
 - **Could**: an analyst addition or a refinement with a cheaper substitute. Build only if Steven asks, or when a hosting condition (T1 section D) requires it.
 - **Won't this release**: an analyst addition or provisional feature that the smallest scope does without, approved as Won't at T1. Each carries a revisit trigger.
 - **Size**: S is a few days of one role, M about a week or two, L a multi week build with real technical risk. Sizes are rough and are for ordering, not for dating.
-- Counts are of active acceptance criteria. Seven criteria are WITHDRAWN in `docs/stories.md` (they keep their numbers and are not counted).
+- Counts are of active acceptance criteria. Seven criteria are WITHDRAWN and five are MOVED in `docs/stories.md` (they keep their numbers and are not counted).
 
 ## Summary
 
 | Priority | Stories | Size S | Size M | Size L | Active criteria |
 | --- | --- | --- | --- | --- | --- |
-| Must | 61 | 22 | 33 | 6 | 330 |
+| Must | 62 | 23 | 33 | 6 | 336 |
 | Should | 11 | 7 | 4 | 0 | 36 |
 | Could | 5 | 3 | 2 | 0 | 20 |
-| Won't this release | 3 | 0 | 2 | 1 | 15 |
-| Total | 80 | 32 | 41 | 7 | 401 |
+| Won't this release | 3 | 0 | 2 | 1 | 10 |
+| Total | 81 | 33 | 41 | 7 | 402 |
 
-- Must: 61 stories (330 active criteria). This is the MVP (see `docs/mvp.md`).
+- Must: 62 stories (336 active criteria). This is the MVP (see `docs/mvp.md`).
 - Should (11): US-12, US-18, US-23, US-24, US-29, US-35, US-58, US-74, US-77, US-78, US-80
 - Could (5): US-42, US-44, US-55, US-61, US-62
 - Won't this release (3): US-14, US-31, US-36
 - Criteria still provisional: 2 (AC-15.1 and AC-17.4, both on OQ-12, pending the solicitor's answer to Q3). Both sit in Must stories.
 
-Before T1 the backlog had 78 stories with 58 Must. The T1 amendments added two new stories (US-79 and US-80) and promoted US-46 and US-66, giving 61 Must. The Must set is still large. That is the direct result of what Steven asked for and approved: an immersive 3D site with six scenes, loaders, four languages, a form, a newsletter and an admin portal that edits all text and lists, with personal data handled properly, at no running cost, and to the agency accessibility standard.
+Before T1 the backlog had 78 stories with 58 Must. The T1 amendments added two new stories (US-79 and US-80) and promoted US-46 and US-66. The requirements gate then split US-81 out of US-36, giving 62 Must. The Must set is still large. That is the direct result of what Steven asked for and approved: an immersive 3D site with six scenes, loaders, four languages, a form, a newsletter and an admin portal that edits all text and lists, with personal data handled properly, at no running cost, and to the agency accessibility standard.
 
 ## Backlog
 
@@ -77,8 +77,8 @@ Every story, by story ID. "Depends on" lists stories that should be built first 
 | US-33 | Edit every piece of text in every language | FR-35 | Must | L | US-30, US-22 | Explicit ask (D3): edit titles and text in four languages. T1 (OQ-4): text, titles, images, links, list items and settings within fixed page designs; Steven approved this narrowing with "Approve T1" (A-38). |
 | US-34 | Add, remove and reorder items in lists | FR-36 | Must | L | US-33, US-38 | Explicit ask (D3): edit everything. Lists (venues, offers, FAQ, gallery and so on) hold most editable content. Rooms are edited but not added or deleted (OQ-20). |
 | US-35 | See which translations are missing | FR-37 | Should | M | US-33 | T1 (OQ-7): the admin portal flags gaps per page. The per page count (AC-35.1) is the minimum and can sit on the edit screen in US-33; the cross page missing translations screen can follow. |
-| US-36 | Save changes and see them go live | FR-38 | Won't this release | L | US-33, US-34, US-37 | T1 section A: Won't for draft, preview and version history (OQ-6: edits go live on save). Its five remaining criteria (AC-36.2, AC-36.4 to AC-36.7) describe live on save, which is delivered by the Must stories US-33, US-34, US-37 and US-38 and should be tested there (see Consistency notes). |
-| US-37 | Keep contact details and site-wide settings up to date | FR-39 | Must | M | US-30 | Decision D3 and brief Integrations: one place for the Book now URL, contact details, social links, optional concept sentence and provider details (LR-32). T1 (G-5) adds strict validation. |
+| US-36 | Preview and publish changes safely, with version history | FR-38 | Won't this release | L | US-33, US-34, US-37 | T1 section A: Won't. Draft, preview, publish step and version history are not built (OQ-6: edits go live on save). Its five live on save criteria moved to US-81 at the requirements gate (CL-4), so this story has no active criteria. Revisit only if Steven asks for drafts or history; new criteria would then be needed. |
+| US-37 | Keep contact details and site-wide settings up to date | FR-39 | Must | M | US-30 | Decision D3 and brief Integrations: one place for the Book now URL, contact details, social links, optional concept sentence and provider details (LR-32). T1 (G-5) adds strict validation, now with a criterion for the map and social links (AC-37.7). |
 | US-38 | Upload and manage photos | FR-40 | Must | M | US-30, US-68, US-39 | Explicit ask: upload photos, with alt text and captions in four languages. |
 | US-39 | Have uploaded photos prepared automatically | FR-41 | Must | M | US-38 | Without resizing, staff uploads would break the performance budgets and leak photo location data. Candidate to trim (not decided at T1): WebP only at three widths. |
 | US-40 | Read enquiries | FR-42 | Must | M | US-13, US-30 | Explicit ask: read enquiries. T1 (LR-5): label and "acknowledge by" date for data protection complaints. |
@@ -122,6 +122,7 @@ Every story, by story ID. "Depends on" lists stories that should be built first 
 | US-78 | Never lose or corrupt confirmed data | NFR-33 | Should | S | US-13, US-15, US-33 | Durable writes come with a normal embedded database. The two editors conflict check (AC-78.3) is an analyst addition and can follow. |
 | US-79 | Keep a record of security events | NFR-34 | Must | S | US-30, US-41, US-43 | New at T1 (G-2, NFR-34, stated Must). A plain record of sign ins, lockouts, exports, deletions and purge runs, because the audit log screen (US-44) is Could. Also carries AC-41.4 and AC-43.3. |
 | US-80 | Stay up under heavy or hostile traffic | NFR-35 | Should | M | US-13, US-38, US-30 | New at T1 (G-13, NFR-35). Body size limits, slow request timeout, job queues, long cache lifetimes and record caps protect a 1 CPU, 1 GB server. Residual risk is low for local review (threat model), so Should; promote before any hosting. |
+| US-81 | Saved changes go live | FR-38 | Must | S | US-30, US-33, US-34, US-37, US-38 | Split out of US-36 at the requirements gate (CL-4). T1 approved edits going live on save (OQ-6), and staff edits are pointless unless they appear on the public site, so it is Must. Small as a story, but it constrains the architecture (public pages must reflect saved changes within 60 seconds with no rebuild or restart, FR-38); the architect may find it larger. |
 
 ## What changed since the first backlog
 
@@ -131,9 +132,10 @@ Every story, by story ID. "Depends on" lists stories that should be built first 
 | US-66 Stop automated abuse | Should, M | Must, M | T1 section C2 (G-10): no CAPTCHA and no second factor, so rate limits are the main abuse control. |
 | US-79 Keep a record of security events | did not exist | Must, S | New story for NFR-34 (G-2, stated Must). |
 | US-80 Stay up under heavy or hostile traffic | did not exist | Should, M | New story for NFR-35 (G-13). The threat model does not state a priority; low residual risk for local review, so Should. Needs Steven's confirmation if he wants it Must. |
+| US-81 Saved changes go live | did not exist | Must, S | Split out of US-36 at the requirements gate (CL-4). Carries FR-38 (AC-81.1 to AC-81.5). No scope change: T1 approved edits going live on save. |
 | US-14 Enquiry email | Won't, M | Won't, M | Confirmed at T1 (OQ-2: admin portal only). |
 | US-31 Two-step verification | Won't, M | Won't, M | Confirmed at T1 as an accepted risk (section D) under condition G-22. |
-| US-36 Save changes and see them go live | Won't, L (draft and publish) | Won't, L | Confirmed at T1 (OQ-6). The story was retitled by the analyst and now holds only live on save criteria (see Consistency notes). |
+| US-36 Preview and publish changes safely, with version history | Won't, L | Won't, L | Confirmed at T1 (OQ-6). Its five live on save criteria moved to US-81; the story keeps only the parts that are not built and has no active criteria. |
 | US-44 Review who did what | Could, M | Could, M | Unchanged. Its minimum (a record of events) moved into the Must story US-79. |
 | US-26 Section scenes | Must, L (five scenes proposed as a cut candidate) | Must, L | OQ-9: Steven approved a scene on each section page (six in all). The "hero plus two" cut was not taken. |
 | US-32, US-70 Accounts and authorisation | Must (two roles proposed) | Must | OQ-1: one Administrator role. Editor criteria withdrawn. |
@@ -164,7 +166,7 @@ Still open, inside Must or Should stories. Steven did not decide these at T1; th
 
 These are places where a story's priority and its acceptance criteria point in different directions. They do not change any priority approved at T1. Where a fix needs a priority change, it needs Steven's yes in chat.
 
-- **US-36 (Won't) holds the only criteria for FR-38.** AC-36.2, AC-36.4 and AC-36.5 to AC-36.7 describe live on save. Edits cannot work without it, so the Must stories US-33, US-34, US-37 and US-38 deliver it. Recommend the analyst move these five criteria into those stories (or into a new small Must story) so FR-38 has an active criterion in a story that is built. Until then QA should run them with US-33 and US-34.
+- **US-36 (Won't) has no active criteria.** Its live on save criteria moved to the Must story US-81 (CL-4), so FR-38 is carried by a built story. If Steven ever reinstates drafts, preview or history, new criteria are needed (the two original ones are withdrawn).
 - **US-18 (Should) versus US-60 and US-17 (Must).** The Cookie notice page ships with US-1. AC-60.2 and AC-60.5 expect the notice to list the pause choice and the admin session cookie. Either promote US-18 (size S) or accept that those two criteria are checked once the page content is written.
 - **US-62 (Could) versus US-46 (Must).** The 35 day expiry is tested in AC-46.3, so no gap in behaviour. The extra statement criteria duplicate AC-17.1.
 - **US-12 (Should).** Error pages are covered for the concept notice and noindex by Must criteria; only localisation is Should.
@@ -183,7 +185,7 @@ Not a schedule (there are no dates). The order puts the highest technical risk f
 2. **Public content in English.** US-2 to US-11, US-19, US-21, then US-22 (language structure).
 3. **Motion.** US-25, US-28, US-27, US-54, US-53, then US-26 (six scenes).
 4. **Forms and personal data.** US-13, US-15, US-16, US-17, US-59, US-67, US-66, US-43.
-5. **Admin portal.** US-45 (first Administrator), US-30, US-64, US-65, US-70, US-79, US-32, US-37, US-68, US-38, US-39, US-33, US-34, US-40, US-41, US-51, US-46.
+5. **Admin portal.** US-45 (first Administrator), US-30, US-64, US-65, US-70, US-79, US-32, US-37, US-68, US-38, US-39, US-33, US-34, US-81, US-40, US-41, US-51, US-46.
 6. **Four languages complete and hardening.** US-73, then US-24, US-23, US-35 (Should), US-47 to US-50, US-52, US-69, US-76. T3 verdict (NFR-36) on the running package.
 7. **Remaining Should and Could** only if Steven asks after the first review: US-12, US-18, US-29, US-58, US-74, US-77, US-78, US-80, then US-42, US-44, US-55, US-61, US-62.
 
