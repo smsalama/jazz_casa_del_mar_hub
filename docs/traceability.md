@@ -223,5 +223,5 @@
 | OQ-17 | Resolved at T1 | FR-17, FR-18, NFR-30 | none | none |
 | OQ-18 | Resolved at T1 | FR-1 | none | none |
 | OQ-19 | Resolved at T1 | FR-7, FR-18 | none | none |
-| OQ-20 | Open (found in P2-T2) | FR-1, FR-36 | FR-36 | AC-34.6 |
-| OQ-21 | Open (found in P2-T2) | FR-11, FR-39 | FR-11 | AC-10.5 |
+| OQ-20 | Resolved 2026-10-15 (no seventh room type) | FR-1, FR-36 | none | none |
+| OQ-21 | Resolved 2026-10-15 (keep default resort page URL) | FR-11, FR-39 | none | none |

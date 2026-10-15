@@ -95,7 +95,7 @@ Requirements: FR-11
 - AC-10.2 [FR-11] Given any Book now link, when a tester activates it, then it opens in a new tab, the link has `rel="noopener noreferrer"`, and the original tab remains on the concept site.
 - AC-10.3 [FR-11] Given any Book now link in each language, when a tester reads its accessible name, then it includes the words for "opens in a new tab" in that language.
 - AC-10.4 [FR-11] Given the whole public site, when a tester searches pages and forms for fields for dates, guests, room availability, price or card details, then there are none.
-- AC-10.5 [FR-11] Given the initial setting, when a tester reads the Book now URL, then it equals `https://www.jazhotels.com/hoteldetail/57-egypt-hurghada-jaz-elite-casa-del-mar-beach`. Provisional (OQ-21).
+- AC-10.5 [FR-11] Given the initial setting, when a tester reads the Book now URL, then it equals `https://www.jazhotels.com/hoteldetail/57-egypt-hurghada-jaz-elite-casa-del-mar-beach`. (OQ-21 resolved 2026-10-15: keep this default.)
 - AC-10.6 [FR-11] Given any page with a Book now link, in each language, when a tester reads the text next to each Book now link, then the label "External site, not connected with this concept" (in the page language) is visible without hover or focus, its computed font size is at least 14 CSS pixels, its contrast meets NFR-4, and the link's `aria-describedby` points to it.
 
 ## US-11 Contact the resort by phone, chat or social media
@@ -348,7 +348,7 @@ Requirements: FR-36
 - AC-34.3 [FR-36] Given a list item, when an Administrator selects Delete, then a confirmation names the item, and the item is deleted only after the Administrator confirms.
 - AC-34.4 [FR-36] Given the gallery has 12 images, when an Administrator removes one, then the delete succeeds and the edit screen shows a warning that the gallery has fewer than the minimum of 12.
 - AC-34.5 [FR-36] Given the lists named in FR-36 (rooms, dining venues, pools and beach items, activities and facilities items, offers, gallery images, FAQ questions, nearby attractions, room features), when a tester looks for a manage screen for each, then there is one for each.
-- AC-34.6 [FR-36] Given the rooms list, when a tester looks for Add and Delete controls, then there are none for room types, and each of the six room entries can be edited. Provisional (OQ-20).
+- AC-34.6 [FR-36] Given the rooms list, when a tester looks for Add and Delete controls, then there are none for room types, and each of the six room entries can be edited. (OQ-20 resolved 2026-10-15: no seventh room type.)
 
 ## US-35 See which translations are missing
 As a member of resort staff, I want to see what is not yet translated, so that I can complete all four languages.

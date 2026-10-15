@@ -420,3 +420,9 @@ Counts after the changes: 48 FR, 36 NFR, 80 stories, 401 active acceptance crite
 - Nothing in the task was left unapplied.
 - Judgements flagged for confirmation: A-38 (reading "Approve T1" as the explicit confirmation of OQ-4), OQ-20 and OQ-21 (new open items), A-27 (lab profile L2 values), A-34 (soft hyphen exception), A-35 (machine assisted translations of the fixed concept sentence and the title suffix), the default Book now address (A-33), the Forbidden claims list translations (glossary), and the 8 hour life of the public form token (FR-20).
 - US-31 stays Won't. US-46 (backup) and US-66 (rate limiting) are recorded as Must in the requirements; the backlog, MVP and change log are for the Product Owner to update.
+
+## Resolved after T1 (2026-10-15, Orchestrator)
+
+- OQ-20: Steven answered "no". Staff cannot add or delete a room type; the working answer stands. AC-34.6 is no longer provisional.
+- OQ-21: Steven answered "ignore booking". Read as: keep the default Book now URL (the resort page on the group site) and do not pursue the booking engine address. Book now stays in scope. AC-10.5 is no longer provisional.
+- Provisional criteria now: AC-15.1 and AC-17.4 (OQ-12, pending solicitor questions Q3 and Q7).
