@@ -3,7 +3,7 @@
 - Task: P2-T1a (Requirements Analyst), amended by P2-T2 after the T1 scope approval
 - Source: `docs/requirements.md` (requirements FR-n and NFR-n, open questions OQ-n)
 - Format: each story has an ID (US-n) and numbered acceptance criteria (AC-n.m). Every criterion is written as Given / When / Then, is tagged with the requirement or requirements it checks (in square brackets), and can be decided pass or fail by a person or a test without interpretation.
-- A criterion marked **Provisional (OQ-n)** depends on an item still listed under "Open after T1" in `docs/requirements.md` (OQ-12, OQ-20 or OQ-21) and must be re-checked when it is answered. A criterion shown as **WITHDRAWN** keeps its number but is no longer a requirement of this release; it is not counted in coverage. Stories marked "Status at T1" are not built in the first release; their criteria apply if the story is reinstated. Priority notes at T1 are the analyst's record only; the backlog belongs to the Product Owner.
+- A criterion marked **Provisional (OQ-n)** depends on an item still listed under "Open after T1" in `docs/requirements.md` (after the answers to OQ-20 and OQ-21 only OQ-12 remains) and must be re-checked when it is answered. A criterion shown as **WITHDRAWN** keeps its number but is no longer a requirement of this release. A criterion shown as **MOVED** keeps its number but now lives under another number (for example in the story that carries the built behaviour); neither WITHDRAWN nor MOVED criteria are counted in coverage. Stories marked "Status at T1" are not built in the first release; their criteria apply if the story is reinstated. Priority notes at T1 are the analyst's record only; the backlog belongs to the Product Owner.
 - Test data is synthetic only (for example `Test Visitor`, `visitor.one@example.com`, `+44 20 7946 0000`).
 - Terms such as R1, L1, 3D mode, fallback mode, four languages and page inventory are defined in the glossary of `docs/requirements.md`.
 
@@ -68,7 +68,7 @@ Requirements: FR-7
 
 - AC-7.1 [FR-7] Given the Offers page, when a tester counts offers, then there are at least 3, each with a title, a description of at least 25 words, the label "Sample offer" in the page language and a Book now link.
 - AC-7.2 [FR-7] Given the Offers page in all four languages, when a tester searches the visible text for the characters £, $, €, ₽, the codes EGP, USD, EUR, GBP, RUB, and the symbol %, then there are no matches.
-- AC-7.3 [FR-7] Given the Offers page and the Home offers summary in all four languages, when a tester searches the visible text for any digit and for any term in the Forbidden claims list that expresses scarcity, urgency or a deadline (for example "limited time", "last rooms", "only today" and the German, Italian and Russian terms listed in the glossary), then there are no matches.
+- AC-7.3 [FR-7] Given the offer items on the Offers page (the title, description, "Sample offer" label and Book now link text of every offer) and the offer titles in the Home offers summary, in all four languages, when a tester searches that text for any digit and for any of these terms (whole words, ignoring case), then there are no matches. English: limited time, last chance, last rooms, hurry, countdown, expires, only today. German: nur heute, nur für kurze Zeit, letzte Chance, letzte Zimmer, beeilen. Italian: solo oggi, tempo limitato, ultima occasione, ultime camere, affrettati. Russian: только сегодня, ограниченное время, последний шанс, последние номера, спешите. The page header, footer, contact details and copyright year are not searched.
 
 ## US-8 Look through the photo gallery
 As a prospective guest, I want to view the resort photos in large size, so that I can judge the place.
@@ -123,13 +123,13 @@ Requirements: FR-19, FR-20
 - AC-13.1 [FR-19] Given the Contact Us form, when a tester inspects it, then it has the fields name, email, telephone (marked optional), subject (the choices "General enquiry", selected by default, and "Data protection request or complaint"), message and a privacy information line next to the send button that links to the Privacy notice; it has no checkbox of any kind and no other field a person can see.
 - AC-13.2 [FR-19] Given the form, when a tester submits it empty, then it is not accepted, and an error summary at the top and a message beside each of name, email and message name the field and the problem, in the page language.
 - AC-13.3 [FR-19] Given the form, when a tester enters a name of 1 character, an email of `not-an-email`, a telephone of `abc`, a message of 9 characters and a message of 2001 characters in turn, then each is refused with a message naming that field, in browser and on the server (the server check is tested with the browser check bypassed).
-- AC-13.4 [FR-19, FR-20] Given the form filled with `Test Visitor`, `visitor.one@example.com`, `+44 20 7946 0000`, a message of 40 characters when the tester submits, then a confirmation page in the page language shows a reference matching `ENQ-[A-HJ-NP-Z2-9]{6}`.
+- AC-13.4 [FR-19, FR-20] Given the form filled with `Test Visitor`, `visitor.one@example.com`, `+44 20 7946 0000`, and a message of 40 characters, when the tester submits, then a confirmation page in the page language shows a reference matching `ENQ-[A-HJ-NP-Z2-9]{6}`.
 - AC-13.5 [FR-20] Given the submission in AC-13.4, when an Administrator opens the enquiry list, then an enquiry with that reference exists holding the name, email, telephone, subject, message, page language, time received and privacy information version.
 - AC-13.6 [FR-20] Given the hidden spam trap field is filled in by a script, or the form token is altered, when it submits, then no enquiry is stored, the visible retry message of AC-13.10 is shown, the typed values are kept, and the response does not say which test failed.
 - AC-13.7 [FR-20] Given JavaScript is turned off, when a tester completes AC-13.4, then the same confirmation is shown.
 - AC-13.8 [FR-20] Given the data store is made unavailable by a test hook, when a tester submits a valid form, then an error message is shown, the typed values are still in the fields, and no confirmation or reference is shown.
 - AC-13.9 WITHDRAWN at T1 (LR-2: the contact form has no consent tick, see AC-13.1).
-- AC-13.10 [FR-20] Given a visitor submits a valid form 1 second after it was displayed, when the server responds, then no enquiry is stored, a visible message in the page language ("We could not send your message. Please check it and send it again.") is shown, every typed value is still in its field and focus is on the message; and when the visitor sends again 2 or more seconds later, then the enquiry is stored and the confirmation is shown.
+- AC-13.10 [FR-20] Given a visitor submits a valid form 1 second after it was displayed, when the server responds, then no enquiry is stored, a visible message in the page language ("We could not send your message. Please check it and send it again.") is shown, every typed value is still in its field and keyboard focus is on the retry message element (the element with `role="alert"` at the top of the form, which has `tabindex="-1"`); and when the visitor sends again 2 or more seconds later, then the enquiry is stored and the confirmation is shown.
 - AC-13.11 [FR-19, FR-20] Given the subject "Data protection request or complaint" is chosen and the form is otherwise valid, when it is submitted, then the stored enquiry has that subject.
 
 ## US-14 Let staff know by email when an enquiry arrives (optional)
@@ -210,8 +210,8 @@ Requirements: FR-18
 
 - AC-21.1 [FR-18] Given the licence register, when a tester lists every image, font and 3D input file (model, texture, HDR environment map, material and generated asset) in the release package, then each has an entry with source, licence and date, and no entry has the licence "unknown".
 - AC-21.2 [FR-18] Given the whole public site and the package, when a tester searches file contents and recorded network requests for the host name `jazhotels.com`, then it appears in no image address, font address, script or stylesheet, and no request is made to it while pages load. (The Book now link, if set to a jazhotels.com address, is exempt because it is a link and not a request.)
-- AC-21.3 [FR-18] Given the visible text of all 84 public pages, when a tester searches it for every term in the Forbidden claims list (whole words, ignoring case, in the language of the page), and inspects every image file by file name and by eye for a logo or badge of JAZ or Tripadvisor, then there are no matches and no such logo or badge.
-- AC-21.4 [FR-18] Given a list of hashes of every sequence of 8 consecutive words in the text of the current resort page (generated on the day of the test when the page is reachable, otherwise the most recent saved list, with its date stated in the test report), when a tester hashes every 8 word sequence of the English public text and compares the two lists, then no hash is in both.
+- AC-21.3 [FR-18] Given the visible text of all 84 public pages other than the Privacy notice, Cookie notice, Terms, Accessibility statement, Newsletter unsubscribe and error pages (which may need words such as "expires" or "certified" for cookie lifetimes and legal statements), when a tester searches it for every term in the Forbidden claims list (whole words, ignoring case, in the language of the page), then there are no matches; and given every image file of all 84 pages, when a tester inspects each by file name and by eye for a logo or badge of JAZ or Tripadvisor, then there is none (this image check has no page exemption).
+- AC-21.4 [FR-18] Given the dated list of hashes of every sequence of 8 consecutive words in the text of the current resort page that the package ships (generated before release, FR-18), and, when the live resort page is reachable at test time, a list freshly generated from it, when a tester hashes every 8 word sequence of the English public text and compares it with each list, then no hash is in either list; and if the live page is unreachable, then the comparison with the fresh list is skipped and the test report says so and states the date of the shipped list.
 - AC-21.5 [FR-18] Given the main content of every page other than the Privacy notice, Cookie notice, Terms, Accessibility statement, Newsletter unsubscribe and error pages, in all four languages (excluding header, footer, contact details, form hints and the gallery counter), when a tester extracts every digit sequence, then each is a count of 4, 5, 6 or 10 used to count items the page lists, list numbering, or a copyright year, and none states a size, distance, time or capacity.
 
 ## Visitor stories: languages
@@ -257,7 +257,7 @@ Requirements: FR-27
 As a prospective guest, I want each main section to open with its own scene, so that browsing feels immersive and varied.
 Requirements: FR-28
 
-- AC-26.1 [FR-28] Given the Rooms and suites, Dining, Pools and beach, Activities and facilities and Location pages loaded in 3D mode, when a tester loads each, then each shows a motion scene whose top edge lies within the first viewport height of the page.
+- AC-26.1 [FR-28] Given the Rooms and suites, Dining, Pools and beach, Activities and facilities and Location pages loaded in 3D mode, when a tester loads each, then each shows a 3D scene (a canvas rendered by the 3D engine, which may be driven by scrolling) whose top edge lies within the first viewport height of the page.
 - AC-26.2 [FR-28] Given each of those pages in fallback mode, when a tester loads it, then a static image replaces the scene and no scene code or 3D asset is requested.
 - AC-26.3 [FR-27, FR-28] Given the Home page and the five section pages, when a tester lists the root .glb file or scene module requested by each, then there are six different files and no two pages request the same root file.
 
@@ -322,10 +322,10 @@ Requirements: FR-34
 
 - AC-32.1 [FR-34] Given a signed in Administrator, when they create an account with the email `admin.two@example.com` and a temporary password, then the new user can sign in, is forced to change the password at first sign in, and can then use every admin function.
 - AC-32.2 [FR-34] Given an account, when an Administrator disables it, then its next request is refused and its sign in is refused until enabled; and deleting it removes it from the account list.
-- AC-32.3 [FR-34] Given only one active Administrator, when that Administrator tries to delete, disable or demote their own account, then the action is refused with a message.
+- AC-32.3 [FR-34] Given only one active Administrator, when that Administrator tries to delete or disable their own account, then the action is refused with a message.
 - AC-32.4 [FR-34] Given a user who forgot their password, when an Administrator sets a new temporary password for them, then the user can sign in with it without any email being sent.
 - AC-32.5 WITHDRAWN at T1 (OQ-1 settled as one Administrator role; there is no Editor role to restrict).
-- AC-32.6 [FR-34, NFR-20] Given any user, when they use Change password with the current password and a new valid password, then all of the account's sessions, including the current one, end immediately, and the user can sign in with the new password and not with the old.
+- AC-32.6 [FR-34, NFR-20] Given any user, when they use Change password with the current password and a new valid password, then all of the account's sessions, including the current one, end immediately, the sign in form is shown, and the user can sign in with the new password and not with the old.
 - AC-32.7 [FR-34] Given an existing account, when a tester runs the documented server side password reset command and signs in with the temporary password it prints, then sign in succeeds and a password change is forced.
 - AC-32.8 [FR-34] Given an account locked by 5 failed attempts, when a tester runs the documented unlock command for it, then the next sign in with the correct password succeeds within the lock period.
 
@@ -358,18 +358,18 @@ Requirements: FR-37
 - AC-35.2 [FR-37] Given the missing translations screen, when an Administrator filters by Russian, then it lists every field with no Russian value and no field that has one.
 - AC-35.3 [FR-37] Given a field is filled in for the missing language and saved, when the Administrator reloads the missing translations screen filtered by that language, then the field is no longer listed.
 
-## US-36 Save changes and see them go live
-As a member of resort staff, I want to check my changes before the public sees them, so that mistakes do not go live.
+## US-36 Preview and publish changes safely, with version history
+As a member of resort staff, I want to preview my changes before the public sees them, publish them as a separate step and restore an earlier version, so that mistakes can be undone.
 Requirements: FR-38
-Status at T1: draft, preview, publish and version history are not built (Won't; OQ-6 settled as edits live on save). AC-36.2 and AC-36.4 and the new AC-36.5 to AC-36.7 stay in scope because saving must go live; the Product Owner decides which story carries them.
+Status at T1: not built this release (Won't; OQ-6 settled as edits live on save). Draft, preview, publish step and version history are not built. Both of its original criteria are WITHDRAWN and the five built live on save criteria have MOVED to US-81 (FR-38). The story is kept so the T1 record stays literal.
 
 - AC-36.1 WITHDRAWN at T1 (OQ-6: there is no draft or preview).
-- AC-36.2 [FR-38] Given an Administrator changes the English text of a page and saves, when a visitor loads the public page within 60 seconds, then it shows the new text, with no software restart or rebuild.
+- AC-36.2 MOVED to AC-81.1 (OQ-6: the built live on save behaviour is carried by US-81; US-36 keeps only the parts that are Won't).
 - AC-36.3 WITHDRAWN at T1 (OQ-6: there is no version history).
-- AC-36.4 [FR-38] Given unsaved changes in an edit screen, when the Administrator tries to leave it, then a warning appears and the Administrator can stay.
-- AC-36.5 [FR-38] Given an offer title that is shown on both the Offers page and the Home offers summary, when an Administrator changes it and saves, then both pages show the new title within 60 seconds.
-- AC-36.6 [FR-38] Given the Book now URL and the optional concept sentence, when an Administrator changes them and saves, then on all 84 public pages every Book now link and the concept notice show the new values within 60 seconds.
-- AC-36.7 [FR-38] Given a photo used on two pages, when an Administrator changes its alternative text or caption and saves, then both pages show the new text within 60 seconds.
+- AC-36.4 MOVED to AC-81.2 (OQ-6: the built live on save behaviour is carried by US-81; US-36 keeps only the parts that are Won't).
+- AC-36.5 MOVED to AC-81.3 (OQ-6: the built live on save behaviour is carried by US-81; US-36 keeps only the parts that are Won't).
+- AC-36.6 MOVED to AC-81.4 (OQ-6: the built live on save behaviour is carried by US-81; US-36 keeps only the parts that are Won't).
+- AC-36.7 MOVED to AC-81.5 (OQ-6: the built live on save behaviour is carried by US-81; US-36 keeps only the parts that are Won't).
 
 ## US-37 Keep contact details and site-wide settings up to date
 As a member of resort staff, I want one place to change phone numbers, links and the Book now address, so that every page stays correct.
@@ -381,6 +381,7 @@ Requirements: FR-39
 - AC-37.4 [FR-39, FR-17] Given the settings screen and the configuration file, when a tester looks for any setting that hides the concept notice, edits the fixed concept sentence or the title suffix, or changes the robots rules, then there is none.
 - AC-37.5 [FR-39] Given the telephone and WhatsApp fields, when an Administrator enters `+44 20 7946 0001`, then the save is accepted; and when the Administrator enters `+44-20-7946-0001`, `4420abc` or `++44`, then each save is refused; and given the email field, `not-an-email` is refused.
 - AC-37.6 [FR-39, FR-16] Given the provider details in settings, when a tester reads them on a fresh install, then each shows the marked placeholder "to be confirmed"; and when an Administrator saves the legal name `Test Provider Ltd`, then the Terms page in every language shows it within 60 seconds.
+- AC-37.7 [FR-39] Given the Google Maps link field and each of the five social link fields (Instagram, Facebook, LinkedIn, X, YouTube), when an Administrator enters `https://example.com/page`, then the save is accepted; and when the Administrator enters `http://example.com`, `javascript:alert(1)`, `https://user:pw@example.com` or a URL of 2,049 characters, then each save is refused with a message naming the field; and when a social link field is left empty, then the save is accepted and no link for that network is shown (AC-11.3), while an empty Google Maps link is refused.
 
 ## US-38 Upload and manage photos
 As a member of resort staff, I want to upload photos and describe them in four languages, so that the gallery and pages show our pictures.
@@ -466,7 +467,7 @@ Requirements: FR-47
 - AC-45.1 [FR-47] Given a clean computer with the documented prerequisites and the release package, when a tester follows the install and start steps, then the site opens at a local address and shows the Home page in 3D mode or fallback mode.
 - AC-45.2 [FR-47] Given the site is running with default configuration, when a tester requests it from another computer on the same network, then the connection is refused.
 - AC-45.3 [FR-47] Given a first start with no Administrator, when a tester requests any admin address, then it is refused; and the first Administrator can be created only with the documented server side command, or on a setup screen that requires a single use setup code printed on the server console, which fails after 60 minutes (1 minute in a test configuration) and after one use; and there is no default account.
-- AC-45.4 [FR-47, NFR-28] Given the first start, when a tester visits the 84 public pages, then no page text contains any of the tokens `TODO`, `TBD`, `lorem`, `ipsum`, `XXX`, `undefined`, `null`, `{{`, `}}` or `%s`, and each language has the same number of non-empty strings as English.
+- AC-45.4 [FR-47, NFR-28] Given the first start, when a tester visits the 84 public pages, then no page text contains, matched case sensitively, any of the tokens `TODO`, `TBD`, `XXX`, `undefined`, `NaN`, `[object Object]`, `(null)`, `{{`, `}}`, `%s` or `%d`, or, ignoring case, the words `lorem ipsum`; and each language has the same number of non-empty strings as English.
 - AC-45.5 [FR-47] Given the install and run, when a tester watches network connections, then the software makes no connection to any outside address.
 - AC-45.6 [FR-47] Given the package, when a tester opens the draft record of processing activities, then it lists purposes, categories of people and data, recipients, transfers, retention per the Retention schedule and a security summary, and is marked "draft for the controller to complete".
 
@@ -532,7 +533,7 @@ Requirements: NFR-5
 - AC-51.1 [NFR-5] Given the sign in page, when a tester pastes a password and a code into the fields, then both are accepted; and the fields carry `autocomplete` values `username`, `current-password` and, only if two-step verification is built, `one-time-code`.
 - AC-51.2 [NFR-5] Given the sign in page and enrolment, when a tester looks for a puzzle, image selection or character transcription, then there is none.
 - AC-51.3 [NFR-5] Given an idle session with 28 minutes elapsed (test configuration), when the tester waits 2 more minutes, then a warning dialog appeared at least 2 minutes before expiry, it is announced to a screen reader, and activating Stay signed in extends the session.
-- AC-51.4 [NFR-5] Given a multi-step admin process (enrolment, first sign in password change), when a tester completes it, then no value already given in that process is asked for again.
+- AC-51.4 [NFR-5] Given the forced password change at first sign in, when a tester completes it, then within the change process the email address and the temporary password are not asked for again (the form asks only for the new password and its confirmation); and when the change ends all sessions as required by NFR-20, then the sign in form that follows is a separate process in which the email address and the new password are entered, and a test that checks for repeated entry treats that form as a new process.
 
 ## Non-functional stories: performance and motion
 
@@ -844,3 +845,14 @@ Requirements: NFR-35
 - AC-80.3 [NFR-35] Given 5 simultaneous image uploads and 5 simultaneous sign ins, when a tester watches the processes, then at most 1 image job and 2 password hash computations run at once, the rest are queued, and all requests complete.
 - AC-80.4 [NFR-35] Given any fingerprinted static or 3D asset, when a tester inspects the response, then `Cache-Control` has a `max-age` of at least 31,536,000 seconds and the file name changes when the content changes.
 - AC-80.5 [NFR-35, FR-20] Given the cap on stored enquiries is set to 10 in a test configuration, when 8 enquiries are stored then an admin warning shows; and when 10 are stored then the next submission is refused with the visible error message of FR-20 and nothing is stored.
+
+## US-81 Saved changes go live
+As a member of resort staff, I want a change I save to appear on the public site at once without a rebuild or restart, so that visitors always see current information.
+Requirements: FR-38
+Origin: carries the live on save behaviour of FR-38 (OQ-6, T1). It replaces AC-36.2, AC-36.4, AC-36.5, AC-36.6 and AC-36.7, which are marked MOVED in US-36.
+
+- AC-81.1 [FR-38] Given an Administrator changes the English text of a page and saves, when a visitor loads the public page within 60 seconds, then it shows the new text, with no software restart or rebuild.
+- AC-81.2 [FR-38] Given unsaved changes in an edit screen, when the Administrator tries to leave it, then a warning appears and the Administrator can stay.
+- AC-81.3 [FR-38] Given an offer title that is shown on both the Offers page and the Home offers summary, when an Administrator changes it and saves, then both pages show the new title within 60 seconds.
+- AC-81.4 [FR-38] Given the Book now URL and the optional concept sentence, when an Administrator changes them and saves, then on all 84 public pages every Book now link and the concept notice show the new values within 60 seconds.
+- AC-81.5 [FR-38] Given a photo used on two pages, when an Administrator changes its alternative text or caption and saves, then both pages show the new text within 60 seconds.

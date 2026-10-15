@@ -2,7 +2,7 @@
 
 - Task: P2-T1a (Requirements Analyst), amended by P2-T2 after the T1 scope approval
 - Sources: `docs/brief.md`, `docs/requirements.md`, `docs/t1-decisions.md` (approved by Steven at T1), `docs/legal-register.md`, `docs/threat-model.md`, `gates/requirements.json`
-- IDs: assumptions are A-n, dependencies are DEP-n, risks are RSK-n, exclusions are EXC-n. Open questions are OQ-n and live in `docs/requirements.md`. Steven's decisions are D1 to D7 as numbered in the brief's section "Decisions from Steven (2026-10-15)". Legal register rows are LR-n, security gaps G-n and gate findings M-n and L-n. After T1 the only open items are OQ-12, OQ-20 and OQ-21; the project risk register is `docs/risk-register.md`, and RSK-1 to RSK-20 below are the requirements-phase risks that it incorporates.
+- IDs: assumptions are A-n, dependencies are DEP-n, risks are RSK-n, exclusions are EXC-n. Open questions are OQ-n and live in `docs/requirements.md`. Steven's decisions are D1 to D7 as numbered in the brief's section "Decisions from Steven (2026-10-15)". Legal register rows are LR-n, security gaps G-n and gate findings M-n and L-n. After T1 and the answers to OQ-20 and OQ-21 the only open item is OQ-12; the project risk register is `docs/risk-register.md`, and RSK-1 to RSK-20 below are the requirements-phase risks that it incorporates.
 - An assumption is something the analyst believes true or has chosen to proceed on without confirmation. Unlike an open question, an assumption does not block work; each one says who confirms it.
 
 ## Steven's decisions and where they land
@@ -135,7 +135,7 @@ Added after T1 (P2-T2) from the approved legal and security reviews. These come 
 
 ## Dependencies
 
-- **DEP-1 Answers to open items.** OQ-1 to OQ-19 were settled at T1. Still open: OQ-12 (controller name, solicitor Q3 and lawful basis for the contact form Q7), OQ-20 (seventh room type) and OQ-21 (booking engine address). The solicitor's questions Q1 to Q7 (`docs/legal/questions-2026-10-15.md`) must all be answered before any hosting (OQ-13). Provisional criteria (AC-10.5, AC-15.1, AC-17.4, AC-34.6) are re-checked once answered.
+- **DEP-1 Answers to open items.** OQ-1 to OQ-19 were settled at T1, and OQ-20 (seventh room type: no) and OQ-21 (booking engine address: keep the default) were answered by Steven later on 2026-10-15. Still open: OQ-12 only (controller name, solicitor Q3 and lawful basis for the contact form Q7). The solicitor's questions Q1 to Q7 (`docs/legal/questions-2026-10-15.md`) must all be answered before any hosting (OQ-13). The provisional criteria (AC-15.1 and AC-17.4) are re-checked once OQ-12 is answered.
 - **DEP-2 UK legal review.** Phase 3 produced `docs/legal-register.md` (research, not legal advice). Rows needing a qualified lawyer, and the solicitor's answers, are still pending and gate any hosting. The UK legal role provides research support only.
 - **DEP-3 Brand extraction (Phase 4).** The UI/UX Designer extracts the brand from the current site (colours, fonts, tone); the brief says fonts and the full palette were not visible. NFR-30 cannot be fully checked until this is done.
 - **DEP-4 Architecture decisions (Phase 4).** The System Architect chooses the stack, data storage, authentication approach, 3D library, language handling and testing approach, and confirms or adjusts the budgets in A-12. Requirements avoid naming technology.
@@ -143,7 +143,7 @@ Added after T1 (P2-T2) from the approved legal and security reviews. These come 
 - **DEP-6 Test devices and tools.** Physical R1 and R2 phones, NVDA on Windows (free), VoiceOver on an iPhone, and the free tools axe-core and Lighthouse are needed for NFR-1, NFR-3, NFR-6 and NFR-8. Without physical phones the frame rate and screen reader checks use the executable alternatives in A-27 and the results are labelled "emulated".
 - **DEP-7 3D authoring.** The agency creates 3D models itself (brief). A free authoring tool (for example Blender) and a free export and compression toolchain are assumed; every tool and library must meet NFR-31.
 - **DEP-8 Placeholder imagery.** Royalty-free or generated images with licences recorded in the licence register (FR-18). Photos and 3D scenes must show a Red Sea resort convincingly without copying jazhotels.com.
-- **DEP-9 Access to the current resort page at test time.** AC-21.4 uses a list of hashes made from the current page text. The page must be reachable once to make the list (and again when refreshed); otherwise the most recent saved list is used and its date is stated.
+- **DEP-9 Access to the current resort page at test time.** AC-21.4 uses a list of hashes made from the current page text. The package ships a dated list generated before release (FR-18); the live page is a second, optional source at test time, and if it is unreachable that comparison is skipped and reported with the date of the shipped list.
 - **DEP-10 Client mail server (not needed).** Not needed in this release (OQ-2). Needed only if FR-21 or a confirmation email is ever reinstated: SMTP host, port, account and a sending address.
 
 ## Risks
