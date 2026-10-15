@@ -31,7 +31,7 @@ Option 3: **SQLite 3.53.4 as bundled in better-sqlite3 13.0.3**, accessed throug
 - **Caps** (NFR-35): counted with indexed `count(*)` before insert.
 - **Backup**: better-sqlite3's online backup API produces a consistent copy while the site runs (ADR-0010).
 
-Main tables (the Database Engineer owns the detailed schema): `account`, `session`, `login_attempt`, `content_entry`, `list_item`, `settings`, `media_asset`, `media_variant`, `media_usage`, `enquiry`, `subscriber`, `suppression`, `rate_limit`, `used_form_token`, `security_event`, `job_run`, `health`.
+Main tables (the Database Engineer owns the detailed schema): `account`, `session`, `login_attempt`, `content_entry`, `list_item`, `settings`, `media_asset`, `media_variant`, `media_usage`, `enquiry`, `subscriber`, `suppression`, `rate_limit`, `used_form_token`, `security_event`, `job_run`, `health`, and `dsr_record` (created empty for FR-44 later).
 
 ## Consequences
 
