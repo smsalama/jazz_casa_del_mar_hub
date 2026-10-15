@@ -3,7 +3,7 @@
   "project": "site",
   "agency_version": "0.1.1+ef1fb3c",
   "created": "2026-10-15",
-  "phase": "1 Discovery",
+  "phase": "2 Requirements",
   "repos": {
     "hub": {
       "name": "jazz_casa_del_mar_hub",
@@ -58,49 +58,80 @@
       "status": "done",
       "depends_on": [],
       "evidence": "docs/brief.md"
+    },
+    {
+      "id": "P2-T1",
+      "title": "Requirements, stories, assumptions, traceability, backlog and MVP",
+      "role": "role-requirements-analyst, role-product-owner",
+      "repo": "hub",
+      "branch": "p2-requirements",
+      "status": "doing",
+      "depends_on": [
+        "P1-T1"
+      ],
+      "evidence": ""
     }
   ],
-  "decisions": [],
+  "decisions": [
+    {
+      "date": "2026-10-15",
+      "decision": "Contact form, newsletter and admin accounts stay in scope and are handled as personal data with privacy notice, consent and retention rules",
+      "by": "Steven (in chat)",
+      "file": "docs/brief.md"
+    },
+    {
+      "date": "2026-10-15",
+      "decision": "Project is speculative: concept marking, placeholder imagery only, noindex on every page, local review only",
+      "by": "Steven (in chat)",
+      "file": "docs/brief.md"
+    },
+    {
+      "date": "2026-10-15",
+      "decision": "Admin portal edits all site content and titles, uploads photos, reads enquiries, exports subscribers",
+      "by": "Steven (in chat)",
+      "file": "docs/brief.md"
+    },
+    {
+      "date": "2026-10-15",
+      "decision": "Book now links out to the existing JAZ booking engine; no booking engine built",
+      "by": "Steven (in chat)",
+      "file": "docs/brief.md"
+    },
+    {
+      "date": "2026-10-15",
+      "decision": "Languages: English, German, Italian and Russian",
+      "by": "Steven (in chat)",
+      "file": "docs/brief.md"
+    },
+    {
+      "date": "2026-10-15",
+      "decision": "No running costs once hosted on the client's servers: no paid third party services",
+      "by": "Steven (in chat)",
+      "file": "docs/brief.md"
+    },
+    {
+      "date": "2026-10-15",
+      "decision": "Designer extracts brand from the current site and may enhance it for the sector",
+      "by": "Steven (in chat)",
+      "file": "docs/brief.md"
+    }
+  ],
   "open_questions": [
     {
-      "id": "Q1",
-      "question": "Personal data conflict: answer was no personal data, but contact form, newsletter and admin logins process personal data. Keep and govern, or avoid collection?",
+      "id": "Q8",
+      "question": "Number of admin users and whether they need different permission levels",
       "for": "Steven",
       "asked": "2026-10-15"
     },
     {
-      "id": "Q2",
-      "question": "Brand and content rights: is Jaz Hotels the actual client and has it authorised use of the JAZ name, logo and branding, or is this a speculative or test build?",
+      "id": "Q9",
+      "question": "Enquiry notifications by email (needs client mail server) or only in the admin portal",
       "for": "Steven",
       "asked": "2026-10-15"
     },
     {
-      "id": "Q3",
-      "question": "Admin portal scope: what can staff edit or see, and how many admin users?",
-      "for": "Steven",
-      "asked": "2026-10-15"
-    },
-    {
-      "id": "Q4",
-      "question": "Booking: link out to the existing JAZ booking engine, or no booking action?",
-      "for": "Steven",
-      "asked": "2026-10-15"
-    },
-    {
-      "id": "Q5",
-      "question": "Languages: English only, or which others?",
-      "for": "Steven",
-      "asked": "2026-10-15"
-    },
-    {
-      "id": "Q6",
-      "question": "Running cost ceiling: monthly figure?",
-      "for": "Steven",
-      "asked": "2026-10-15"
-    },
-    {
-      "id": "Q7",
-      "question": "Brand assets: supplied by client, or extracted from the current site by the designer?",
+      "id": "Q10",
+      "question": "Default language and whether it is chosen from the visitor's browser",
       "for": "Steven",
       "asked": "2026-10-15"
     }
