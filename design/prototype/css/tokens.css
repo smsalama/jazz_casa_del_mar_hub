@@ -1,0 +1,170 @@
+/* Jazz Casa del Mar concept: design tokens. Defined once, used everywhere (NFR-30).
+   Every text pairing in use is listed with its measured contrast in docs/design/system.md. */
+
+@font-face {
+  font-family: "Prata";
+  src: url("../fonts/prata-latin-400-normal.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Prata";
+  src: url("../fonts/prata-cyrillic-400-normal.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: "Manrope";
+  src: url("../fonts/manrope-latin-wght-normal.woff2") format("woff2");
+  font-weight: 200 800; font-style: normal; font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Manrope";
+  src: url("../fonts/manrope-cyrillic-wght-normal.woff2") format("woff2");
+  font-weight: 200 800; font-style: normal; font-display: swap;
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+:root {
+  /* Colour: palette (raw). Driftwood is the one value extracted from the current site (theme colour). */
+  --color-driftwood: #453536;
+  --color-ink: #241C1D;
+  --color-ink-soft: #51423F;
+  --color-muted: #625251;
+  --color-abyss: #0C2229;
+  --color-deep: #123642;
+  --color-lagoon-900: #064247;
+  --color-lagoon-800: #075659;
+  --color-lagoon-700: #0B6B6E;
+  --color-lagoon-500: #1E8F90;
+  --color-aqua-300: #7FD6CF;
+  --color-aqua-100: #D5F0EC;
+  --color-foam: #F3F7F6;
+  --color-white: #FFFFFF;
+  --color-sand-200: #E6D9C3;
+  --color-sand-100: #F0E8DA;
+  --color-sun: #E8B04B;
+  --color-line: #D3CBC7;
+  --color-line-strong: #7A6A68;
+
+  /* Colour: status (always paired with an icon and a word) */
+  --color-error: #A8201A;
+  --color-error-bg: #FBE9E7;
+  --color-success: #17673F;
+  --color-success-bg: #E4F3EA;
+  --color-warning: #7A4B00;
+  --color-warning-bg: #FFF1D6;
+  --color-info: #0B6B6E;
+  --color-info-bg: #E3F4F2;
+
+  /* Colour: roles */
+  --bg: var(--color-foam);
+  --surface: var(--color-white);
+  --surface-sunk: var(--color-sand-100);
+  --text: var(--color-ink);
+  --text-soft: var(--color-ink-soft);
+  --text-muted: var(--color-muted);
+  --link: var(--color-lagoon-700);
+  --link-hover: var(--color-lagoon-900);
+  --border: var(--color-line);
+  --border-strong: var(--color-line-strong);
+  --focus: var(--color-lagoon-900);
+  --cta-bg: var(--color-lagoon-700);
+  --cta-bg-hover: var(--color-lagoon-800);
+  --cta-text: var(--color-white);
+  --on-dark: var(--color-foam);
+  --on-dark-soft: #C9D8D6;
+  --dark-bg: var(--color-abyss);
+  --brand-bg: var(--color-driftwood);
+  --focus-on-dark: var(--color-sun);
+
+  /* Type families */
+  --font-display: "Prata", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-text: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Type scale (fluid; body never below 1rem) */
+  --text-2xs: 0.8125rem;                                   /* 13px: concept notice and micro labels only */
+  --text-xs: 0.875rem;                                     /* 14px: Book now label, captions, table meta */
+  --text-base: 1rem;                                       /* 16px: body */
+  --text-md: clamp(1.0625rem, 1.02rem + 0.2vw, 1.1875rem); /* lead */
+  --text-lg: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);      /* h4 */
+  --text-xl: clamp(1.5rem, 1.3rem + 0.9vw, 2rem);          /* h3 */
+  --text-2xl: clamp(1.875rem, 1.45rem + 2vw, 3rem);        /* h2 */
+  --text-3xl: clamp(2.375rem, 1.6rem + 3.6vw, 4.25rem);    /* h1 on content pages */
+  --text-hero: clamp(2.75rem, 1.4rem + 6.2vw, 6.5rem);     /* Home hero heading */
+  --lh-tight: 1.08;
+  --lh-snug: 1.25;
+  --lh-body: 1.6;
+  --track-display: -0.015em;
+  --track-body: 0;
+  --track-small: 0.01em;
+
+  /* Spacing (4px base) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+  --space-10: 8rem;
+  --gutter: clamp(1rem, 0.5rem + 2.5vw, 2.5rem);
+  --measure: 62ch;
+  --max-width: 80rem;
+
+  /* Radius */
+  --radius-s: 0.375rem;
+  --radius-m: 0.875rem;
+  --radius-l: 1.75rem;
+  --radius-pill: 999px;
+  --radius-arch: 999px 999px var(--radius-s) var(--radius-s); /* signature arch window shape */
+
+  /* Shadow and elevation */
+  --shadow-1: 0 1px 2px rgba(12, 34, 41, 0.14), 0 1px 1px rgba(12, 34, 41, 0.08);
+  --shadow-2: 0 10px 28px -10px rgba(12, 34, 41, 0.32), 0 2px 6px rgba(12, 34, 41, 0.1);
+  --shadow-3: 0 28px 64px -24px rgba(12, 34, 41, 0.5), 0 6px 16px rgba(12, 34, 41, 0.14);
+  --z-base: 0;
+  --z-header: 20;
+  --z-menu: 30;
+  --z-sheet: 40;
+  --z-lightbox: 80;
+  --z-loader: 90;
+  --z-dialog: 95;
+  --z-skip: 200;
+
+  /* Motion: durations */
+  --dur-press: 90ms;
+  --dur-fast: 160ms;
+  --dur-base: 280ms;
+  --dur-slow: 480ms;
+  --dur-page-exit: 300ms;
+  --dur-page-enter: 420ms;
+  /* Motion: easings. The two springs are linear() approximations of
+     damping 1.0 / response 0.4 (calm) and damping 0.8 / response 0.4 (flick, momentum only). */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring-calm: linear(0, 0.205, 0.499, 0.715, 0.848, 0.921, 0.96, 0.981, 0.991, 0.998, 1);
+  --ease-spring-flick: linear(0, 0.223, 0.565, 0.813, 0.947, 1.001, 1.015, 1.013, 1.008, 1.003, 1);
+  --dur-spring: 520ms;
+
+  /* Sizing */
+  --target: 2.75rem; /* 44px minimum pointer target */
+  --header-h: 3.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-press: 0ms;
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+    --dur-page-exit: 0ms;
+    --dur-page-enter: 0ms;
+    --dur-spring: 0ms;
+  }
+}
