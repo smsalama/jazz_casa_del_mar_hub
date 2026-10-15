@@ -1,0 +1,97 @@
+{
+  "gate": "requirements",
+  "status": "BLOCKED",
+  "criteria": [
+    "Scope approved at T1",
+    "Every story has testable acceptance criteria",
+    "Assumptions and exclusions documented"
+  ],
+  "reviewer": "role-product-owner",
+  "date": "2026-10-15",
+  "evidence": [
+    "evidence/2-requirements/verify-jazz_casa_del_mar_hub-9327efd-20261015T171347Z.log",
+    "evidence/2-requirements/verify-jazz_casa_del_mar_hub-8a59131-20261015T172225Z.log"
+  ],
+  "findings": [
+    {
+      "severity": "medium",
+      "finding": "M1 Analyst additions table omitted several requirements sourced Analyst (NFR-10, 12, 13, 18, 20, 23, 25, 26, 31, 32, FR-7, FR-20). Fixed by the Orchestrator on 2026-10-15.",
+      "where": "docs/assumptions.md:54"
+    },
+    {
+      "severity": "medium",
+      "finding": "M2 EXC-15 narrows Steven's decision D3 'edit everything' to content within fixed templates; needs Steven's explicit confirmation (OQ-4).",
+      "where": "docs/assumptions.md:133"
+    },
+    {
+      "severity": "medium",
+      "finding": "M3 No story or criterion makes the primary success measure (modernised design, client feedback) checkable; add a Steven design verdict at T2 and T3.",
+      "where": "docs/stories.md (US-75)"
+    },
+    {
+      "severity": "medium",
+      "finding": "M4 Criteria not executable as written: AC-53.1 needs a physical Android phone, AC-48.5 needs VoiceOver and NVDA, AC-21.4 depends on an external live site and is tagged to the wrong question.",
+      "where": "docs/stories.md:512"
+    },
+    {
+      "severity": "medium",
+      "finding": "M5 Criteria needing interpretation: AC-63.2, AC-49.2, AC-59.4, AC-26.1, AC-45.4, AC-20.2, AC-21.3.",
+      "where": "docs/stories.md:608"
+    },
+    {
+      "severity": "medium",
+      "finding": "M6 Contradictions: image weight 250 KB (NFR-7) versus 300 KB posters (NFR-12); editable titles (FR-35) versus required Concept suffix (FR-17); loader on every first visit (FR-29) versus only after 300 ms (NFR-9).",
+      "where": "docs/requirements.md:207"
+    },
+    {
+      "severity": "medium",
+      "finding": "M7 The 2 second form timing trap can silently drop a real enquiry; visitor facing result undefined (AC-13.6) and WCAG 3.3.7 interaction.",
+      "where": "docs/requirements.md:123"
+    },
+    {
+      "severity": "medium",
+      "finding": "M8 FR-38 publishing scope for shared lists and global settings undefined.",
+      "where": "docs/requirements.md:165"
+    },
+    {
+      "severity": "low",
+      "finding": "L1 AC-19.3 checks the review register for only two of four legal pages.",
+      "where": "docs/stories.md:181"
+    },
+    {
+      "severity": "low",
+      "finding": "L2 AC-32.6 password change timing conflicts with NFR-20.",
+      "where": "docs/stories.md:307"
+    },
+    {
+      "severity": "low",
+      "finding": "L3 Clauses without criteria: FR-34 server reset command, FR-39 settings validation, FR-29 forward button, AC-2.3 numeric facts beyond Home.",
+      "where": "docs/requirements.md:157"
+    },
+    {
+      "severity": "low",
+      "finding": "L4 FR-36 ambiguous whether staff can add a seventh room type.",
+      "where": "docs/requirements.md:161"
+    },
+    {
+      "severity": "low",
+      "finding": "L5 Undocumented assumptions: iOS tilt permission, AVIF and WebP decoding, digits in offer validity wording, site search exclusion.",
+      "where": "docs/requirements.md:141"
+    },
+    {
+      "severity": "low",
+      "finding": "L6 NFR-1 title truncated in traceability table.",
+      "where": "docs/traceability.md:66"
+    },
+    {
+      "severity": "low",
+      "finding": "L7 38 criteria provisional on open questions; re-check after answers.",
+      "where": "docs/stories.md"
+    }
+  ],
+  "actions": [
+    "Blocked only on criterion 1: scope approval at T1 by Steven in chat.",
+    "Reviewer judged criteria 2 and 3 PASS with no high findings.",
+    "After T1: the requirements analyst applies the T1 decisions and findings M2 to M8 and L1 to L7 to requirements.md, stories.md, assumptions.md and traceability.md; the product owner re-checks; the gate is re-run."
+  ]
+}

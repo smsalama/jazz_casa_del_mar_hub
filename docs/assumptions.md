@@ -71,6 +71,20 @@ These are requirements the brief did not state, added because the analyst judged
 | Image resizing and metadata removal on upload | Keeps performance budgets when staff upload large photos; removes location data from photos | FR-41 |
 | Rate limits, anti-forgery tokens, security headers | Standard security controls | NFR-21, NFR-22, NFR-24 |
 | Optimistic locking of content saves | Two editors must not silently overwrite each other | NFR-33 |
+| No prices, discounts or currency symbols on offers | Avoids price claims that a speculative concept cannot honour (consumer protection) | FR-7 (price rule only) |
+| Spam trap field and 2 second minimum before a form is accepted | Cuts automated spam without a paid or third party captcha | FR-20 (rejection rules only) |
+| Server load and admin speed targets on a 1 CPU, 1 GB server | Makes "no running costs" testable on a small server | NFR-10 |
+| Data saving and slow connection triggers for the 3D fallback | Protects visitors on slow or metered mobile data | NFR-12 (`Save-Data` and 2g triggers only) |
+| Every public function works with JavaScript turned off | Resilience and accessibility beyond the brief | NFR-13 |
+| Package refuses to start on a non-local address without HTTPS | Stops personal data and admin passwords travelling unencrypted | NFR-18 (start-up refusal only) |
+| Admin session timers (30 minutes idle, 8 hours maximum) | Limits damage from an unattended admin browser | NFR-20 |
+| Upload type, size and storage limits | Stops malicious or oversized uploads filling the server | NFR-23 |
+| Deny by default authorisation with record level checks | Standard access control for a portal holding personal data | NFR-25 |
+| Secret handling, error hiding and dependency audit | Standard security hygiene | NFR-26 |
+| Licence allow-list and a test suite run with outgoing network blocked | Proves the zero running cost rule rather than assuming it | NFR-31 (licence and blocked network test only) |
+| Single configuration file, health check and install in at most 10 commands | Makes self hosting by the client practical | NFR-32 |
+
+Added by the Orchestrator on 2026-10-15 after the requirements gate review (finding M1): the rows from "No prices" onward were sourced "Analyst" in `docs/requirements.md` but were missing from this table.
 
 ## Dependencies
 

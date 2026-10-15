@@ -54,6 +54,13 @@
       "role": "role-requirements-analyst",
       "task": "P2-T1a",
       "tokens": 207291
+    },
+    {
+      "date": "2026-10-15",
+      "phase": "2 Requirements",
+      "role": "role-product-owner",
+      "task": "P2-T1b",
+      "tokens": 225429
     }
   ],
   "tasks": [
@@ -72,12 +79,12 @@
       "title": "Requirements, stories, assumptions, traceability, backlog and MVP",
       "role": "role-requirements-analyst, role-product-owner",
       "repo": "hub",
-      "branch": "p2-requirements",
-      "status": "doing",
+      "branch": "p2-requirements, p2-backlog",
+      "status": "review",
       "depends_on": [
         "P1-T1"
       ],
-      "evidence": ""
+      "evidence": "gates/requirements.json"
     }
   ],
   "decisions": [
@@ -140,6 +147,12 @@
     {
       "id": "Q10",
       "question": "Default language and whether it is chosen from the visitor's browser",
+      "for": "Steven",
+      "asked": "2026-10-15"
+    },
+    {
+      "id": "Q11",
+      "question": "OQ-4 to OQ-19 in docs/requirements.md (analyst open questions, Q8 to Q10 are OQ-1 to OQ-3)",
       "for": "Steven",
       "asked": "2026-10-15"
     }
