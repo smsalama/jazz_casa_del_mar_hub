@@ -13,7 +13,7 @@ Every setting comes from one documented configuration file or environment variab
 
 **Configuration**: environment variables, optionally loaded from the `.env` file in the app folder by `process.loadEnvFile()` at start (Node.js built-in, no dependency). Parsed and validated once with Zod into a frozen `Config` object; an invalid value stops the start with a message naming the variable. The full list with defaults is in `docs/repo-plan.md` (the web repo's `.env.example`). No variable holds a key for an external service (AC-76.2).
 
-**Startup sequence** (`src/server/entry.ts`), each step failing fast before any port is opened:
+**Startup sequence** (`src/server/main.ts`), each step failing fast before any port is opened:
 
 1. Load and validate configuration.
 2. **Listen address guard** (G-22): `HOST` must be a loopback address (`127.0.0.1`, any `127.x.x.x`, `::1`, or `localhost`). Any other value (including `0.0.0.0` and `::`) prints `STARTUP-REFUSED: HOST=<value> is not a local address. This release cannot be reached from other machines because two-step verification is not built (NFR-18).` and exits with status 78, before creating the server, so no port is ever opened. When FR-33 is built later, the guard also requires `PUBLIC_ORIGIN` to be `https://` and two step verification enforced; until then there is no code path that accepts a non local address, and no override variable.

@@ -18,7 +18,7 @@ The site runs on the client's own server, designed for 1 CPU, 1 GB memory and 10
 
 ## Decision
 
-Option 1. One Node.js process, started with `node --max-old-space-size=256 dist/server/entry.mjs`, is the whole application. It owns:
+Option 1. One Node.js process, started with `node --max-old-space-size=256 dist/server/main.mjs`, is the whole application. It owns:
 
 - HTTP serving (public pages, public form posts, admin portal shell, admin JSON API, media, static and 3D assets, health check), with the request limits of NFR-35 applied before any handler runs;
 - the embedded SQLite data store (ADR-0003);

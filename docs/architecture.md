@@ -102,7 +102,7 @@ There is no arrow from the application to any external host: the running site ma
 
 ```mermaid
 flowchart TB
-  subgraph Process["Node.js process: node --max-old-space-size=256 dist/server/entry.mjs"]
+  subgraph Process["Node.js process: node --max-old-space-size=256 dist/server/main.mjs"]
     GUARD["Startup guards: config, loopback HOST only, file permissions, keys, migrate (backup first)"]
     HTTP["Custom http server: timeouts, body caps per route class, canonical host, security headers"]
     STATIC["sirv: /_astro/* (fingerprinted, precompressed, 1 year)"]

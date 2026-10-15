@@ -39,7 +39,7 @@ The agency rule is one setup command and one verify command on Steven's Mac, and
 
 **One setup, one verify** (web repo):
 
-- `bash scripts/setup.sh` (agency template, extended): checks prerequisites, `npm ci` (with `ignore-scripts=true`, ADR-0014), `npx playwright install chromium` (plus `webkit firefox` on the Mac), creates `.env` from `.env.example` with mode 0600, creates `data/` and `backups/` with mode 0700, runs `npm run db:migrate` and `npm run seed`.
+- `bash scripts/setup.sh` (agency template, extended): checks prerequisites, `npm ci` (with `ignore-scripts=true`, ADR-0014), `npx playwright install chromium` (plus `webkit firefox` on the Mac), creates `.env` from `.env.example` with mode 0600, creates `data/` and `backups/` with mode 0700, runs `npm run build`, then `npm run db:migrate` and `npm run seed` (`docs/repo-plan.md` section 4).
 - `bash scripts/verify.sh` (agency template, unchanged): dash check, secret scan, then `npm run lint`, `typecheck`, `test`, `test:contract`, `test:e2e`, `build`.
 - `npm run dev` starts Astro's dev server for development; `npm run build && npm start` runs production locally.
 - No Docker Compose file: nothing needs a container (ADR-0001).
