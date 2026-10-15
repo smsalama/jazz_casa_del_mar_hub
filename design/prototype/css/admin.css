@@ -40,7 +40,7 @@ body.admin { background: #EDF2F1; }
 .admin .crumbs { font-size: var(--text-xs); color: var(--text-muted); }
 .admin .crumbs ol { display: flex; flex-wrap: wrap; gap: 0.25rem 0.5rem; list-style: none; margin: 0; padding: 0; }
 .admin .crumbs li + li::before { content: "/"; margin-right: 0.5rem; }
-.admin .crumbs a { display: inline-flex; align-items: center; min-height: var(--target); }
+.admin .crumbs a { display: inline-flex; align-items: center; min-height: var(--target); min-width: var(--target); justify-content: center; }
 .admin .card-plain { background: var(--color-white); border-radius: var(--radius-m); box-shadow: var(--shadow-1); padding: var(--space-5); display: grid; gap: var(--space-4); }
 .stat-grid { display: grid; gap: var(--space-4); grid-template-columns: 1fr; list-style: none; margin: 0; padding: 0; }
 @media (min-width: 40rem) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
