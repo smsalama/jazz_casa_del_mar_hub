@@ -3,7 +3,7 @@
   "project": "site",
   "agency_version": "0.1.1+ef1fb3c",
   "created": "2026-10-15",
-  "phase": "3 Initial legal and risk",
+  "phase": "2 Requirements (post T1 amendments)",
   "repos": {
     "hub": {
       "name": "jazz_casa_del_mar_hub",
@@ -75,6 +75,14 @@
       "role": "role-security-engineer",
       "task": "P3-T2",
       "tokens": 164554
+    },
+    {
+      "date": "2026-10-15",
+      "phase": "2 Requirements",
+      "role": "role-requirements-analyst",
+      "task": "P2-T2",
+      "tokens": 175000,
+      "note": "estimate: harness returned no subagent_tokens figure; subagent estimated 150000 to 200000"
     }
   ],
   "tasks": [
@@ -143,11 +151,11 @@
       "role": "role-requirements-analyst",
       "repo": "hub",
       "branch": "p2-t1-amendments",
-      "status": "doing",
+      "status": "done",
       "depends_on": [
         "P3-T3"
       ],
-      "evidence": ""
+      "evidence": "evidence/2-requirements/verify-jazz_casa_del_mar_hub-c21fb84-20261015T180601Z.log"
     }
   ],
   "decisions": [
@@ -211,6 +219,24 @@
       "id": "Q12",
       "question": "Solicitor question pack Q1 to Q7 in docs/legal/questions-2026-10-15.md (needed before any hosting, not before the local build)",
       "for": "Steven (solicitor)",
+      "asked": "2026-10-15"
+    },
+    {
+      "id": "Q14",
+      "question": "OQ-20: can staff add a seventh room type? Working answer: no, six fixed room pages",
+      "for": "Steven",
+      "asked": "2026-10-15"
+    },
+    {
+      "id": "Q15",
+      "question": "OQ-21: exact JAZ booking engine URL for Book now. Working answer: the resort page on jazhotels.com",
+      "for": "Steven",
+      "asked": "2026-10-15"
+    },
+    {
+      "id": "Q16",
+      "question": "Phase 2 subagent budget exceeded (about 607700 of 600000). Continue with the product owner re-check and requirements gate re-run (about 150000 to 200000 more)?",
+      "for": "Steven",
       "asked": "2026-10-15"
     }
   ]
