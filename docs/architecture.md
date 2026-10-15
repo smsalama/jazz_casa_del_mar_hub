@@ -93,7 +93,7 @@ flowchart LR
   CLI --> DATA
   CLI --> BK
   APP -- "Scheduled backup" --> BK
-  V -. "Navigates away (new tab, noopener noreferrer)" .-> EXT
+  V -.->|"Navigates away (new tab, noopener noreferrer)"| EXT
 ```
 
 There is no arrow from the application to any external host: the running site makes no outgoing request (NFR-31, AC-76.5). Build time inputs (npm registry, the 3D toolchain on the agency machine) are covered by ADR-0014.
@@ -106,7 +106,7 @@ flowchart TB
     GUARD["Startup guards: config, loopback HOST only, file permissions, keys, migrate (backup first)"]
     HTTP["Custom http server: timeouts, body caps per route class, canonical host, security headers"]
     STATIC["sirv: /_astro/* (fingerprinted, precompressed, 1 year)"]
-    MEDIA["Media handler: /media/<fileKey>-<rev>-<width>.<avif|webp>"]
+    MEDIA["Media handler: /media/ public copies only, strict file name pattern"]
     ASTRO["Astro handler (middleware mode)"]
     MW["Astro middleware: headers, noindex, admin guard (session, CSRF, setup required), rate limits"]
     PAGES["Public pages and form POST handlers (.astro)"]
