@@ -227,7 +227,7 @@ Nullability: **N** = `NOT NULL`, **null** = may be `NULL`. "Soft" = a column kep
 | --- | --- | --- | --- |
 | `id` | INTEGER PK | N | `CHECK (id = 1)` |
 | `content_revision` | INTEGER | N | `>= 1`. The "global content revision" of ADR-0004: incremented by 1 in the same transaction as every write to `content_entry`, `list_item`, `settings`, `media_asset` (metadata, file, delete) and `legal_text_version`. Feeds the page `ETag` and the snapshot swap. |
-| `schema_version` | INTEGER | N | Highest applied migration number. Set by the migration runner after it applies pending migrations (same transaction), copied into backup manifests, and compared on restore (section 10.5). |
+| `schema_version` | INTEGER | N | Number of applied migrations (the highest file number plus one). Set by the migration runner after it applies pending migrations (same transaction), copied into backup manifests, and compared on restore (section 10.5). |
 | `seed_version` | TEXT | null | Version label of the seed that populated an empty install (`seed/` folder). |
 | `seed_content_revision` | INTEGER | null | `content_revision` right after seeding. Restore into an "empty install" (FR-48) means: no account, enquiry, subscriber, suppression or media rows, and `content_revision = seed_content_revision`. |
 | `installed_at` | INTEGER | N | Time of the first migration. |
@@ -754,7 +754,7 @@ Content, settings, wording versions and placeholder photos are **seed**, not mig
 
 ### 10.4 Rollback
 
-SQLite has no transactional DDL across process failure beyond the single transaction, and Drizzle generates no down scripts, so rollback has two layers:
+SQLite runs DDL inside transactions, but Drizzle generates no down scripts and a committed migration cannot be undone by the database, so rollback has three parts:
 
 1. **Failed migration at start**: each migration batch runs in one transaction, so a failure leaves the file as it was (ADR-0003), the server prints `STARTUP-REFUSED` and does not open a port. A backup archive has been written first (ADR-0010) whenever the database holds data and migrations are pending.
 2. **Going back after a migration that applied**: restore that pre-migration archive into an empty install with `npm run restore` (ADR-0010). Changes made after the migration are not in that archive; the operator is told so.
@@ -776,3 +776,118 @@ A migration is **destructive** when it can lose or irreversibly change existing 
 ### 10.7 Migration tests
 
 Apply all migrations to an empty file and compare with the Drizzle schema (`drizzle-kit generate` must report no changes); apply them one at a time with fixtures in between; run every down file; upgrade golden database files kept for each released schema version; `PRAGMA integrity_check` and `foreign_key_check` after each step; compare the trigger list with appendix B; run one test per invariant of section 7 asserting the exact error text; confirm the pre-migration backup is created and restores (AC-46.2).
+
+## 11. Indexes, access patterns and query plans
+
+### 11.1 Access patterns and the index that serves each
+
+Every index below exists for a named pattern; the 11 foreign key and uniqueness indexes that come with constraints are listed too. Tables of fewer than 1,000 rows (`content_entry`, `list_item`, `settings`, `media_asset`, `media_variant`, `legal_text_version`, `account`, `job_run`) are read whole or by primary key, and need nothing else.
+
+| # | Access pattern | Source | Statement shape | Index and expected plan |
+| --- | --- | --- | --- | --- |
+| P1 | Build the content snapshot at start and after each save | FR-38, ADR-0004 | read all `content_entry`, all `list_item ORDER BY list_key, position`, `settings`, non deleted `media_asset` + `media_variant` | primary keys; `list_item_position_uq` gives list order without a sort; tens of rows |
+| P2 | Detect an outside change | ADR-0004 | `PRAGMA data_version` every 5 s | none |
+| P3 | Sign in by address | US-30, NFR-19 | `WHERE email_normalised = ? AND status <> 'deleted'` | `account_email_live_uq` |
+| P4 | Check the session on every admin request | NFR-20 | `session WHERE id_hash = ?` joined to `account` by primary key | primary key (`WITHOUT ROWID`) |
+| P5 | End all sessions of an account | G-19 | `DELETE FROM session WHERE account_id = ?` (by trigger) | `session_account_idx` |
+| P6 | Remove expired sessions | Retention schedule | `absolute_expires_at < ?`, `last_seen_at < ?` | `session_absolute_idx`, `session_seen_idx` |
+| P7 | Save an entry or item with its version | NFR-33 | update by primary key and version | primary key |
+| P8 | Photos used by an owner; where a photo is used | FR-40 | `media_usage WHERE owner_kind = ? AND owner_key = ?`; `WHERE media_id = ?` | primary key prefix; `media_usage_media_idx` |
+| P9 | Library page, newest first, 48 per page | US-38 | `ORDER BY uploaded_at DESC, id DESC LIMIT 48 OFFSET ?` where not deleted | `media_library_idx` (partial) |
+| P10 | Storage used | NFR-23 | two `SUM` queries | full scan of fewer than 5,000 rows; no index needed |
+| P11 | Store an enquiry | FR-20, NFR-35 | cap `count(*)`; insert; nonce insert | `enquiry_received_idx` covers `count(*)`; unique `reference`; nonce primary key |
+| P12 | Enquiry list, 25 per page, newest first | US-40, NFR-10 | `ORDER BY received_at DESC, id DESC LIMIT 25 OFFSET ?` | `enquiry_received_idx` |
+| P13 | Filter by status | FR-42 | `WHERE status = ?` + same order | `enquiry_status_idx` |
+| P14 | Filter data protection enquiries; filter by subject | FR-42, LR-5 | `WHERE data_protection = 1`; `WHERE subject = ?` | `enquiry_dp_idx` (partial); subject filter walks `enquiry_received_idx` |
+| P15 | Search reference, name or address | FR-42, G-12 | `instr(search_text, ?) > 0` + same order | intended scan of `enquiry` through the date index (no index can serve a contains match); 20 ms at 50,000 rows |
+| P16 | Unread count | FR-42, AC-40.2 | `count(*) WHERE read_at IS NULL` | `enquiry_unread_idx` (partial) |
+| P17 | Open or mark an enquiry | US-40 | by primary key | primary key |
+| P18 | Subscriber list, 50 per page | FR-43 | `ORDER BY subscribed_at DESC, id DESC` | `subscriber_recent_idx` |
+| P19 | Filter by status; `activeTotal` | FR-43 | `WHERE status = ?` + order; `count(*)` | `subscriber_status_idx` (covering) |
+| P20 | Search by part of an address | FR-43, G-12 | `instr(email_normalised, ?) > 0` + order | intended scan; 13 ms at 50,000 rows |
+| P21 | CSV export | FR-43, NFR-10 | keyset chunks of 500: `WHERE status = 'active' AND (subscribed_at, id) > (?, ?) ORDER BY subscribed_at, id LIMIT 500` | `subscriber_status_idx` range |
+| P22 | Sign up, unsubscribe, duplicate check | FR-22, FR-23 | by `email_normalised`; suppression by hash | `UNIQUE (email_normalised)`; suppression primary key |
+| P23 | Rate limit hit | NFR-21 | upsert on the primary key | primary key (`WITHOUT ROWID`) |
+| P24 | Purge each category by time | FR-45 | range deletes | `enquiry_received_idx`, `dsr_closed_idx`, `subscriber_unsub_idx`, `suppression_created_idx`, `security_event_time_idx`, `account_deleted_idx`, `account_inactive_idx`, `media_deleted_idx`, `rate_limit_window_idx`, `used_form_token_exp_idx` |
+| P25 | Delete an enquiry (foreign key from the token table) | FR-42 | cascade check | `used_form_token_enquiry_idx`. The plan check on the purge showed a scan of `used_form_token` per deleted row without it. |
+| P26 | Main screen | NFR-10 | unread count, two cap counts, storage, last job runs | indexes above; `job_run_job_idx` for the last run of each job |
+| P27 | Job due check, status | ADR-0010 | latest row per job | `job_run_job_idx` |
+| P28 | Security events by user, event, time (FR-46 later) | FR-46 | filters on `account_id`, `event`, `occurred_at` | `security_event_account_idx`, `security_event_event_idx`, `security_event_time_idx` |
+| P29 | Records for one address (FR-44 later, 5 seconds) | NFR-16, AC-42.4 | exact `email_normalised` on `enquiry`, `subscriber`, `account` | `enquiry_email_idx`, subscriber unique index, account partial unique index |
+| P30 | Open requests, closed requests to purge | FR-44 | `dsr_open_idx`, `dsr_closed_idx` | partial indexes |
+
+### 11.2 Plans and timings observed at design time
+
+Taken on SQLite 3.45.1 (Python), in memory, warm cache, deterministic synthetic rows (`example.invalid` addresses, Latin, Cyrillic and accented names), `ANALYZE` run, average of 20 runs. These show the shape of the plan and rough cost only; the NFR-10 numbers come from better-sqlite3 on a one CPU limit after the build (section 11.3).
+
+| Query | Plan | 5,000 enquiries, 10,000 subscribers | 50,000 and 50,000 (the caps) |
+| --- | --- | --- | --- |
+| Enquiry list, first page | `SCAN enquiry USING INDEX enquiry_received_idx` (stops after 25) | 0.09 ms | 0.05 ms |
+| Enquiry list, last page (offset 4,975) | same index | 0.28 ms | 0.16 ms (offset 4,975) |
+| Enquiry count, unread count | covering index; `enquiry_unread_idx` | 0.01 ms; 0.10 ms | 0.02 ms; 0.36 ms |
+| Filter Unhandled, first page; its count | `SEARCH ... USING COVERING INDEX enquiry_status_idx (status=?)` | 0.02 ms; 0.20 ms | 0.03 ms; 1.34 ms |
+| Filter data protection | `SCAN ... USING COVERING INDEX enquiry_dp_idx` | 0.02 ms | 0.01 ms |
+| Filter subject | walks `enquiry_received_idx` | 0.44 ms | 0.30 ms |
+| Search `instr(search_text, 'visitor.0123')` | scan through `enquiry_received_idx` (intended) | 2.6 ms | 20.0 ms |
+| Search with status filter | `enquiry_status_idx` | 0.08 ms | 0.06 ms |
+| Exact address, exact reference | `enquiry_email_idx`; unique reference index | under 0.02 ms | under 0.02 ms |
+| Subscriber list, first page; deep page (offset 5,000) | `subscriber_recent_idx`; `subscriber_status_idx` | 0.13 ms; 0.30 ms | 0.07 ms; 0.18 ms |
+| Active subscriber count | covering `subscriber_status_idx` | 0.54 ms | 1.74 ms |
+| Subscriber search `instr(email_normalised, 'sub.0042')` | scan through `subscriber_recent_idx` (intended) | 2.2 ms | 12.9 ms |
+| Export, one chunk of 500 | `SEARCH ... USING INDEX subscriber_status_idx (status=? AND (subscribed_at,id)>(?,?))` | 0.5 ms | 0.5 ms |
+| Export, all active rows in chunks of 500 | same | 9,000 rows in 11 ms | 45,000 rows in 50 ms |
+| Purge expired enquiries | `SEARCH ... USING COVERING INDEX enquiry_received_idx (received_at<?)` | 0.01 ms when nothing is due | same |
+
+No query other than the two intended `instr` searches reads the whole table. The database share of the 10,000 subscriber export is therefore around 11 ms against the 10 s budget; the rest is CSV quoting, compression and the response (section 11.3, Q5). Two choices follow from this: rows are read in keyset chunks with `.all()` and a `setImmediate` between chunks (the `.iterate()` mentioned in ADR-0003 holds the connection busy and would block the other statements the server must run between chunks), and `OFFSET` paging is acceptable for the contract's page numbers because the largest offset (page 10,000 of 25 rows) is capped by the number of rows that exist.
+
+### 11.3 Query plan list to measure after the build (NFR-10)
+
+To be recorded by the Performance Engineer as `EXPLAIN QUERY PLAN` output plus timings on better-sqlite3 13.0.3 (`synchronous=FULL`, WAL, a file on disk, process limited to one CPU and 1 GB), median and 95th percentile of 100 runs each, with the `perf` fixture profile (section 12). A plan that shows a `SCAN` of a table not named below, or a `USE TEMP B-TREE FOR ORDER BY`, is a defect to fix before release.
+
+| # | Path | Dataset | Budget | Expected plan |
+| --- | --- | --- | --- | --- |
+| Q1 | `GET /admin/api/enquiries` first page with `total` and `unreadCount` | 5,000 enquiries (and 50,000) | first page within 1 s (NFR-10); admin reads 500 ms at the 95th percentile | index scan of `enquiry_received_idx` with limit; covering `count(*)`; partial index count |
+| Q2 | Same with `q` (reference, name, address) | 5,000 and 50,000 | 500 ms | intended scan with `instr` |
+| Q3 | Same with `status`, `subject`, `dataProtection` and combinations, pages 1 and 200 | 5,000 | 500 ms | `enquiry_status_idx`, `enquiry_dp_idx`, date index |
+| Q4 | `GET /admin/api/subscribers` first page, `status`, `q`, `activeTotal` | 10,000 (and 50,000) | 500 ms | `subscriber_recent_idx`, `subscriber_status_idx`, intended scan for `q` |
+| Q5 | `POST /admin/api/subscribers/export`, full request including CSV writer and response | 10,000 subscribers | 10 s (NFR-10); event loop never blocked longer than 50 ms; memory flat | keyset chunks on `subscriber_status_idx` |
+| Q6 | Snapshot rebuild after a save, and the effect on page latency | seed content plus 100 list items | far below 60 s (FR-38); target under 100 ms | primary key scans of under 1,000 rows |
+| Q7 | Public page render at 25 simultaneous visitors | seed content | 200 ms at the 95th percentile (NFR-10) | no query on the page path (snapshot in memory) |
+| Q8 | Admin request overhead: session check and rate counter write | any | within the 500 ms admin budget | primary key lookups |
+| Q9 | `GET /admin/api/overview` | 5,000 enquiries, 10,000 subscribers, 500 photos | 500 ms | partial index counts, `SUM` over photos, `job_run_job_idx` |
+| Q10 | Media library page and photo detail with usage | 500 photos | 500 ms | `media_library_idx`, `media_usage_media_idx` |
+| Q11 | Daily purge with 10,000 expired enquiries and 5,000 expired events | 50,000 | longest write lock under 50 ms per batch; page latency during the purge unchanged | range delete through `enquiry_received_idx` in batches of 1,000 |
+| Q12 | `db.backup()` while the site serves load | 50,000 + 50,000 rows | no request slower than twice normal | page stepped backup |
+| Q13 | Sign up and unsubscribe handler: database time with and without a matching row | 10,000 | median difference under 100 ms (G-11), 150 ms floor in place | unique index and suppression primary key |
+| Q14 | `GET /healthz` | any | under 50 ms including the fsync | primary key update of `health` |
+| Q15 | Record search by address across enquiries, subscribers and accounts (FR-44, later) | 5,000 + 10,000 | 5 s (NFR-16) | `enquiry_email_idx`, unique indexes |
+
+## 12. Synthetic seed data plan
+
+### 12.1 Install seed (ships in the release package, FR-47)
+
+`npm run seed` loads the placeholder site into an empty database and refuses to run if `content_entry` already has rows. It loads: every content entry (about 30) and every list item (10 dining venues, 4 pools and beach items, 5 activities, 3 or more offers, 12 or more gallery items, 8 or more FAQ items, 5 or more nearby attractions) in all four languages from `seed/*.json`, each file validated by the same registry code as a save; the `settings` row with the synthetic defaults of FR-12 (`+44 20 7946 0000`, `442079460001`, `info@example.invalid`, `https://social.example.invalid/<network>`, provider details marked "to be confirmed"); `legal_text_version` rows `consent-1` and `privacy-1`; the placeholder photos from `seed/media/` through the real upload pipeline (original, variants, English and translated alternative text); and `site_state.seed_version` and `seed_content_revision`. It loads no account, enquiry, subscriber or suppression row and no password (AC-30.5), so the package contains no personal data of any kind. Machine assisted translations are flagged in the content register, not in the data.
+
+### 12.2 Fixtures for tests and development (never in the package)
+
+A deterministic generator (seeded pseudo random numbers, same output every run) in the web repo's test support code, excluded from the release package by `scripts/package.sh`. Profiles:
+
+| Profile | Rows | Used by |
+| --- | --- | --- |
+| `small` | 2 accounts, 60 enquiries, 3 active and 2 unsubscribed subscribers, 3 photos with different orientations, 2 suppression entries, a few security events | most integration and end-to-end tests (AC-13.5, AC-40.1 to AC-40.7, AC-41.1, AC-41.2) |
+| `formula` | subscribers whose address starts with `=`, `+`, `-` or `@` and rows whose text starts with a tab or carriage return, inserted directly in the store | AC-41.3, AC-41.6 |
+| `retention` | for each category in AC-43.6 and AC-79.4, one record dated 2 days ago and one today, written through the injected `Clock`, with retention set to 1 day | AC-43.1 to AC-43.6, AC-42.6 |
+| `perf` | 5,000 enquiries, 10,000 subscribers, 500 photos, 2,000 security events | NFR-10 measurements, AC-42.4 |
+| `cap` | 50,000 enquiries and 50,000 subscribers | cap behaviour (AC-80.5 with a lower configured cap), worst case plans |
+
+Content rules for every generated value:
+
+- Addresses are `visitor.NNNNN@example.invalid`, `sub.NNNNNN@example.invalid`, `admin.one@example.invalid`, `admin.two@example.invalid`; the formula profile uses `=cmd@example.invalid` style locals.
+- Names are obviously synthetic and cover the four languages and the accent cases that normalisation must handle: `Test Visitor 0001`, `Тест Посетитель 0002`, `Jürgen Testmann 0003`, `Zoë Prøve 0004`, `Giulia Prova 0005`.
+- Telephone numbers come from the reserved drama range `+44 20 7946 0000` to `0999`.
+- Messages are generated sentences such as "Synthetic enquiry text number 123 for testing." with no real topics.
+- Account passwords are random per run, printed to the test log once, and never written to a repository file; no fixture contains a default credential.
+- Photos are generated at run time (gradients and shapes, no people); the orientation and metadata test images carry obviously fake EXIF values.
+- A test scans the generator output and `seed/*.json` for any address whose domain is not `example.invalid` or a reserved `example.*`, and any telephone number outside the reserved range, and fails the build on a hit.
+
+`npm run seed:fixtures -- --profile <name>` works only when `NODE_ENV` is not `production`, and refuses a non empty database unless `--append` is given. Fixture insertion uses the same domain modules as the application (so the constraints and triggers apply) except for the deliberately malformed `formula` rows, which use direct inserts.
