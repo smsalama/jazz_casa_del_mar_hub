@@ -47,7 +47,15 @@
     "9 Remediation": 1000000,
     "10 Release readiness": 500000
   },
-  "usage": [],
+  "usage": [
+    {
+      "date": "2026-10-15",
+      "phase": "2 Requirements",
+      "role": "role-requirements-analyst",
+      "task": "P2-T1a",
+      "tokens": 207291
+    }
+  ],
   "tasks": [
     {
       "id": "P1-T1",

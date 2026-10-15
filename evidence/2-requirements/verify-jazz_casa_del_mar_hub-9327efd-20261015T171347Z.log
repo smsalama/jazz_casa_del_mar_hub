@@ -1,0 +1,30 @@
+Verify report
+Repo: jazz_casa_del_mar_hub
+Commit: 9327efd
+Uncommitted changes: 0
+Time (UTC): 20261015T171347Z
+Node: v22.22.0
+System: Linux x86_64
+
+== No em-dashes or en-dashes in files
+Dash check: clean (29 checked)
+
+== No dashes in commit messages
+Dash check: clean (7 checked)
+
+== No secrets in files or git history
+[90m6:13PM[0m [32mINF[0m [1mscanned ~233097 bytes (233.10 KB) in 31.1ms[0m
+[90m6:13PM[0m [32mINF[0m [1mno leaks found[0m
+[90m6:13PM[0m [32mINF[0m [1m7 commits scanned.[0m
+[90m6:13PM[0m [32mINF[0m [1mscanned ~240732 bytes (240.73 KB) in 184ms[0m
+[90m6:13PM[0m [32mINF[0m [1mno leaks found[0m
+
+== Project state and gate records valid
+State and gates: valid (0 gate record(s)).
+
+== Summary
+PASS  No em-dashes or en-dashes in files
+PASS  No dashes in commit messages
+PASS  No secrets in files or git history
+PASS  Project state and gate records valid
+RESULT: PASS
