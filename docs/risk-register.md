@@ -20,9 +20,11 @@
 
 | Rating | Count |
 | --- | --- |
-| High | 18 |
-| Medium | 16 |
+| High | 20 |
+| Medium | 22 |
 | Low | 4 |
+
+Counts include RSK-39 to RSK-46 added from the UK legal review; RSK-41 is counted at its local review rating (Medium).
 | Total | 38 |
 
 RSK-2 is counted as Low (local review release). Seeded risks: 8 High, 9 Medium, 3 Low. Security risks from the threat model: 10 High, 7 Medium, 1 Low.
@@ -91,10 +93,22 @@ Note on RSK-2: the source gives a likelihood range. The register rates it Low fo
 
 ## Legal risks (added after the UK legal review)
 
-This section is intentionally empty. The Orchestrator fills it with the risks raised by the UK legal role's Phase 3 review, using the next free RSK IDs and the same columns as above.
+Added by the Orchestrator on 2026-10-15 from the UK legal role's Phase 3 report (task P3-T1). Research, not legal advice.
+
+| ID | Risk | Category | Likelihood | Impact | Rating | Owner | Mitigation | Status | Source |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| RSK-39 | Trade mark or passing off claim over the JAZ name and get up if the concept is shown or hosted beyond local review | legal | Medium | High | High | Steven | Local review only (OQ-13), concept notice and noindex (FR-17), resort name as typeset text, no copied logo artwork or badges (OQ-17); solicitor question Q1 | open | legal-register.md LR-33, LR-34 |
+| RSK-40 | Live Book now link implies affiliation with JAZ and sends real visitors into real bookings | legal | Medium | Medium | Medium | Steven | Single configurable URL (FR-11), decision at T1 on OQ-15; solicitor question Q2 | open | legal-register.md LR-46 |
+| RSK-41 | Misleading or unfair commercial practice finding under the DMCC Act 2024 if a hosted concept is taken for the real site | legal | Low (local) to Medium (hosted) | High | Medium (local), High (hosted) | Steven | Concept notice that cannot be emptied (FR-17, G-6), no prices, deadlines, scarcity or award claims (FR-7, LR-29), local review only | open | legal-register.md LR-25, LR-29 |
+| RSK-42 | No lawful data controller for real enquiry or subscriber data if the site is hosted before the controller question is answered | legal | Medium | High | High | Steven | Placeholder controller in privacy notice (OQ-12), synthetic data only in review; solicitor question Q3 | open | legal-register.md LR-1 |
+| RSK-43 | Consent wrongly used as the lawful basis for enquiries (a required consent tick on the contact form) | privacy | High | Low (local), Medium (hosted) | Medium | Requirements Analyst | Change FR-19, FR-20 and NFR-14 to a non consent basis with a privacy link and no required tick (LR-2), subject to solicitor question Q7 | open | legal-register.md LR-2 |
+| RSK-44 | Egyptian data protection law or EU GDPR obligations not assessed if the concept is adopted | legal | Medium | Medium | Medium | Steven | Marked Requires qualified legal advice; reassess before any hosting | open | legal-register.md LR-16, LR-44, LR-45 |
+| RSK-45 | Third party licence breach from generated images, textures, map imagery, fonts or missing open source notices | legal | Medium | Medium | Medium | Developer | Licence allow list (NFR-31), extend asset licence rules to textures and generated assets (LR-39), open source notices file in the package (LR-40) | open | legal-register.md LR-39, LR-40 |
+| RSK-46 | UK data protection guidance is under review after the Data (Use and Access) Act 2025, so guidance based register rows go stale | legal | High | Low | Medium | UK Legal | Recheck register sources at the legal gate in Phase 7 and record new check dates | open | legal-register.md (source table) |
 
 ## Change history
 
 | Date | Change | By |
 | --- | --- | --- |
 | 2026-10-15 | Register created: RSK-1 to RSK-20 seeded from `docs/assumptions.md`, RSK-21 to RSK-38 added from `docs/threat-model.md` | Security Engineer (P3-T2) |
+| 2026-10-15 | RSK-39 to RSK-46 added from the UK legal review (`docs/legal-register.md`) | Orchestrator |

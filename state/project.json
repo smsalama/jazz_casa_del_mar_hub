@@ -3,7 +3,7 @@
   "project": "site",
   "agency_version": "0.1.1+ef1fb3c",
   "created": "2026-10-15",
-  "phase": "2 Requirements",
+  "phase": "3 Initial legal and risk",
   "repos": {
     "hub": {
       "name": "jazz_casa_del_mar_hub",
@@ -22,7 +22,7 @@
   },
   "touchpoints": {
     "T1-scope": {
-      "status": "pending",
+      "status": "waiting",
       "approval_file": ""
     },
     "T2-design": {
@@ -61,6 +61,20 @@
       "role": "role-product-owner",
       "task": "P2-T1b",
       "tokens": 225429
+    },
+    {
+      "date": "2026-10-15",
+      "phase": "3 Initial legal and risk",
+      "role": "role-uk-legal",
+      "task": "P3-T1",
+      "tokens": 202661
+    },
+    {
+      "date": "2026-10-15",
+      "phase": "3 Initial legal and risk",
+      "role": "role-security-engineer",
+      "task": "P3-T2",
+      "tokens": 164554
     }
   ],
   "tasks": [
@@ -85,6 +99,43 @@
         "P1-T1"
       ],
       "evidence": "gates/requirements.json"
+    },
+    {
+      "id": "P3-T1",
+      "title": "UK legal register and solicitor question pack",
+      "role": "role-uk-legal",
+      "repo": "hub",
+      "branch": "p3-legal",
+      "status": "done",
+      "depends_on": [
+        "P2-T1"
+      ],
+      "evidence": "evidence/3-legal-risk/verify-hub-p3-legal-b0744ee-20261015T174431Z.log"
+    },
+    {
+      "id": "P3-T2",
+      "title": "Threat model and project risk register",
+      "role": "role-security-engineer",
+      "repo": "hub",
+      "branch": "p3-security",
+      "status": "done",
+      "depends_on": [
+        "P2-T1"
+      ],
+      "evidence": "evidence/3-legal-risk/verify-hub-p3-security-54c42a5-20261015T173738Z.log"
+    },
+    {
+      "id": "P3-T3",
+      "title": "T1 decision sheet and legal risks in register",
+      "role": "orchestrator",
+      "repo": "hub",
+      "branch": "main",
+      "status": "done",
+      "depends_on": [
+        "P3-T1",
+        "P3-T2"
+      ],
+      "evidence": "docs/t1-decisions.md"
     }
   ],
   "decisions": [
@@ -153,6 +204,18 @@
     {
       "id": "Q11",
       "question": "OQ-4 to OQ-19 in docs/requirements.md (analyst open questions, Q8 to Q10 are OQ-1 to OQ-3)",
+      "for": "Steven",
+      "asked": "2026-10-15"
+    },
+    {
+      "id": "Q12",
+      "question": "Solicitor question pack Q1 to Q7 in docs/legal/questions-2026-10-15.md (needed before any hosting, not before the local build)",
+      "for": "Steven (solicitor)",
+      "asked": "2026-10-15"
+    },
+    {
+      "id": "Q13",
+      "question": "T1 decisions in docs/t1-decisions.md",
       "for": "Steven",
       "asked": "2026-10-15"
     }

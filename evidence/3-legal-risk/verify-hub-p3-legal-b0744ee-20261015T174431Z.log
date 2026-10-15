@@ -1,0 +1,30 @@
+Verify report
+Repo: hub-p3-legal
+Commit: b0744ee
+Uncommitted changes: 0
+Time (UTC): 20261015T174431Z
+Node: v22.22.0
+System: Linux x86_64
+
+== No em-dashes or en-dashes in files
+Dash check: clean (37 checked)
+
+== No dashes in commit messages
+Dash check: clean (14 checked)
+
+== No secrets in files or git history
+[90m6:44PM[0m [32mINF[0m [1mscanned ~356564 bytes (356.56 KB) in 33.2ms[0m
+[90m6:44PM[0m [32mINF[0m [1mno leaks found[0m
+[90m6:44PM[0m [32mINF[0m [1m16 commits scanned.[0m
+[90m6:44PM[0m [32mINF[0m [1mscanned ~435378 bytes (435.38 KB) in 210ms[0m
+[90m6:44PM[0m [32mINF[0m [1mno leaks found[0m
+
+== Project state and gate records valid
+State and gates: valid (1 gate record(s)).
+
+== Summary
+PASS  No em-dashes or en-dashes in files
+PASS  No dashes in commit messages
+PASS  No secrets in files or git history
+PASS  Project state and gate records valid
+RESULT: PASS
