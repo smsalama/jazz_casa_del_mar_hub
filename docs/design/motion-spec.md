@@ -822,3 +822,12 @@ The asset register is not edited by this task. These rows are needed under "3D a
 | 3D-SHADERS | shader library in the 3D chunk | `src/client/scenes/shaders/` | sky, water, glow, cloth, points |
 | 3D-RUNTIME-TEX | generated data textures | code | soft disc, contact shadow, noise; no download |
 | POSTER-HOME, POSTER-HOME-PORTRAIT, POSTER-ROOMS, POSTER-DINING, POSTER-POOLS, POSTER-ACTIVITIES, POSTER-LOCATION | `.avif` and `.webp` | rendered from the scenes at `t0` | with tool version and render date (LR-36) |
+
+## 13. Spike results and tuning (task P6-T4, 2026-10-16)
+
+The Home hero was built through the real pipeline (web repo `3d/`, `src/client/3d/`) and measured in the cloud with software rendering (log in the web repo at `3d/spike-evidence/`).
+
+- Weight and first frame met with margin: 3D code 143.2 KB brotli (target 200), `home.glb` 49.9 KB, first 3D frame 2.12 s on L1-like throttling (budget 4 s), so the OQ-25 fallback of 4.5 s is not needed on this evidence.
+- Frame rate cannot be judged under software rendering (9 to 14 fps); it still needs a real mid range phone (R1) or a GPU machine (L2) before the other five scenes are built.
+- Tuning of starting values (allowed by section 9.1): landscape camera turned about 7 degrees left and portrait camera raised so the sun and arches sit in the clear zones of the scrim; sky gains a mid teal and a rose step; hemisphere sky light `#A9BDBA`; felucca scale 0.8 and further out; jetty posts lower; water grid 215 m deep; wave speeds scaled to 0.3; contact shadows analytic instead of a data texture. Engine code lives in `src/client/3d`, not `src/client/scenes`.
+- Open: governor median rule can miss stalls (consider a mean guard); 8 shader programs use up the proposed ceiling; swup must call `unmountScenes()` and `mountScenes()` (integration in the content pages task).

@@ -12,7 +12,7 @@
     "web": {
       "name": "jazz_casa_del_mar_web",
       "url": "https://github.com/smsalama/jazz_casa_del_mar_web",
-      "status": "P6-T1 to P6-T3 done, main at 9413fd5",
+      "status": "P6-T1 to P6-T5 done, main at aa7e74b",
       "branch": "main"
     },
     "api": {
@@ -245,6 +245,13 @@
       "task": "P6-T5",
       "tokens": 66016,
       "note": "count after resume only; first run before the session limit not returned"
+    },
+    {
+      "date": "2026-10-16",
+      "phase": "6 Implementation",
+      "role": "role-motion-designer",
+      "task": "P6-T4",
+      "tokens": 512605
     }
   ],
   "tasks": [
@@ -531,12 +538,12 @@
       "title": "3D spike: Home hero through the real pipeline, measured on NFR-7 and NFR-8 (RSK-3)",
       "role": "role-motion-designer",
       "repo": "web",
-      "branch": "",
-      "status": "todo",
+      "branch": "p6-t4-3d-spike",
+      "status": "done",
       "depends_on": [
         "P6-T2"
       ],
-      "evidence": ""
+      "evidence": "evidence/6-implementation/verify-jazz_casa_del_mar_web-aa7e74b-20261016T172809Z.log"
     },
     {
       "id": "P6-T5",
