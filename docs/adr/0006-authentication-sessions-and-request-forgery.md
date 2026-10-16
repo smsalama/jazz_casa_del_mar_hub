@@ -1,7 +1,7 @@
 # ADR-0006: Admin authentication, server side sessions, request forgery protection, signed public form tokens and rate limits
 
 - Status: Proposed (for T2)
-- Date: 2026-10-15
+- Date: 2026-10-15, amended 2026-10-16 in P4R2-ARCH (architecture gate finding SEC-H1)
 - Author: System Architect (P4-T2)
 - Requirements: FR-20, FR-22, FR-23, FR-32, FR-34, FR-47, NFR-5, NFR-15, NFR-19 to NFR-22, NFR-34, NFR-35; G-1, G-9, G-10, G-11, G-19 to G-23; LR-21; threat model section 9 ("Session and form token mechanism"), TM-08, TM-10, TM-14, TM-15, TM-17, TM-20 to TM-27, TM-29, TM-62, TM-65, TM-66; RSK-10, RSK-21, RSK-25, RSK-26, RSK-32, RSK-38
 
@@ -21,8 +21,8 @@ Only staff sign in (email and password, no second factor this release, US-31 Won
 
 **Cookie**:
 
-- Name `__Host-jcdm_admin` with `Secure; HttpOnly; SameSite=Strict; Path=/` whenever `PUBLIC_ORIGIN` starts with `https://`.
-- Name `jcdm_admin` with `HttpOnly; SameSite=Strict; Path=/` and no `Secure` only when `PUBLIC_ORIGIN` is `http://localhost` or a loopback address. This is the only way Safari can sign in during local review (RSK-10), and it can never apply to a reachable address because the server refuses to start on a non local address (ADR-0015, G-22).
+- Name `__Host-jcdm_admin` with `Secure; HttpOnly; SameSite=Strict; Path=/` whenever `PUBLIC_ORIGIN` starts with `https://`. This branch cannot run in this release, because the exposure guard refuses an `https://` origin (ADR-0015); it is kept for when FR-33 is built.
+- Name `jcdm_admin` with `HttpOnly; SameSite=Strict; Path=/` and no `Secure` only when `PUBLIC_ORIGIN` is `http://localhost` or a loopback address. This is the only way Safari can sign in during local review (RSK-10). It cannot apply to a reachable set up because the exposure guard of ADR-0015 (G-22) allows only a loopback `HOST`, the server's own `http` loopback `PUBLIC_ORIGIN` on the same port, an empty `TRUSTED_PROXIES` and loopback peers, and answers 421 to any request carrying a forwarding header, so a local reverse proxy or tunnel cannot publish the portal either.
 - Every admin response carries `Cache-Control: no-store` (NFR-20, TM-46).
 
 **Admin request forgery protection** (NFR-22, TM-27):
@@ -43,7 +43,7 @@ Only staff sign in (email and password, no second factor this release, US-31 Won
 
 **After sign in** (FR-32, G-23): the session response includes the previous successful sign in time and the number of failed attempts since then, shown by the portal.
 
-**Rate limits** (NFR-21, G-10, G-20): fixed window counters in the `rate_limit` table keyed by `(rule, client key, window start)`. For rules keyed by address the client key is a keyed hash (the first 32 hex characters of HMAC-SHA256 with a per install rate key from `keys.json`), so the address is never stored readable; it is still personal data and kept at most 24 hours (data model D-9). `admin_write` is keyed by the session hash and `media_upload` by the account id. Counters are removed by the 10 minute sweep (ADR-0010). Rules and defaults: admin sign in 20 per 15 minutes per address; contact form 5 per hour; newsletter sign up 5 per hour; unsubscribe 10 per hour; admin writes 300 per minute per session; uploads 30 per hour per account. Exceeding returns 429 with `Retry-After` (an HTML page in the page language for public forms; a problem JSON for the admin API). The client address is the socket peer address; `X-Forwarded-For` is read only when the peer is listed in `TRUSTED_PROXIES` (empty by default), taking the right-most untrusted address. Limits are configuration values so tests can raise them.
+**Rate limits** (NFR-21, G-10, G-20): fixed window counters in the `rate_limit` table keyed by `(rule, client key, window start)`. For rules keyed by address the client key is a keyed hash (the first 32 hex characters of HMAC-SHA256 with a per install rate key from `keys.json`), so the address is never stored readable; it is still personal data and kept at most 24 hours (data model D-9). `admin_write` is keyed by the session hash and `media_upload` by the account id. Counters are removed by the 10 minute sweep (ADR-0010). Rules and defaults: admin sign in 20 per 15 minutes per address; contact form 5 per hour; newsletter sign up 5 per hour; unsubscribe 10 per hour; admin writes 300 per minute per session; uploads 30 per hour per account. Exceeding returns 429 with `Retry-After` (an HTML page in the page language for public forms; a problem JSON for the admin API). The client address is the socket peer address. In this release `TRUSTED_PROXIES` must be empty and requests carrying forwarding headers are refused with 421 before the rate limiter runs (ADR-0015), so no forwarding header is ever read; when FR-33 is built, `X-Forwarded-For` will be read only when the peer is listed in `TRUSTED_PROXIES`, taking the right-most untrusted address. Limits are configuration values so tests can raise them.
 
 **Equal timing** (FR-22, FR-23, G-11): sign up always runs the same statements in one transaction: normalise, HMAC for the suppression key, **the subscriber cap check first** (at the cap every address, new or existing, is refused with the same 503 page, so the cap cannot reveal which addresses exist; data model D-4), then one insert guarded by the suppression check with `ON CONFLICT DO NOTHING`. Unsubscribe always runs the same suppression insert (only when a subscriber row exists, so unknown addresses never create entries) and update. Both pad the response to a fixed minimum of 150 ms measured from the start of the handler, so the median difference stays well under 100 ms.
 
@@ -56,7 +56,7 @@ Only staff sign in (email and password, no second factor this release, US-31 Won
 - No public cookie, so no consent banner (NFR-15) and the Cookie notice lists only the admin session cookie and the pause motion session storage item.
 - Tokens embedded in cached pages must be refreshed at serve time if the optional page cache is used (ADR-0004).
 - A stolen database copy reveals password hashes (Argon2id) but no live session.
-- TM-21 (no second factor) remains High if hosted; the start refusal on non local addresses (ADR-0015) is the compensating control.
+- TM-21 (no second factor) remains High if hosted; the compensating control is the exposure guard of ADR-0015 (loopback `HOST` and `PUBLIC_ORIGIN`, empty `TRUSTED_PROXIES`, loopback peers only, 421 on forwarding headers), which also stops a local reverse proxy or tunnel. A raw TCP forward set up deliberately by the machine's owner is the residual (ADR-0015).
 
 ## Versions and licences
 

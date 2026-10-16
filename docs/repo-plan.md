@@ -187,7 +187,7 @@ Described here; the Developer creates the file in the web repo. No value is a se
 | --- | --- | --- |
 | `HOST` | `127.0.0.1` | Listen address. Only loopback values are accepted in this release; anything else stops the start with `STARTUP-REFUSED` (NFR-18) |
 | `PORT` | `4321` | Listen port |
-| `PUBLIC_ORIGIN` | `http://localhost:4321` | Origin used for `Origin` checks, the canonical host, cookie naming and `Secure` |
+| `PUBLIC_ORIGIN` | `http://localhost:4321` | Origin used for `Origin` checks, the canonical host, cookie naming and `Secure`. In this release it must be `http://localhost:<PORT>`, `http://127.0.0.1:<PORT>` or `http://[::1]:<PORT>` with the same port as `PORT`; an `https://` origin, any other host or another port stops the start with `STARTUP-REFUSED` (G-22, ADR-0015) |
 | `DATA_DIR` | `./data` | Database, media, keys; owner only |
 | `BACKUP_DIR` | `./backups` | Backup archives; owner only; outside `DATA_DIR` and every served folder |
 | `BACKUP_ENABLED` | `true` | Automatic daily backup (FR-48) |
@@ -215,7 +215,7 @@ Described here; the Developer creates the file in the web repo. No value is a se
 | `RATE_UNSUBSCRIBE_PER_HOUR` | `10` | Per client address |
 | `RATE_ADMIN_WRITES_PER_MINUTE` | `300` | Per session |
 | `RATE_UPLOADS_PER_HOUR` | `30` | Per account |
-| `TRUSTED_PROXIES` | empty | Comma separated peer addresses whose forwarding headers are trusted (G-20) |
+| `TRUSTED_PROXIES` | empty | Comma separated peer addresses whose forwarding headers are trusted (G-20). Must be empty in this release: any value stops the start with `STARTUP-REFUSED`, and requests carrying forwarding headers get 421 (G-22, ADR-0015). Kept for when FR-33 is built |
 | `UPLOAD_MAX_MB` | `10` | Per photo (NFR-23) |
 | `UPLOAD_MAX_MEGAPIXELS` | `40` | Per photo |
 | `UPLOAD_BATCH_MAX` | `20` | Files per batch |
@@ -233,7 +233,7 @@ Only after Steven's T2 verdict is recorded as Approve or Approve with changes (N
 1. **Templates** (Orchestrator, `agency:new-project`): fill `jazz_casa_del_mar_web` from the agency templates at the project's pinned agency version: `templates/shared` (scripts, hooks, `.nvmrc`, `.gitignore`, `.gitleaks.toml`, `.dash-allow`) and `templates/web` (`CLAUDE.md`, `RUN-LOCALLY.md`, `.env.example` placeholder). Commit on a branch, never on `main` directly.
 2. **Scaffold** (DevOps Engineer with the Developer): create `package.json` with the exact versions in section 5, `.npmrc`, `astro.config.ts`, `tsconfig.json`, lint, test and Playwright configuration; run `npm install` once to produce `package-lock.json`; add `.gitignore` entries for `data/`, `backups/`, `dist/`, `release/`, `.env`, test outputs.
 3. **Contract**: `npm run contract:sync` copies `contract/openapi.yaml` from the hub and writes `contract/SOURCE`; `npm run contract:types` generates the admin client types.
-4. **Walking skeleton** (Developer): server entry with the startup guards (loopback, permissions, keys), the security header middleware, `GET /healthz`, `GET /` redirect, one public page in four languages with the layout and concept notice, the migration for `health` and `job_run`, and one test per layer (unit, integration, contract, end-to-end with axe and the CSP listener). `bash scripts/verify.sh` must print `RESULT: PASS` before any feature work.
+4. **Walking skeleton** (Developer): server entry with the startup guards (exposure guard: loopback `HOST`, own loopback `PUBLIC_ORIGIN`, empty `TRUSTED_PROXIES`, and per request loopback peer, 421 on forwarding headers and foreign `Host`; permissions; keys) and their tests G22-1 to G22-10 (`docs/reviews/p4r2-arch-notes.md`), the security header middleware, `GET /healthz`, `GET /` redirect, one public page in four languages with the layout and concept notice, the migration for `health` and `job_run`, and one test per layer (unit, integration, contract, end-to-end with axe and the CSP listener). `bash scripts/verify.sh` must print `RESULT: PASS` before any feature work.
 5. **Phase 4 spike** (Motion Designer and Performance Engineer): the hero scene through the real pipeline (meshopt, WebP, single renderer, gate, governor) measured against NFR-7 and NFR-8 on profile L1 or L2, before the other five scenes are built (RSK-3).
 6. **Database Engineer**: detailed schema, indexes and the first real migrations from ADR-0003 and `docs/architecture.md` section 10.
 7. **Records** (Orchestrator): update `state/project.json` (web repo status, api repo "not used", ADR decisions) and `status.md`.
