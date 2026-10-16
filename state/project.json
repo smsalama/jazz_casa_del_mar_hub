@@ -237,6 +237,14 @@
       "role": "role-database-engineer",
       "task": "P6-T3",
       "tokens": 295329
+    },
+    {
+      "date": "2026-10-16",
+      "phase": "6 Implementation",
+      "role": "role-developer",
+      "task": "P6-T5",
+      "tokens": 66016,
+      "note": "count after resume only; first run before the session limit not returned"
     }
   ],
   "tasks": [
@@ -535,13 +543,13 @@
       "title": "Public layout, design tokens, fonts, concept notice, language routing, loader and swup containers, focus on h1 fix",
       "role": "role-developer",
       "repo": "web",
-      "branch": "",
-      "status": "todo",
+      "branch": "p6-t5-public-layout",
+      "status": "done",
       "depends_on": [
         "P6-T2",
         "P6-T3"
       ],
-      "evidence": ""
+      "evidence": "evidence/6-implementation/verify-wt-web-t5-edddbcc-20261016T162759Z.log"
     },
     {
       "id": "P6-T6",
