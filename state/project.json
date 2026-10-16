@@ -12,7 +12,7 @@
     "web": {
       "name": "jazz_casa_del_mar_web",
       "url": "https://github.com/smsalama/jazz_casa_del_mar_web",
-      "status": "initialised from templates, scaffold pending",
+      "status": "scaffolded (P6-T1 done, main at 554ad9f)",
       "branch": "main"
     },
     "api": {
@@ -216,6 +216,13 @@
       "role": "role-security-engineer",
       "task": "P4R2-REVIEW-ARCH",
       "tokens": 205276
+    },
+    {
+      "date": "2026-10-16",
+      "phase": "6 Implementation",
+      "role": "role-devops-engineer",
+      "task": "P6-T1",
+      "tokens": 144201
     }
   ],
   "tasks": [
@@ -466,12 +473,12 @@
       "title": "Initialise web repo from agency templates at the pinned version, scaffold with exact pins (section 7 steps 1 to 3), contract sync and types",
       "role": "role-devops-engineer",
       "repo": "web",
-      "branch": "",
-      "status": "doing",
+      "branch": "p6-t1-scaffold",
+      "status": "done",
       "depends_on": [
         "P5-T0"
       ],
-      "evidence": ""
+      "evidence": "evidence/6-implementation/verify-jazz_casa_del_mar_web-554ad9f-20261016T092545Z.log"
     },
     {
       "id": "P6-T2",
