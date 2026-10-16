@@ -1,6 +1,6 @@
 {
   "gate": "design",
-  "status": "FAIL",
+  "status": "PASS",
   "criteria": [
     "User flows approved (Steven at T2)",
     "Responsive layouts",
@@ -8,36 +8,41 @@
     "Accessibility considered",
     "Motion spec has reduced motion and budgets"
   ],
-  "reviewer": "role-accessibility and role-consultant",
+  "reviewer": "role-accessibility (re-review), originally role-accessibility and role-consultant",
   "date": "2026-10-16",
   "evidence": [
-    "evidence/4-design-architecture/verify-hub-p4-design-4020c59-20261015T212500Z.log",
+    "evidence/4-design-architecture/verify-jazz_casa_del_mar_hub-5e75fcc-20261016T090929Z.log",
+    "evidence/4-design-architecture/verify-wt-p4r2-arch-a1e331f-20261016T085843Z.log",
+    "docs/reviews/phase4-rereview.md",
+    "design/prototype-checks/a1-results.json",
+    "design/prototype-checks/h3-results.json",
+    "design/prototype-checks/h3-scroll-results.json",
     "evidence/accessibility/summary.json"
   ],
   "findings": [
     {
       "severity": "high",
-      "finding": "DC-H1 Resort name spelled 'Jazz Casa del Mar' everywhere; brief and FR-16 say 'Jaz Elite Casa del Mar Beach'. Steven to choose real name, short form or neutral codename at T2.",
+      "finding": "DC-H1 Resort name spelled 'Jazz Casa del Mar' everywhere; brief and FR-16 say 'Jaz Elite Casa del Mar Beach'. Steven to choose real name, short form or neutral codename at T2. STATUS: not fixed by design; becomes a T2 decision for Steven.",
       "where": "docs/asset-register.md:46; docs/design/screens/home.md:28; design/prototype/index*.html"
     },
     {
       "severity": "high",
-      "finding": "DC-H2 No 3D has been seen before T2; only flat SVG posters exist. Scrim 0.84 to 0.92 and short scene bands make it less immersive than the brief. Produce at least a Home hero still or spike capture before T2.",
+      "finding": "DC-H2 No 3D has been seen before T2; only flat SVG posters exist. Scrim 0.84 to 0.92 and short scene bands make it less immersive than the brief. Produce at least a Home hero still or spike capture before T2. STATUS: accepted by Steven in chat 2026-10-16: \"skip the 3D hero preview ... I will judge the look blindly.\"",
       "where": "docs/design/motion-spec.md:771,777; docs/design/budgets.md:15"
     },
     {
       "severity": "high",
-      "finding": "DC-H3 Admin session timeout warning (AC-51.3, NFR-5, WCAG 2.2.1) is not designed.",
+      "finding": "DC-H3 Admin session timeout warning (AC-51.3, NFR-5, WCAG 2.2.1) is not designed. STATUS: fixed and re-reviewed 2026-10-16 (see docs/reviews/phase4-rereview.md).",
       "where": "docs/design/screens/admin-shell.md:90"
     },
     {
       "severity": "high",
-      "finding": "DC-H4 No screen for site wide text (navigation, footer, form labels, messages), no Pages index, no consent and privacy line editor with wording versions (FR-35, AC-33.2, D-2).",
+      "finding": "DC-H4 No screen for site wide text (navigation, footer, form labels, messages), no Pages index, no consent and privacy line editor with wording versions (FR-35, AC-33.2, D-2). STATUS: fixed and re-reviewed 2026-10-16 (see docs/reviews/phase4-rereview.md).",
       "where": "docs/design/screens/admin-shell.md:19; admin-page-editor.md:39; admin-settings.md:9"
     },
     {
       "severity": "high",
-      "finding": "A-1 Prototype JS runs in head without defer so menu, pause control and password toggle never bind (WCAG 2.1.1, 2.2.2, 4.1.2).",
+      "finding": "A-1 Prototype JS runs in head without defer so menu, pause control and password toggle never bind (WCAG 2.1.1, 2.2.2, 4.1.2). STATUS: fixed and re-reviewed 2026-10-16 (see docs/reviews/phase4-rereview.md).",
       "where": "design/prototype/js/proto.js:3-60"
     },
     {
@@ -102,8 +107,7 @@
     }
   ],
   "actions": [
-    "Fix DC-H1 to DC-H4 and A-1 before T2: choose name at T2, produce a Home hero still or spike, design session timeout warning and shared text and wording editors, fix prototype script.",
-    "Fix A-3 to A-5 and DC-M1 to DC-M7 (or record Steven's acceptance) then re-run both reviewers.",
-    "User flows approval is Steven's at T2."
+    "Steven decides the resort name at T2 (DC-H1) and judges the 3D look blind (DC-H2).",
+    "Medium and low findings, plus the re-review items in docs/reviews/phase4-rereview.md, are known items taken to T2 by Steven's decision."
   ]
 }

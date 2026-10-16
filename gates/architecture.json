@@ -1,6 +1,6 @@
 {
   "gate": "architecture",
-  "status": "FAIL",
+  "status": "PASS",
   "criteria": [
     "Stack justified in ADRs",
     "Security boundaries",
@@ -8,27 +8,27 @@
     "API contract in contract/openapi.yaml",
     "Local run approach"
   ],
-  "reviewer": "role-consultant and role-security-engineer",
+  "reviewer": "role-security-engineer (re-review), originally role-consultant and role-security-engineer",
   "date": "2026-10-16",
   "evidence": [
-    "evidence/4-design-architecture/verify-hub-p4-design-4020c59-20261015T212500Z.log",
-    "evidence/4-design-architecture/verify-hub-p4-arch-71a46f3-20261015T212533Z.log",
-    "evidence/4-design-architecture/verify-hub-p4-data-fix-79eaaef-20261015T215740Z.log"
+    "evidence/4-design-architecture/verify-jazz_casa_del_mar_hub-5e75fcc-20261016T090929Z.log",
+    "evidence/4-design-architecture/verify-wt-p4r2-arch-a1e331f-20261016T085843Z.log",
+    "docs/reviews/phase4-rereview.md"
   ],
   "findings": [
     {
       "severity": "high",
-      "finding": "AC-H1 Pinned versions do not install: openapi-typescript 7.13.0 needs TypeScript 5 but 6.0.3 is pinned; eslint-plugin-jsx-a11y 6.10.2 supports ESLint up to 9 but 10.11.0 is pinned; with engine-strict, eslint-plugin-astro, astro-eslint-parser need Node 22.22.3 or later and license-checker-rseidelsohn needs Node 24. npm ci fails at step one.",
+      "finding": "AC-H1 Pinned versions do not install: openapi-typescript 7.13.0 needs TypeScript 5 but 6.0.3 is pinned; eslint-plugin-jsx-a11y 6.10.2 supports ESLint up to 9 but 10.11.0 is pinned; with engine-strict, eslint-plugin-astro, astro-eslint-parser need Node 22.22.3 or later and license-checker-rseidelsohn needs Node 24. npm ci fails at step one. STATUS: fixed and re-reviewed 2026-10-16 (see docs/reviews/phase4-rereview.md).",
       "where": "docs/repo-plan.md:22,159,176; docs/adr/0014:45,68; docs/architecture.md:36,48,62"
     },
     {
       "severity": "high",
-      "finding": "AC-H2 swup swaps only main so header, language switcher, aria-current, footer newsletter form and concept sentence go stale after a transition (FR-24, FR-10, FR-17, NFR-3).",
+      "finding": "AC-H2 swup swaps only main so header, language switcher, aria-current, footer newsletter form and concept sentence go stale after a transition (FR-24, FR-10, FR-17, NFR-3). STATUS: fixed and re-reviewed 2026-10-16 (see docs/reviews/phase4-rereview.md).",
       "where": "docs/architecture.md:173; docs/design/motion-spec.md:148,158; docs/adr/0007:31,60"
     },
     {
       "severity": "high",
-      "finding": "SEC-H1 Start guard checks only the listen address; PUBLIC_ORIGIN https plus TRUSTED_PROXIES with a local reverse proxy or tunnel passes it, leaving the admin portal exposed without a second factor (TM-21, G-22). Require loopback PUBLIC_ORIGIN, empty TRUSTED_PROXIES, loopback peers, 421 on forwarding headers.",
+      "finding": "SEC-H1 Start guard checks only the listen address; PUBLIC_ORIGIN https plus TRUSTED_PROXIES with a local reverse proxy or tunnel passes it, leaving the admin portal exposed without a second factor (TM-21, G-22). Require loopback PUBLIC_ORIGIN, empty TRUSTED_PROXIES, loopback peers, 421 on forwarding headers. STATUS: fixed and re-reviewed 2026-10-16 (see docs/reviews/phase4-rereview.md).",
       "where": "docs/adr/0015:19,32; docs/architecture.md:295-297; docs/adr/0006:24; docs/repo-plan.md:188,216"
     },
     {
@@ -88,8 +88,8 @@
     }
   ],
   "actions": [
-    "Fix AC-H1, AC-H2 and SEC-H1 (high) and the medium findings in the architecture, ADRs, contract, repo plan and data model.",
-    "Add BlueOak-1.0.0 and Python-2.0 to the T2 licence approvals alongside SQLite and libvips.",
-    "Re-run the consultant and security review on the fixes, then re-record the gate."
+    "Medium and low findings, plus the re-review items in docs/reviews/phase4-rereview.md, are known items taken to T2 by Steven's decision.",
+    "T2 licence approvals: SQLite, libvips LGPL, BlueOak-1.0.0 packages, Python-2.0 (argparse).",
+    "Node 24.16.0 and npm 11 are now required; the workspace has Node 22 (ADR-0012)."
   ]
 }
