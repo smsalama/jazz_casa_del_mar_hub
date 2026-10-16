@@ -3,7 +3,7 @@
   "project": "site",
   "agency_version": "0.1.1+ef1fb3c",
   "created": "2026-10-15",
-  "phase": "5 Development planning",
+  "phase": "6 Implementation",
   "repos": {
     "hub": {
       "name": "jazz_casa_del_mar_hub",
@@ -459,6 +459,180 @@
         "P4R2-DESIGN"
       ],
       "evidence": "docs/reviews/phase4-rereview.md"
+    },
+    {
+      "id": "P6-T1",
+      "title": "Initialise web repo from agency templates at the pinned version, scaffold with exact pins (section 7 steps 1 to 3), contract sync and types",
+      "role": "role-devops-engineer",
+      "repo": "web",
+      "branch": "",
+      "status": "todo",
+      "depends_on": [
+        "P5-T0"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P6-T2",
+      "title": "Walking skeleton: server entry, exposure guard (G22-1 to G22-10 plus the re-review extra checks), config, logging, headers and CSP, healthz",
+      "role": "role-developer",
+      "repo": "web",
+      "branch": "",
+      "status": "todo",
+      "depends_on": [
+        "P6-T1"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P6-T3",
+      "title": "Database: schema, migrations, triggers, seed loader, Drizzle proof with plain SQL fallback (ADR-0003)",
+      "role": "role-database-engineer",
+      "repo": "web",
+      "branch": "",
+      "status": "todo",
+      "depends_on": [
+        "P6-T1"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P6-T4",
+      "title": "3D spike: Home hero through the real pipeline, measured on NFR-7 and NFR-8 (RSK-3)",
+      "role": "role-motion-designer",
+      "repo": "web",
+      "branch": "",
+      "status": "todo",
+      "depends_on": [
+        "P6-T2"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P6-T5",
+      "title": "Public layout, design tokens, fonts, concept notice, language routing, loader and swup containers, focus on h1 fix",
+      "role": "role-developer",
+      "repo": "web",
+      "branch": "",
+      "status": "todo",
+      "depends_on": [
+        "P6-T2",
+        "P6-T3"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P6-T6",
+      "title": "Public pages (21 page types x 4 languages) with placeholder content, rich text renderer, gallery, FAQ, offers, rooms",
+      "role": "role-developer",
+      "repo": "web",
+      "branch": "",
+      "status": "todo",
+      "depends_on": [
+        "P6-T5"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P6-T7",
+      "title": "Forms and personal data: contact, newsletter, unsubscribe, consent, privacy notice, cookie notice, retention purge, rate limits",
+      "role": "role-developer",
+      "repo": "web",
+      "branch": "",
+      "status": "todo",
+      "depends_on": [
+        "P6-T3",
+        "P6-T5"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P6-T8",
+      "title": "Admin foundations: first run, sign in, sessions, CSRF, accounts, password change, session timeout warning, audit and security events",
+      "role": "role-developer",
+      "repo": "web",
+      "branch": "",
+      "status": "todo",
+      "depends_on": [
+        "P6-T2",
+        "P6-T3"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P6-T9",
+      "title": "Admin content: pages index, page editor with four languages, Site text, consent wording versions, lists, settings, missing translations",
+      "role": "role-developer",
+      "repo": "web",
+      "branch": "",
+      "status": "todo",
+      "depends_on": [
+        "P6-T8",
+        "P6-T6"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P6-T10",
+      "title": "Admin media upload and library, sandboxed image worker, enquiries, subscribers export",
+      "role": "role-developer",
+      "repo": "web",
+      "branch": "",
+      "status": "todo",
+      "depends_on": [
+        "P6-T8"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P6-T11",
+      "title": "Remaining five 3D scenes, reduced motion and non-WebGL fallback, pause control, governor",
+      "role": "role-motion-designer",
+      "repo": "web",
+      "branch": "",
+      "status": "todo",
+      "depends_on": [
+        "P6-T4",
+        "P6-T6"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P6-T12",
+      "title": "Backup, restore with retention purge, security event command, local run scripts, RUN-LOCALLY.md, release install path",
+      "role": "role-devops-engineer",
+      "repo": "web",
+      "branch": "",
+      "status": "todo",
+      "depends_on": [
+        "P6-T7",
+        "P6-T10"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P6-T13",
+      "title": "Development gate: verify in hub and web, consultant code review",
+      "role": "role-consultant",
+      "repo": "web",
+      "branch": "",
+      "status": "todo",
+      "depends_on": [
+        "P6-T9",
+        "P6-T11",
+        "P6-T12"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "P5-T0",
+      "title": "Development plan written (docs/dev-plan.md) and tasks recorded",
+      "role": "Orchestrator",
+      "repo": "hub",
+      "branch": "",
+      "status": "done",
+      "depends_on": [],
+      "evidence": "docs/dev-plan.md"
     }
   ],
   "decisions": [

@@ -1,6 +1,6 @@
 # Project status
 
-- **Project and phase:** Jazz Casa del Mar resort website (jazz_casa_del_mar site), 4 Design and architecture, T2 approved, moving to Phase 5
+- **Project and phase:** Jazz Casa del Mar resort website (jazz_casa_del_mar site), 4 Design and architecture, T2 approved, Phase 5 plan done, starting Phase 6 with the Node 24 setup
 - **Completed since last report:** fixed the high findings only (Steven, 2026-10-16): swap containers, start guard, installable toolchain (Node 24 now required), prototype script binding, session timeout warning, Pages index, Site text and Consent wording screens; independent re-reviews; both gates re-recorded
 - **In progress:** none, waiting for Steven at T2
 - **Gates:** requirements PASS. Design PASS with conditions (resort name is a T2 decision; 3D accepted unseen by Steven; mediums carried). Architecture PASS with conditions (mediums carried). Record: `docs/reviews/phase4-rereview.md`.
