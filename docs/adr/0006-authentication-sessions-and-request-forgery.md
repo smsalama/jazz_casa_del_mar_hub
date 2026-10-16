@@ -22,7 +22,7 @@ Only staff sign in (email and password, no second factor this release, US-31 Won
 **Cookie**:
 
 - Name `__Host-jcdm_admin` with `Secure; HttpOnly; SameSite=Strict; Path=/` whenever `PUBLIC_ORIGIN` starts with `https://`. This branch cannot run in this release, because the exposure guard refuses an `https://` origin (ADR-0015); it is kept for when FR-33 is built.
-- Name `jcdm_admin` with `HttpOnly; SameSite=Strict; Path=/` and no `Secure` only when `PUBLIC_ORIGIN` is `http://localhost` or a loopback address. This is the only way Safari can sign in during local review (RSK-10). It cannot apply to a reachable set up because the exposure guard of ADR-0015 (G-22) allows only a loopback `HOST`, the server's own `http` loopback `PUBLIC_ORIGIN` on the same port, an empty `TRUSTED_PROXIES` and loopback peers, and answers 421 to any request carrying a forwarding header, so a local reverse proxy or tunnel cannot publish the portal either.
+- Name `jcdm_admin` with `HttpOnly; SameSite=Strict; Path=/` and no `Secure` only when `PUBLIC_ORIGIN` is `http://localhost` or a loopback address. This is the only way Safari can sign in during local review (RSK-10). It cannot apply to a reachable set up because the exposure guard of ADR-0015 (G-22) allows only a loopback `HOST`, the server's own `http` loopback `PUBLIC_ORIGIN` on the same port, an empty `TRUSTED_PROXIES` and loopback peers, and answers 421 to any request carrying a forwarding header, so the common local reverse proxies and tunnels cannot publish the portal either (a deliberately header stripping forward is a known residual, ADR-0015).
 - Every admin response carries `Cache-Control: no-store` (NFR-20, TM-46).
 
 **Admin request forgery protection** (NFR-22, TM-27):
