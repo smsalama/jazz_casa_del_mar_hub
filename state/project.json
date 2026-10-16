@@ -12,7 +12,8 @@
     "web": {
       "name": "jazz_casa_del_mar_web",
       "url": "https://github.com/smsalama/jazz_casa_del_mar_web",
-      "status": "planned"
+      "status": "initialised from templates, scaffold pending",
+      "branch": "main"
     },
     "api": {
       "name": "",
