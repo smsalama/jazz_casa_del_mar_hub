@@ -2111,7 +2111,13 @@ components:
         - attractions
     HtmlDocument:
       type: string
-      description: A complete UTF-8 HTML document with `lang`, the robots meta tag, the concept notice and no inline script
+      description: |
+        A complete UTF-8 HTML document with `lang`, the robots meta tag, the concept notice and no inline script.
+        Every public HTML response (pages, form results and errors, 404, 429, 500) contains the three page
+        transition containers `#swup-top` (skip link, concept notice, header, navigation, language switcher),
+        `#swup-main` (`main`) and `#swup-footer` (concept sentence, newsletter form with its own `formToken`),
+        ADR-0007. Requests sent by the page transition script (`X-Requested-With: swup`) get the same complete
+        document; the server never returns a fragment.
     BinaryFile:
       type: string
       contentMediaType: application/octet-stream
