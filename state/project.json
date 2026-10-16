@@ -12,7 +12,7 @@
     "web": {
       "name": "jazz_casa_del_mar_web",
       "url": "https://github.com/smsalama/jazz_casa_del_mar_web",
-      "status": "scaffolded (P6-T1 done, main at 554ad9f)",
+      "status": "P6-T1 to P6-T3 done, main at 9413fd5",
       "branch": "main"
     },
     "api": {
@@ -230,6 +230,13 @@
       "role": "role-developer",
       "task": "P6-T2",
       "tokens": 229928
+    },
+    {
+      "date": "2026-10-16",
+      "phase": "6 Implementation",
+      "role": "role-database-engineer",
+      "task": "P6-T3",
+      "tokens": 295329
     }
   ],
   "tasks": [
@@ -504,12 +511,12 @@
       "title": "Database: schema, migrations, triggers, seed loader, Drizzle proof with plain SQL fallback (ADR-0003)",
       "role": "role-database-engineer",
       "repo": "web",
-      "branch": "",
-      "status": "todo",
+      "branch": "p6-t3-database",
+      "status": "done",
       "depends_on": [
         "P6-T1"
       ],
-      "evidence": ""
+      "evidence": "evidence/6-implementation/verify-jazz_casa_del_mar_web-9413fd5-20261016T094432Z.log"
     },
     {
       "id": "P6-T4",

@@ -1339,7 +1339,7 @@ CREATE TRIGGER security_event_no_update BEFORE UPDATE ON security_event
 BEGIN SELECT RAISE(ABORT, 'security_event_is_append_only'); END;
 
 -- wording versions are immutable
-CREATE TRIGGER legal_text_no_update BEFORE UPDATE ON legal_text_version
+CREATE TRIGGER legal_text_no_update BEFORE UPDATE OF label, kind, n, text_en, text_de, text_it, text_ru, created_at ON legal_text_version
 BEGIN SELECT RAISE(ABORT, 'legal_text_version_is_immutable'); END;
 
 -- wording versions are immutable

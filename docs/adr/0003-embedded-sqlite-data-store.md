@@ -52,3 +52,17 @@ Main tables (the Database Engineer owns the detailed schema in `docs/data-model.
 | drizzle-orm | 0.45.3 | Apache-2.0 | Typed queries and runtime migrator |
 | drizzle-kit | 0.31.11 | MIT | Migration generation (development only) |
 | @types/better-sqlite3 | 9.6.0 | MIT | Types (development only) |
+
+## Addendum 2026-10-16: Drizzle proof (task P6-T3)
+
+Drizzle 0.45.3 and drizzle-kit 0.31.11 were proven against the schema on SQLite 3.53.4 with better-sqlite3 13.0.3.
+
+| Feature | Result | Handling |
+| --- | --- | --- |
+| Table CHECK constraints, partial indexes, descending index columns, composite keys, foreign key actions | Expressed and emitted | In the Drizzle schema (all CHECKs are table level and named) |
+| WITHOUT ROWID | Not expressible | `0000_baseline.sql` patched by hand for 7 tables; `npm run db:check` and tests verify it |
+| Triggers and constant rows | Not expressible | Custom migrations `0001_integrity_triggers` and `0002_singleton_rows` |
+
+- Migrations run through the project's own runner (one `BEGIN IMMEDIATE` transaction, refuses a database newer than the code), writing Drizzle's own `__drizzle_migrations` table so both agree.
+- Migrations must always be generated with an explicit `--name` (`NNNN_snake_case`).
+- The wording immutability trigger `legal_text_no_update` is limited to the content columns so that deleting an author account can set `created_by` to NULL (fix of 2026-10-16, also in `docs/data-model.md`).
