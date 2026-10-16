@@ -23,6 +23,10 @@ info:
       (`adminClient`) and a matching `Origin` (ADR-0006).
     - Identifiers are UUID version 7 strings. A missing record returns 404 (NFR-25).
     - Times are RFC 3339 in UTC.
+    - Exposure guard (G-22, ADR-0015): any request from a non loopback peer, carrying a forwarding header
+      (`Forwarded`, `X-Forwarded-*`, `X-Real-IP`, `Via` and the others in ADR-0015) or with a `Host` other than
+      the `PUBLIC_ORIGIN` host gets `421 Misdirected Request` (plain text, `Cache-Control: no-store`) before any
+      operation below runs. It is not repeated on each operation.
   license:
     name: Proprietary, client project (speculative concept)
     url: https://github.com/smsalama/jazz_casa_del_mar_hub
@@ -2111,7 +2115,13 @@ components:
         - attractions
     HtmlDocument:
       type: string
-      description: A complete UTF-8 HTML document with `lang`, the robots meta tag, the concept notice and no inline script
+      description: |
+        A complete UTF-8 HTML document with `lang`, the robots meta tag, the concept notice and no inline script.
+        Every public HTML response (pages, form results and errors, 404, 429, 500) contains the three page
+        transition containers `#swup-top` (skip link, concept notice, header, navigation, language switcher),
+        `#swup-main` (`main`) and `#swup-footer` (concept sentence, newsletter form with its own `formToken`),
+        ADR-0007. Requests sent by the page transition script (`X-Requested-With: swup`) get the same complete
+        document; the server never returns a fragment.
     BinaryFile:
       type: string
       contentMediaType: application/octet-stream

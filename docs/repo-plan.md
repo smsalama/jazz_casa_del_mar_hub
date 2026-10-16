@@ -18,7 +18,7 @@
 ```
 jazz_casa_del_mar_web/
   .githooks/                     agency template: pre-commit (dash check, secret scan), commit-msg
-  .nvmrc                         22
+  .nvmrc                         24 (minimum 24.16.0 with npm 11, ADR-0001, ADR-0014)
   .npmrc                         ignore-scripts=true, engine-strict=true, save-exact=true, audit-level=high
   .gitignore                     node_modules, dist, data, backups, .env, test-results, playwright-report, coverage, release
   .gitleaks.toml, .dash-allow    agency template
@@ -154,7 +154,7 @@ Folder rules: `src/lib/**`, `src/server/**`, `src/cli/**` and `src/workers/**` a
 
 `bash scripts/setup.sh` (agency template plus project steps, idempotent):
 
-1. `scripts/doctor.sh` (git, Node.js 22, npm, curl).
+1. `scripts/doctor.sh` (git, Node.js 24.16.0 or later, npm 11 or later, curl; refuses older versions, AC-H1).
 2. Git hooks on (`core.hooksPath .githooks`).
 3. `npm ci` (install scripts disabled by `.npmrc`).
 4. `npx playwright install chromium` (plus `webkit firefox` on macOS); skipped when the browsers are already present.
@@ -173,7 +173,9 @@ Exact versions (ADR tables hold the licences):
 
 - Shipped, server: astro 7.3.5, @astrojs/node 11.1.6, sirv 3.0.2, better-sqlite3 13.0.3, drizzle-orm 0.45.3, zod 4.6.5, @node-rs/argon2 2.2.1, sharp 0.35.5, tar-stream 3.2.1.
 - Shipped, bundled into browser code: three 0.186.1, swup 4.10.0, @swup/a11y-plugin 5.2.1, @swup/head-plugin 2.3.1, @swup/preload-plugin 3.2.12, @swup/forms-plugin 3.6.0, motion 13.4.6, react 19.3.0, react-dom 19.3.0, react-router 8.4.0, react-aria-components 1.21.1, @tiptap/react 3.31.4, @tiptap/pm 3.31.4, @tiptap/starter-kit 3.31.4, @tiptap/extension-link 3.31.4, openapi-fetch 0.17.0, the chosen Fontsource packages.
-- Development only: typescript 6.0.3, @astrojs/check 0.9.10, @astrojs/react 7.0.0, esbuild 0.28.2, tsx 4.23.15, drizzle-kit 0.31.11, vitest 5.0.3, @vitest/coverage-v8 5.0.3, @playwright/test 1.63.0, @axe-core/playwright 4.13.0, ajv 8.20.0, ajv-formats 3.0.1, @redocly/cli 2.57.0, openapi-typescript 7.13.0, lighthouse 13.5.0, eslint 10.11.0, typescript-eslint 8.71.0, eslint-plugin-astro 3.2.1, eslint-plugin-jsx-a11y 6.10.2, prettier 3.9.9, @gltf-transform/cli 4.5.1, meshoptimizer 1.3.0, gltf-validator 2.0.0-dev.3.10, @cyclonedx/cyclonedx-npm 6.0.1, license-checker-rseidelsohn 5.0.1, @types/node 22 line, @types/better-sqlite3 9.6.0, @types/react 19.3.0, @types/react-dom 19.3.0, @types/three 0.186.0, @types/tar-stream 3.1.5.
+- Development only: typescript 5.9.3, @astrojs/check 0.9.10, @astrojs/react 7.0.0, esbuild 0.28.2, tsx 4.23.15, drizzle-kit 0.31.11, vitest 5.0.3, @vitest/coverage-v8 5.0.3, @playwright/test 1.63.0, @axe-core/playwright 4.13.0, ajv 8.20.0, ajv-formats 3.0.1, @redocly/cli 2.57.0, openapi-typescript 7.13.0, lighthouse 13.5.0, eslint 10.11.0, typescript-eslint 8.71.0, eslint-plugin-astro 3.2.1, eslint-plugin-jsx-a11y-x 0.2.0, prettier 3.9.9, @gltf-transform/cli 4.5.1, meshoptimizer 1.3.0, gltf-validator 2.0.0-dev.3.10, @cyclonedx/cyclonedx-npm 6.0.1, license-checker-rseidelsohn 5.0.1, @types/node 24.19.0, @types/better-sqlite3 9.6.0, @types/react 19.3.0, @types/react-dom 19.3.0, @types/three 0.186.0, @types/tar-stream 3.1.5.
+
+`package.json` `engines` is `{ "node": "^24.16.0", "npm": ">=11" }`. This set was resolved and installed with `engine-strict=true` and install scripts disabled on Node.js 24.16.0 with npm 11.13.0 on 2026-10-16 (`npm ci` exit 0, 1,027 packages); the runs and the reasons for TypeScript 5.9.3, eslint-plugin-jsx-a11y-x and the Node.js 24 minimum are in ADR-0014 (gate finding AC-H1).
 
 Browser bundled libraries are listed under `dependencies` so that `npm ls --omit=dev`, the SBOM and the licence check include them.
 
@@ -185,7 +187,7 @@ Described here; the Developer creates the file in the web repo. No value is a se
 | --- | --- | --- |
 | `HOST` | `127.0.0.1` | Listen address. Only loopback values are accepted in this release; anything else stops the start with `STARTUP-REFUSED` (NFR-18) |
 | `PORT` | `4321` | Listen port |
-| `PUBLIC_ORIGIN` | `http://localhost:4321` | Origin used for `Origin` checks, the canonical host, cookie naming and `Secure` |
+| `PUBLIC_ORIGIN` | `http://localhost:4321` | Origin used for `Origin` checks, the canonical host, cookie naming and `Secure`. In this release it must be `http://localhost:<PORT>`, `http://127.0.0.1:<PORT>` or `http://[::1]:<PORT>` with the same port as `PORT`; an `https://` origin, any other host or another port stops the start with `STARTUP-REFUSED` (G-22, ADR-0015) |
 | `DATA_DIR` | `./data` | Database, media, keys; owner only |
 | `BACKUP_DIR` | `./backups` | Backup archives; owner only; outside `DATA_DIR` and every served folder |
 | `BACKUP_ENABLED` | `true` | Automatic daily backup (FR-48) |
@@ -213,7 +215,7 @@ Described here; the Developer creates the file in the web repo. No value is a se
 | `RATE_UNSUBSCRIBE_PER_HOUR` | `10` | Per client address |
 | `RATE_ADMIN_WRITES_PER_MINUTE` | `300` | Per session |
 | `RATE_UPLOADS_PER_HOUR` | `30` | Per account |
-| `TRUSTED_PROXIES` | empty | Comma separated peer addresses whose forwarding headers are trusted (G-20) |
+| `TRUSTED_PROXIES` | empty | Comma separated peer addresses whose forwarding headers are trusted (G-20). Must be empty in this release: any value stops the start with `STARTUP-REFUSED`, and requests carrying forwarding headers get 421 (G-22, ADR-0015). Kept for when FR-33 is built |
 | `UPLOAD_MAX_MB` | `10` | Per photo (NFR-23) |
 | `UPLOAD_MAX_MEGAPIXELS` | `40` | Per photo |
 | `UPLOAD_BATCH_MAX` | `20` | Files per batch |
@@ -231,7 +233,7 @@ Only after Steven's T2 verdict is recorded as Approve or Approve with changes (N
 1. **Templates** (Orchestrator, `agency:new-project`): fill `jazz_casa_del_mar_web` from the agency templates at the project's pinned agency version: `templates/shared` (scripts, hooks, `.nvmrc`, `.gitignore`, `.gitleaks.toml`, `.dash-allow`) and `templates/web` (`CLAUDE.md`, `RUN-LOCALLY.md`, `.env.example` placeholder). Commit on a branch, never on `main` directly.
 2. **Scaffold** (DevOps Engineer with the Developer): create `package.json` with the exact versions in section 5, `.npmrc`, `astro.config.ts`, `tsconfig.json`, lint, test and Playwright configuration; run `npm install` once to produce `package-lock.json`; add `.gitignore` entries for `data/`, `backups/`, `dist/`, `release/`, `.env`, test outputs.
 3. **Contract**: `npm run contract:sync` copies `contract/openapi.yaml` from the hub and writes `contract/SOURCE`; `npm run contract:types` generates the admin client types.
-4. **Walking skeleton** (Developer): server entry with the startup guards (loopback, permissions, keys), the security header middleware, `GET /healthz`, `GET /` redirect, one public page in four languages with the layout and concept notice, the migration for `health` and `job_run`, and one test per layer (unit, integration, contract, end-to-end with axe and the CSP listener). `bash scripts/verify.sh` must print `RESULT: PASS` before any feature work.
+4. **Walking skeleton** (Developer): server entry with the startup guards (exposure guard: loopback `HOST`, own loopback `PUBLIC_ORIGIN`, empty `TRUSTED_PROXIES`, and per request loopback peer, 421 on forwarding headers and foreign `Host`; permissions; keys) and their tests G22-1 to G22-10 (`docs/reviews/p4r2-arch-notes.md`), the security header middleware, `GET /healthz`, `GET /` redirect, one public page in four languages with the layout and concept notice, the migration for `health` and `job_run`, and one test per layer (unit, integration, contract, end-to-end with axe and the CSP listener). `bash scripts/verify.sh` must print `RESULT: PASS` before any feature work.
 5. **Phase 4 spike** (Motion Designer and Performance Engineer): the hero scene through the real pipeline (meshopt, WebP, single renderer, gate, governor) measured against NFR-7 and NFR-8 on profile L1 or L2, before the other five scenes are built (RSK-3).
 6. **Database Engineer**: detailed schema, indexes and the first real migrations from ADR-0003 and `docs/architecture.md` section 10.
 7. **Records** (Orchestrator): update `state/project.json` (web repo status, api repo "not used", ADR decisions) and `status.md`.
