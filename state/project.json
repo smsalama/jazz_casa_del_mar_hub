@@ -223,6 +223,13 @@
       "role": "role-devops-engineer",
       "task": "P6-T1",
       "tokens": 144201
+    },
+    {
+      "date": "2026-10-16",
+      "phase": "6 Implementation",
+      "role": "role-developer",
+      "task": "P6-T2",
+      "tokens": 229928
     }
   ],
   "tasks": [
@@ -485,12 +492,12 @@
       "title": "Walking skeleton: server entry, exposure guard (G22-1 to G22-10 plus the re-review extra checks), config, logging, headers and CSP, healthz",
       "role": "role-developer",
       "repo": "web",
-      "branch": "",
-      "status": "todo",
+      "branch": "p6-t2-skeleton",
+      "status": "done",
       "depends_on": [
         "P6-T1"
       ],
-      "evidence": ""
+      "evidence": "evidence/6-implementation/verify-wt-web-t2-648fc04-20261016T094008Z.log"
     },
     {
       "id": "P6-T3",
