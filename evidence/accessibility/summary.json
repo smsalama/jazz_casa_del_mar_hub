@@ -1,0 +1,316 @@
+[
+ {
+  "page": "404",
+  "w": 375,
+  "viol": [],
+  "inc": [],
+  "pass": 44
+ },
+ {
+  "page": "404",
+  "w": 1440,
+  "viol": [],
+  "inc": [],
+  "pass": 45
+ },
+ {
+  "page": "admin-dashboard",
+  "w": 375,
+  "viol": [],
+  "inc": [],
+  "pass": 43
+ },
+ {
+  "page": "admin-dashboard",
+  "w": 1440,
+  "viol": [],
+  "inc": [],
+  "pass": 40
+ },
+ {
+  "page": "admin-editor",
+  "w": 375,
+  "viol": [],
+  "inc": [
+   "aria-input-field-name"
+  ],
+  "pass": 41
+ },
+ {
+  "page": "admin-editor",
+  "w": 1440,
+  "viol": [],
+  "inc": [
+   "aria-input-field-name",
+   "color-contrast"
+  ],
+  "pass": 41
+ },
+ {
+  "page": "admin-sign-in-error",
+  "w": 375,
+  "viol": [],
+  "inc": [],
+  "pass": 37
+ },
+ {
+  "page": "admin-sign-in-error",
+  "w": 1440,
+  "viol": [],
+  "inc": [
+   "color-contrast"
+  ],
+  "pass": 37
+ },
+ {
+  "page": "admin-sign-in",
+  "w": 375,
+  "viol": [],
+  "inc": [],
+  "pass": 37
+ },
+ {
+  "page": "admin-sign-in",
+  "w": 1440,
+  "viol": [],
+  "inc": [
+   "color-contrast"
+  ],
+  "pass": 37
+ },
+ {
+  "page": "contact-errors",
+  "w": 375,
+  "viol": [],
+  "inc": [],
+  "pass": 44
+ },
+ {
+  "page": "contact-errors",
+  "w": 1440,
+  "viol": [],
+  "inc": [],
+  "pass": 45
+ },
+ {
+  "page": "contact-retry",
+  "w": 375,
+  "viol": [],
+  "inc": [],
+  "pass": 44
+ },
+ {
+  "page": "contact-retry",
+  "w": 1440,
+  "viol": [],
+  "inc": [],
+  "pass": 45
+ },
+ {
+  "page": "contact-sending",
+  "w": 375,
+  "viol": [],
+  "inc": [],
+  "pass": 44
+ },
+ {
+  "page": "contact-sending",
+  "w": 1440,
+  "viol": [],
+  "inc": [],
+  "pass": 45
+ },
+ {
+  "page": "contact-success",
+  "w": 375,
+  "viol": [],
+  "inc": [
+   "aria-prohibited-attr"
+  ],
+  "pass": 44
+ },
+ {
+  "page": "contact-success",
+  "w": 1440,
+  "viol": [],
+  "inc": [
+   "aria-prohibited-attr"
+  ],
+  "pass": 45
+ },
+ {
+  "page": "contact",
+  "w": 375,
+  "viol": [],
+  "inc": [],
+  "pass": 44
+ },
+ {
+  "page": "contact",
+  "w": 1440,
+  "viol": [],
+  "inc": [],
+  "pass": 45
+ },
+ {
+  "page": "index.de",
+  "w": 375,
+  "viol": [],
+  "inc": [
+   "color-contrast"
+  ],
+  "pass": 47
+ },
+ {
+  "page": "index.de",
+  "w": 1440,
+  "viol": [],
+  "inc": [
+   "color-contrast"
+  ],
+  "pass": 48
+ },
+ {
+  "page": "index",
+  "w": 375,
+  "viol": [],
+  "inc": [
+   "color-contrast",
+   "duplicate-id-aria"
+  ],
+  "pass": 47
+ },
+ {
+  "page": "index",
+  "w": 1440,
+  "viol": [],
+  "inc": [
+   "color-contrast",
+   "duplicate-id-aria"
+  ],
+  "pass": 48
+ },
+ {
+  "page": "index.it",
+  "w": 375,
+  "viol": [],
+  "inc": [
+   "color-contrast"
+  ],
+  "pass": 47
+ },
+ {
+  "page": "index.it",
+  "w": 1440,
+  "viol": [],
+  "inc": [
+   "color-contrast"
+  ],
+  "pass": 48
+ },
+ {
+  "page": "index.ru",
+  "w": 375,
+  "viol": [],
+  "inc": [
+   "color-contrast"
+  ],
+  "pass": 47
+ },
+ {
+  "page": "index.ru",
+  "w": 1440,
+  "viol": [],
+  "inc": [
+   "color-contrast"
+  ],
+  "pass": 48
+ },
+ {
+  "page": "loader",
+  "w": 375,
+  "viol": [],
+  "inc": [
+   "color-contrast"
+  ],
+  "pass": 20
+ },
+ {
+  "page": "loader",
+  "w": 1440,
+  "viol": [],
+  "inc": [
+   "color-contrast"
+  ],
+  "pass": 20
+ },
+ {
+  "page": "room-family-suite",
+  "w": 375,
+  "viol": [],
+  "inc": [
+   "color-contrast"
+  ],
+  "pass": 47
+ },
+ {
+  "page": "room-family-suite",
+  "w": 1440,
+  "viol": [],
+  "inc": [
+   "color-contrast"
+  ],
+  "pass": 48
+ },
+ {
+  "page": "rooms",
+  "w": 375,
+  "viol": [],
+  "inc": [
+   "color-contrast"
+  ],
+  "pass": 47
+ },
+ {
+  "page": "rooms",
+  "w": 1440,
+  "viol": [],
+  "inc": [
+   "color-contrast"
+  ],
+  "pass": 48
+ },
+ {
+  "page": "transition",
+  "w": 375,
+  "viol": [],
+  "inc": [],
+  "pass": 20
+ },
+ {
+  "page": "transition",
+  "w": 1440,
+  "viol": [],
+  "inc": [],
+  "pass": 20
+ },
+ {
+  "page": "index-menuopen",
+  "w": 375,
+  "viol": [],
+  "inc": [
+   "color-contrast",
+   "duplicate-id-aria"
+  ],
+  "pass": 47
+ },
+ {
+  "page": "admin-editor-menuopen",
+  "w": 375,
+  "viol": [],
+  "inc": [
+   "aria-input-field-name"
+  ],
+  "pass": 41
+ }
+]

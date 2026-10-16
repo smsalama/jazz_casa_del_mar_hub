@@ -1,0 +1,95 @@
+{
+  "gate": "architecture",
+  "status": "FAIL",
+  "criteria": [
+    "Stack justified in ADRs",
+    "Security boundaries",
+    "Data model",
+    "API contract in contract/openapi.yaml",
+    "Local run approach"
+  ],
+  "reviewer": "role-consultant and role-security-engineer",
+  "date": "2026-10-16",
+  "evidence": [
+    "evidence/4-design-architecture/verify-hub-p4-design-4020c59-20261015T212500Z.log",
+    "evidence/4-design-architecture/verify-hub-p4-arch-71a46f3-20261015T212533Z.log",
+    "evidence/4-design-architecture/verify-hub-p4-data-fix-79eaaef-20261015T215740Z.log"
+  ],
+  "findings": [
+    {
+      "severity": "high",
+      "finding": "AC-H1 Pinned versions do not install: openapi-typescript 7.13.0 needs TypeScript 5 but 6.0.3 is pinned; eslint-plugin-jsx-a11y 6.10.2 supports ESLint up to 9 but 10.11.0 is pinned; with engine-strict, eslint-plugin-astro, astro-eslint-parser need Node 22.22.3 or later and license-checker-rseidelsohn needs Node 24. npm ci fails at step one.",
+      "where": "docs/repo-plan.md:22,159,176; docs/adr/0014:45,68; docs/architecture.md:36,48,62"
+    },
+    {
+      "severity": "high",
+      "finding": "AC-H2 swup swaps only main so header, language switcher, aria-current, footer newsletter form and concept sentence go stale after a transition (FR-24, FR-10, FR-17, NFR-3).",
+      "where": "docs/architecture.md:173; docs/design/motion-spec.md:148,158; docs/adr/0007:31,60"
+    },
+    {
+      "severity": "high",
+      "finding": "SEC-H1 Start guard checks only the listen address; PUBLIC_ORIGIN https plus TRUSTED_PROXIES with a local reverse proxy or tunnel passes it, leaving the admin portal exposed without a second factor (TM-21, G-22). Require loopback PUBLIC_ORIGIN, empty TRUSTED_PROXIES, loopback peers, 421 on forwarding headers.",
+      "where": "docs/adr/0015:19,32; docs/architecture.md:295-297; docs/adr/0006:24; docs/repo-plan.md:188,216"
+    },
+    {
+      "severity": "medium",
+      "finding": "AC-M1 / SEC-M1 Contract: admin GETs omit 403 (setup_required, password_change_required); no 500; 429 missing on several writes; guard order undefined.",
+      "where": "contract/openapi.yaml:694,844,877,941,975,1037,1161,1213,1300,1428,1474,1551"
+    },
+    {
+      "severity": "medium",
+      "finding": "AC-M2 Licences not on allow-list in the shipped tree and undocumented: BlueOak-1.0.0 (lru-cache, sax, common-ancestor-path) and Python-2.0 (argparse); npm run licences will fail; ADD to T2 approvals.",
+      "where": "docs/adr/0014:53-58; docs/architecture.md:369,417; docs/adr/0010:15"
+    },
+    {
+      "severity": "medium",
+      "finding": "AC-M3 Data model stores the newest consent wording label rather than the label in the signed token (defeats D-2).",
+      "where": "docs/data-model.md:666; docs/adr/0006:36"
+    },
+    {
+      "severity": "medium",
+      "finding": "AC-M4 Restore steps omit the retention purge so restore can resurrect expired personal data.",
+      "where": "docs/adr/0010:37-43; docs/data-model.md:716"
+    },
+    {
+      "severity": "medium",
+      "finding": "AC-M5 No way to read the security event record although ACs require it; add a read only command.",
+      "where": "docs/adr/0006:52; docs/repo-plan.md:101"
+    },
+    {
+      "severity": "medium",
+      "finding": "AC-M6 Release install path equals developer setup (dev dependencies, browser download, rebuild); give the release its own production install.",
+      "where": "docs/repo-plan.md:155-168,241"
+    },
+    {
+      "severity": "medium",
+      "finding": "AC-M7 Wording archive D-2 pending T2 yet built into first migration with foreign keys and no fallback.",
+      "where": "docs/data-model.md:628,756"
+    },
+    {
+      "severity": "medium",
+      "finding": "SEC-M2 Image worker is not a real sandbox (same user, full file and network access); use unshare or bubblewrap on Linux and pass input as an open descriptor.",
+      "where": "docs/adr/0009:27,40"
+    },
+    {
+      "severity": "medium",
+      "finding": "SEC-M3 Sensitive admin actions (create, reset, update, delete account, export subscribers) do not re-ask for the password (ASVS 3.7.1); admin can reset own password without current password.",
+      "where": "contract createAccount 720, resetAccountPassword 817, updateAccount 757, deleteAccount 791, exportSubscribers 1610"
+    },
+    {
+      "severity": "medium",
+      "finding": "SEC-M4 Personal data in URL query strings (search by email, upload name) will reach access logs; use POST body or strip query strings in logs.",
+      "where": "contract:1452,1565,1244"
+    },
+    {
+      "severity": "low",
+      "finding": "Architecture and security lows: 127.0.0.1 gets 421 (L1); Astro checkOrigin overrides the contract 403 page (L2); ETag vs per response token (L3); backup VACUUM and gzip block the event loop (L4); hand made backup encryption format and scrypt maxmem default fails on Node 22 (L5); swup forms plugin may lose typed values (L6); stale text across documents (L7); Drizzle unproven for this schema (L8); 9 contract lint warnings (L9); verify builds twice (L10); rich text link attributes, Cf character rule, password hash queue cap, lockout on wrong current password, healthz writes, restore trusts archive schema, IPv6 /64 rate key, localhost cookie sharing, shared origin residual risk, contract path patterns, dev server guards, background GET refreshes idle timeout.",
+      "where": "see docs/reviews/phase4-gate-findings.md"
+    }
+  ],
+  "actions": [
+    "Fix AC-H1, AC-H2 and SEC-H1 (high) and the medium findings in the architecture, ADRs, contract, repo plan and data model.",
+    "Add BlueOak-1.0.0 and Python-2.0 to the T2 licence approvals alongside SQLite and libvips.",
+    "Re-run the consultant and security review on the fixes, then re-record the gate."
+  ]
+}

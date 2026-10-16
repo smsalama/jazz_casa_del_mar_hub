@@ -159,6 +159,34 @@
       "task": "P4-T8",
       "tokens": 60000,
       "note": "estimate: no subagent_tokens figure returned"
+    },
+    {
+      "date": "2026-10-16",
+      "phase": "4 Design and architecture",
+      "role": "role-consultant",
+      "task": "P4-T6a",
+      "tokens": 237553
+    },
+    {
+      "date": "2026-10-16",
+      "phase": "4 Design and architecture",
+      "role": "role-accessibility",
+      "task": "P4-T6b",
+      "tokens": 164792
+    },
+    {
+      "date": "2026-10-16",
+      "phase": "4 Design and architecture",
+      "role": "role-consultant",
+      "task": "P4-T7a",
+      "tokens": 291866
+    },
+    {
+      "date": "2026-10-16",
+      "phase": "4 Design and architecture",
+      "role": "role-security-engineer",
+      "task": "P4-T7b",
+      "tokens": 250682
     }
   ],
   "tasks": [
@@ -337,11 +365,11 @@
       "role": "role-accessibility, role-consultant",
       "repo": "hub",
       "branch": "",
-      "status": "todo",
+      "status": "review",
       "depends_on": [
         "P4-T5"
       ],
-      "evidence": ""
+      "evidence": "gates/design.json"
     },
     {
       "id": "P4-T7",
@@ -349,11 +377,11 @@
       "role": "role-consultant, role-security-engineer",
       "repo": "hub",
       "branch": "",
-      "status": "todo",
+      "status": "review",
       "depends_on": [
         "P4-T5"
       ],
-      "evidence": ""
+      "evidence": "gates/architecture.json"
     },
     {
       "id": "P4-T8",
@@ -478,6 +506,12 @@
       "question": "OQ-25 first 3D frame budget 4 s, or 4.5 s if the spike misses",
       "for": "Steven (T2)",
       "asked": "2026-10-15"
+    },
+    {
+      "id": "Q22",
+      "question": "Phase 4 usage is 2353837 of 1500000 subagent tokens; both gates FAIL. Approve a fix round (estimated 600000 to 900000) before T2?",
+      "for": "Steven",
+      "asked": "2026-10-16"
     }
   ]
 }

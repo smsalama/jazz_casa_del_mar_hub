@@ -1,0 +1,109 @@
+{
+  "gate": "design",
+  "status": "FAIL",
+  "criteria": [
+    "User flows approved (Steven at T2)",
+    "Responsive layouts",
+    "Loading, empty, error and success states designed",
+    "Accessibility considered",
+    "Motion spec has reduced motion and budgets"
+  ],
+  "reviewer": "role-accessibility and role-consultant",
+  "date": "2026-10-16",
+  "evidence": [
+    "evidence/4-design-architecture/verify-hub-p4-design-4020c59-20261015T212500Z.log",
+    "evidence/accessibility/summary.json"
+  ],
+  "findings": [
+    {
+      "severity": "high",
+      "finding": "DC-H1 Resort name spelled 'Jazz Casa del Mar' everywhere; brief and FR-16 say 'Jaz Elite Casa del Mar Beach'. Steven to choose real name, short form or neutral codename at T2.",
+      "where": "docs/asset-register.md:46; docs/design/screens/home.md:28; design/prototype/index*.html"
+    },
+    {
+      "severity": "high",
+      "finding": "DC-H2 No 3D has been seen before T2; only flat SVG posters exist. Scrim 0.84 to 0.92 and short scene bands make it less immersive than the brief. Produce at least a Home hero still or spike capture before T2.",
+      "where": "docs/design/motion-spec.md:771,777; docs/design/budgets.md:15"
+    },
+    {
+      "severity": "high",
+      "finding": "DC-H3 Admin session timeout warning (AC-51.3, NFR-5, WCAG 2.2.1) is not designed.",
+      "where": "docs/design/screens/admin-shell.md:90"
+    },
+    {
+      "severity": "high",
+      "finding": "DC-H4 No screen for site wide text (navigation, footer, form labels, messages), no Pages index, no consent and privacy line editor with wording versions (FR-35, AC-33.2, D-2).",
+      "where": "docs/design/screens/admin-shell.md:19; admin-page-editor.md:39; admin-settings.md:9"
+    },
+    {
+      "severity": "high",
+      "finding": "A-1 Prototype JS runs in head without defer so menu, pause control and password toggle never bind (WCAG 2.1.1, 2.2.2, 4.1.2).",
+      "where": "design/prototype/js/proto.js:3-60"
+    },
+    {
+      "severity": "medium",
+      "finding": "A-2 / DC-H3 Admin session timeout has no warning or extension (WCAG 2.2.1).",
+      "where": "docs/design/screens/admin-shell.md:28"
+    },
+    {
+      "severity": "medium",
+      "finding": "A-3 Sticky admin header obscures focus at 375 px (WCAG 2.4.11).",
+      "where": "design/prototype/css/site.css:4; admin-editor.html"
+    },
+    {
+      "severity": "medium",
+      "finding": "A-4 Horizontal scroll at 320 px on public (323 px) and admin pages (339 px) (WCAG 1.4.10).",
+      "where": "design/prototype/css/admin.css; .menu-button"
+    },
+    {
+      "severity": "medium",
+      "finding": "A-5 Loader loops run up to 8 s with no pause, against spec 3.6 s (WCAG 2.2.2).",
+      "where": "design/prototype/css/loader.css; docs/design/motion-spec.md:114"
+    },
+    {
+      "severity": "medium",
+      "finding": "DC-M1 First 3D frame budget not measurable as specified: Lighthouse simulated throttling cannot show a 4 s first frame; use applied (CDP) throttling; margin only 0.15 to 0.25 s.",
+      "where": "docs/design/budgets.md:24,160-196"
+    },
+    {
+      "severity": "medium",
+      "finding": "DC-M2 Quality governor judges frame interval so 30 Hz devices (Low Power Mode, battery saver) fall to the poster; judge per frame work time instead.",
+      "where": "docs/design/motion-spec.md:325-329"
+    },
+    {
+      "severity": "medium",
+      "finding": "DC-M3 Motion plan heavy for a concept: build Home hero first, build the five section scenes from one parametrised diorama kit, make pixel match and flash checks manual, drop the motion library if CSS lightbox works.",
+      "where": "docs/design/motion-spec.md sections 8.9, 8.10, 9"
+    },
+    {
+      "severity": "medium",
+      "finding": "DC-M4 Loader covers an already drawn page, hides the concept notice and has a 620 ms exit; shorten exit and show the concept sentence or confirm with legal.",
+      "where": "docs/design/motion-spec.md:102-117"
+    },
+    {
+      "severity": "medium",
+      "finding": "DC-M5 German and Russian layouts untested between 960 and 1280 px; hero heading rule breaks for long names.",
+      "where": "design/prototype/css/site.css:64-81; home.md:28"
+    },
+    {
+      "severity": "medium",
+      "finding": "DC-M6 Only 6 of 21 page types prototyped; Gallery lightbox, Offers, Dining, Location, legal pages and states lack visuals; lazy images not captured in 375 screenshots.",
+      "where": "docs/design/flows.md:143"
+    },
+    {
+      "severity": "medium",
+      "finding": "DC-M7 Designs hide Maps link when empty (FR-39 says it may not be empty); Should screens (US-35, US-78) not marked outside MVP.",
+      "where": "admin-settings.md:36; location.md:42; admin-page-editor.md:56"
+    },
+    {
+      "severity": "low",
+      "finding": "Design lows: stale open items in motion spec (L1); reduced motion contradiction in scene-areas (L2); contrast figures disagree 8:1 vs 6.8:1 (L3); Explore tile columns disagree (L4); tilt control and label mismatches (L5); 'Ask about this suite' loses context (L6); booking wording is a third party claim (L7); static map source not chosen (L8); generator scripts not in repo (L9); hover lift not limited to fine pointers (L10); swup head plugin and html lang on language change (L11); duplicate id book-note-1; card link targets 33 px; rich text textbox labelling; text spacing clipping on cards.",
+      "where": "see consultant and accessibility reports summarised in docs/reviews/phase4-gate-findings.md"
+    }
+  ],
+  "actions": [
+    "Fix DC-H1 to DC-H4 and A-1 before T2: choose name at T2, produce a Home hero still or spike, design session timeout warning and shared text and wording editors, fix prototype script.",
+    "Fix A-3 to A-5 and DC-M1 to DC-M7 (or record Steven's acceptance) then re-run both reviewers.",
+    "User flows approval is Steven's at T2."
+  ]
+}
