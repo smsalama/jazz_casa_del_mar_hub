@@ -733,6 +733,12 @@
       "question": "Solicitor question pack Q1 to Q7 in docs/legal/questions-2026-10-15.md (needed before any hosting, not before the local build)",
       "for": "Steven (solicitor)",
       "asked": "2026-10-15"
+    },
+    {
+      "id": "Q27",
+      "question": "Phase 6 needs Node 24 in the cloud workspace. Allow nodejs.org in network settings (preferred, checksum verified), or approve building with an unverified npm registry repackage of Node 24 (build only, never shipped)?",
+      "for": "Steven",
+      "asked": "2026-10-16"
     }
   ]
 }
