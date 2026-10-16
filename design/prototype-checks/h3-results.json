@@ -1,0 +1,54 @@
+[
+ {
+  "check": "Dialog has role alertdialog, modal, name and description",
+  "pass": true
+ },
+ {
+  "check": "Focus starts on Stay signed in",
+  "pass": true
+ },
+ {
+  "check": "Page behind is inert",
+  "pass": true
+ },
+ {
+  "check": "axe 1440",
+  "pass": true,
+  "detail": " incomplete:color-contrast passes:30"
+ },
+ {
+  "check": "Tab cycles inside dialog (Sign out then back to Stay)",
+  "pass": true,
+  "detail": "Sign out"
+ },
+ {
+  "check": "Shift+Tab wraps to Sign out",
+  "pass": true
+ },
+ {
+  "check": "axe 375",
+  "pass": true,
+  "detail": " incomplete:color-contrast passes:30"
+ },
+ {
+  "check": "No horizontal scroll at 320 inside dialog",
+  "pass": true
+ },
+ {
+  "check": "Escape closes (acts as Stay signed in), page not inert",
+  "pass": true
+ },
+ {
+  "check": "Live region says extended",
+  "pass": true
+ },
+ {
+  "check": "Ended state shown at zero, focus on Sign in again",
+  "pass": true
+ },
+ {
+  "check": "axe ended-1440",
+  "pass": true,
+  "detail": " incomplete:color-contrast passes:28"
+ }
+]

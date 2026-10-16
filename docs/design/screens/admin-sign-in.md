@@ -52,7 +52,7 @@ Sign in to the staff portal. English only.
 | Password, empty | Enter your password. |
 | Wrong details (generic) | The email address or password is not right. Check both and try again. |
 | Account locked | Too many attempts. Sign in is paused for a short time. Try again later or ask another administrator for help. |
-| Session ended | You were signed out because the session ended. Sign in again to continue. |
+| Session ended | You were signed out because the session ended. Sign in again to continue. (After "Sign in again" from the timeout dialog, a successful sign in returns to the page that was open; see `admin-session-timeout.md`.) |
 
 ## Interactions
 

@@ -72,3 +72,78 @@
     });
   }
 })();
+
+/* Session timeout warning demo (admin-session-warning.html). Prototype only: the real build counts down to the
+   expiry time sent by the server. ?remaining=N sets the seconds left (default 180). */
+(function () {
+  var scrim = document.querySelector('[data-session-dialog]');
+  if (!scrim) { return; }
+  var dlg = scrim.querySelector('[role="alertdialog"]');
+  var warn = scrim.querySelector('[data-state="warning"]');
+  var ended = scrim.querySelector('[data-state="ended"]');
+  var count = scrim.querySelector('[data-countdown]');
+  var live = document.querySelector('[data-live]');
+  var stay = scrim.querySelector('[data-stay]');
+  var m = /[?&]remaining=([0-9]+)/.exec(window.location.search);
+  var total = m ? parseInt(m[1], 10) : parseInt(scrim.getAttribute('data-remaining'), 10);
+  var left = total;
+  var timer = null;
+  var behind = Array.prototype.slice.call(document.querySelectorAll('.skip-link, .concept-notice, .admin-shell'));
+  var returnTo = null;
+  var announce = { 120: 'About 2 minutes left before you are signed out.', 60: 'About 1 minute left before you are signed out.', 30: 'About 30 seconds left before you are signed out.', 10: 'About 10 seconds left before you are signed out.' };
+
+  var words = function (s) {
+    var mins = Math.floor(s / 60), secs = s % 60;
+    return mins + (mins === 1 ? ' minute ' : ' minutes ') + secs + (secs === 1 ? ' second' : ' seconds');
+  };
+  var setInert = function (on) {
+    behind.forEach(function (el) { if (on) { el.setAttribute('inert', ''); } else { el.removeAttribute('inert'); } });
+  };
+  var focusables = function () {
+    return Array.prototype.slice.call(dlg.querySelectorAll('a[href], button:not([disabled])')).filter(function (el) { return !el.closest('[hidden]'); });
+  };
+  var open = function () {
+    returnTo = document.activeElement;
+    scrim.hidden = false; warn.hidden = false; ended.hidden = true;
+    setInert(true);
+    document.body.style.overflow = 'hidden';
+    stay.focus();
+    tick();
+  };
+  var close = function () {
+    clearTimeout(timer);
+    scrim.hidden = true; setInert(false); document.body.style.overflow = '';
+    if (returnTo && document.contains(returnTo)) { returnTo.focus(); } else { var h = document.querySelector('h1'); if (h) { h.setAttribute('tabindex', '-1'); h.focus(); } }
+  };
+  var end = function () {
+    clearTimeout(timer);
+    warn.hidden = true; ended.hidden = false;
+    live.textContent = 'You were signed out because the session ended.';
+    var again = ended.querySelector('[data-signin-again]');
+    if (again) { again.focus(); }
+  };
+  function tick() {
+    count.textContent = words(left);
+    if (announce[left]) { live.textContent = announce[left]; }
+    if (left <= 0) { end(); return; }
+    left -= 1;
+    timer = setTimeout(tick, 1000);
+  }
+  stay.addEventListener('click', function () {
+    close();
+    live.textContent = 'Your session has been extended.';
+    left = total;
+    // Demo only: show the warning again after another full idle period.
+    timer = setTimeout(open, (total + 5) * 1000);
+  });
+  scrim.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !warn.hidden) { e.preventDefault(); stay.click(); return; }
+    if (e.key !== 'Tab') { return; }
+    var f = focusables();
+    if (!f.length) { return; }
+    var first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+  open();
+})();

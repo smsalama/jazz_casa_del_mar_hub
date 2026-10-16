@@ -1,0 +1,38 @@
+import chromium from '@sparticuz/chromium';
+import { chromium as pw } from 'playwright-core';
+import fs from 'fs'; import {createRequire} from 'module';
+const require=createRequire('/tmp/claude-0/-home-claude/ccf89cdc-fdde-5b19-944a-387f0f856a38/scratchpad/a11y/x.js');
+const axeSrc=fs.readFileSync(require.resolve('axe-core/axe.min.js'),'utf8');
+const dir=process.argv[2], out=process.argv[3];
+const b=await pw.launch({executablePath:await chromium.executablePath(),args:chromium.args,headless:true});
+const p=await b.newPage({viewport:{width:1440,height:900}});
+const res=[]; const ok=(n,v,d)=>res.push({check:n,pass:!!v,detail:d});
+const tags=['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice'];
+const url='file://'+dir+'/admin-session-warning.html';
+const axe=async(label)=>{await p.evaluate(axeSrc);const r=await p.evaluate(async t=>await axe.run(document,{runOnly:{type:'tag',values:t}}),tags);
+ fs.writeFileSync(`${out}/axe-admin-session-warning-${label}.json`,JSON.stringify(r,null,1));
+ res.push({check:'axe '+label,pass:r.violations.length===0,detail:r.violations.map(v=>v.id+'('+v.nodes.length+')').join(' ')+' incomplete:'+r.incomplete.map(v=>v.id).join(',')+' passes:'+r.passes.length});};
+await p.goto(url+'?remaining=180'); await p.waitForTimeout(500);
+ok('Dialog has role alertdialog, modal, name and description',await p.evaluate(()=>{const d=document.querySelector('[role=alertdialog]');return d.getAttribute('aria-modal')==='true'&&!!d.getAttribute('aria-labelledby')&&!!d.getAttribute('aria-describedby')}));
+ok('Focus starts on Stay signed in',await p.evaluate(()=>document.activeElement.hasAttribute('data-stay')));
+ok('Page behind is inert',await p.evaluate(()=>document.querySelector('.admin-shell').inert));
+await p.screenshot({path:out+'/admin-session-warning-1440.png'}); await axe('1440');
+await p.keyboard.press('Tab'); const f1=await p.evaluate(()=>document.activeElement.textContent.trim());
+await p.keyboard.press('Tab'); const f2=await p.evaluate(()=>document.activeElement.hasAttribute('data-stay'));
+ok('Tab cycles inside dialog (Sign out then back to Stay)',f1==='Sign out'&&f2,f1);
+await p.keyboard.press('Shift+Tab'); ok('Shift+Tab wraps to Sign out',await p.evaluate(()=>document.activeElement.textContent.trim())==='Sign out');
+await p.setViewportSize({width:375,height:800}); await p.waitForTimeout(200);
+await p.screenshot({path:out+'/admin-session-warning-375.png'}); await axe('375');
+await p.setViewportSize({width:320,height:700}); ok('No horizontal scroll at 320 inside dialog',await p.evaluate(()=>document.querySelector('.dialog').scrollWidth<=document.querySelector('.dialog').clientWidth+1));
+await p.setViewportSize({width:1440,height:900});
+// focus restore + Escape
+await p.goto(url+'?remaining=180'); await p.evaluate(()=>{});
+await p.keyboard.press('Escape'); await p.waitForTimeout(100);
+ok('Escape closes (acts as Stay signed in), page not inert',await p.evaluate(()=>document.querySelector('[data-session-dialog]').hidden&&!document.querySelector('.admin-shell').inert));
+ok('Live region says extended',(await p.textContent('[data-live]')).includes('extended'));
+// countdown + ended
+await p.goto(url+'?remaining=3'); await p.waitForTimeout(4500);
+ok('Ended state shown at zero, focus on Sign in again',await p.evaluate(()=>!document.querySelector('[data-state=ended]').hidden&&document.activeElement.hasAttribute('data-signin-again')));
+await p.screenshot({path:out+'/admin-session-ended-1440.png'}); await axe('ended-1440');
+fs.writeFileSync(out+'/h3-results.json',JSON.stringify(res,null,1)); console.log(JSON.stringify(res,null,1));
+await b.close();

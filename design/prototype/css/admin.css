@@ -142,3 +142,11 @@ table.data tr:last-child td { border-bottom: 0; }
 .signout-nav { margin-top: var(--space-5) !important; padding-top: var(--space-3) !important; border-top: 1px solid rgba(243, 247, 246, 0.25); }
 @media (min-width: 64rem) { .signout-top { display: inline-flex; } .signout-nav { display: none !important; } }
 @media (max-width: 40rem) { .admin-top .wordmark-sub { display: none; } }
+
+/* Session timeout warning (docs/design/screens/admin-session-timeout.md) */
+.dialog h2 .ic { width: 1.5rem; height: 1.5rem; vertical-align: -0.25rem; margin-right: var(--space-2); color: var(--color-lagoon-700); }
+.dialog-body { display: grid; gap: var(--space-4); }
+.dialog-body[hidden], .dialog-scrim[hidden], .dialog .alert[hidden] { display: none; }
+.st-count { font-family: var(--font-display); font-size: var(--text-xl); font-weight: 800; padding: var(--space-3) var(--space-4); border: 2px solid var(--border-strong); border-radius: var(--radius-m); background: var(--color-warning-bg); color: var(--color-warning); }
+.st-note { font-weight: 700; }
+@media (max-width: 30rem) { .dialog .actions { flex-direction: column; } .dialog .actions .btn { width: 100%; justify-content: center; } }
