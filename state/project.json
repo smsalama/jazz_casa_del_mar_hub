@@ -474,6 +474,12 @@
       "decision": "Continue Phase 4 over its subagent budget for conflict fixes, design and architecture gate reviews (Steven: \"Continue\")",
       "by": "Steven (in chat)",
       "file": "state/project.json"
+    },
+    {
+      "date": "2026-10-16",
+      "decision": "Q22: fix round limited to the high findings only (AC-H1, AC-H2, SEC-H1, DC-H1 handled as a T2 name decision, DC-H3, DC-H4, A-1). No 3D hero preview; Steven will judge the 3D look blind at T2 (DC-H2 accepted). All medium and low findings go to T2 as known items.",
+      "by": "Steven (in chat): \"fix only the highs, skip the 3D hero preview, and take the remaining mediums to T2 as known items. I will judge the look blindly.\"",
+      "file": "docs/reviews/phase4-gate-findings.md"
     }
   ],
   "open_questions": [
@@ -506,12 +512,6 @@
       "question": "OQ-25 first 3D frame budget 4 s, or 4.5 s if the spike misses",
       "for": "Steven (T2)",
       "asked": "2026-10-15"
-    },
-    {
-      "id": "Q22",
-      "question": "Phase 4 usage is 2353837 of 1500000 subagent tokens; both gates FAIL. Approve a fix round (estimated 600000 to 900000) before T2?",
-      "for": "Steven",
-      "asked": "2026-10-16"
     }
   ]
 }
