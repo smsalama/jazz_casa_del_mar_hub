@@ -131,7 +131,7 @@ table.data tr:last-child td { border-bottom: 0; }
 .skeleton { display: block; height: 1rem; border-radius: var(--radius-s); background: linear-gradient(90deg, #E3E9E8 25%, #F3F7F6 50%, #E3E9E8 75%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
 @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 .dialog-scrim { position: fixed; inset: 0; z-index: var(--z-dialog); display: grid; place-items: center; padding: var(--gutter); background: rgba(12, 34, 41, 0.62); }
-.dialog { width: min(100%, 30rem); background: var(--color-white); border-radius: var(--radius-l); box-shadow: var(--shadow-3); padding: var(--space-6); display: grid; gap: var(--space-4); }
+.dialog { max-height: calc(100vh - 2 * var(--gutter)); max-height: calc(100dvh - 2 * var(--gutter)); overflow-y: auto; overscroll-behavior: contain; width: min(100%, 30rem); background: var(--color-white); border-radius: var(--radius-l); box-shadow: var(--shadow-3); padding: var(--space-6); display: grid; gap: var(--space-4); }
 .dialog h2 { margin: 0; font-size: var(--text-xl); }
 .dialog p { margin: 0; }
 .dialog .actions { display: flex; flex-wrap: wrap; gap: var(--space-3); justify-content: flex-end; }

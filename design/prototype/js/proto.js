@@ -118,6 +118,8 @@
   var end = function () {
     clearTimeout(timer);
     warn.hidden = true; ended.hidden = false;
+    var dlg = scrim.querySelector('[role="alertdialog"]');
+    if (dlg) { dlg.setAttribute('aria-labelledby', 'st-title-ended'); dlg.removeAttribute('aria-describedby'); }
     live.textContent = 'You were signed out because the session ended.';
     var again = ended.querySelector('[data-signin-again]');
     if (again) { again.focus(); }
