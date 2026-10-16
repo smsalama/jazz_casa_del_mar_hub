@@ -33,7 +33,7 @@ Read enquiries sent through the contact form.
 
 ## Content
 
-- Detail: reference, name, email (mailto link), telephone, subject, message in a readable block, language, time received, privacy notice version.
+- Detail: reference, name, email (mailto link), telephone, subject, message in a readable block, language, time received, privacy wording version (a link such as C-2 to the read only version viewer in `admin-consent-wording.md`).
 - For "Data protection request or complaint" a chip shows the date by which to acknowledge; text only, no automation.
 
 ## States

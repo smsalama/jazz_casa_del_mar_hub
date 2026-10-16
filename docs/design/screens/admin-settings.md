@@ -1,7 +1,7 @@
 # Screen: Admin settings
 
 - Stories: US-37
-- Requirements: FR-39
+- Requirements: FR-39, FR-35 (concept sentence), D-2 (provider details feed the consent wording)
 - Acceptance criteria: the AC lines of those stories in `docs/stories.md`
 - Prototype: (form pattern)
 - Admin shell and rules: `admin-shell.md`
@@ -33,6 +33,7 @@ Edit Book now URL, maps and social links, telephone, WhatsApp, email, postal add
 
 ## Content
 
+- Where other texts live: a note at the top says "Menu, footer and form text: Site text. Newsletter consent and privacy line wording: Consent and privacy wording." with links. The optional concept sentence stays here.
 - Placeholder defaults are marked "Placeholder, replace before use". Empty social links and WhatsApp hide the matching items on the public site; empty Maps link hides the link.
 
 ## States
@@ -57,6 +58,8 @@ Edit Book now URL, maps and social links, telephone, WhatsApp, email, postal add
 ## Interactions
 
 - As the page editor: unsaved marker and leave warning.
+- Changing the provider (controller) name or details: the controller name is part of the words visitors agree to, so before saving a warning alert shows "This changes the controller name in the newsletter consent text and the contact form privacy line. New versions of both texts are saved at the same time and the old versions are kept." Save asks for confirmation with the button "Save and create new wording versions". Cross reference: `admin-consent-wording.md`.
+- Session timeout: as the page editor.
 
 ## Accessibility
 

@@ -53,7 +53,7 @@ Open the admin path, enter email and password (generic failure message; lock mes
 
 ### A2 Edit a page in four languages (US-33, US-35, US-81)
 
-1. Pages, choose Home. Chips show "3 of 4 languages complete".
+1. Pages (the Pages index lists every page with its translation status), choose Home. Chips show "3 of 4 languages complete".
 2. Edit English, DE, IT and RU side by side; use "Missing translations only" to jump to gaps.
 3. Unsaved marker shows; Save changes. Changes are live at once. Another person's change shows a conflict message.
 4. Leaving with unsaved changes asks for confirmation.
@@ -77,6 +77,22 @@ Open an enquiry (marked read), mark handled. Data protection subject shows an ac
 ### A7 Settings and accounts (US-37, US-32)
 
 Settings: Book now URL, links, contact details, optional concept sentence. Accounts: create, set temporary password, disable, delete (never the last active administrator).
+
+### A8 Session about to end (US-51, NFR-5)
+
+1. The user has been idle for 27 minutes. A modal dialog "Your session is about to end" opens with the time left in words ("2 minutes 59 seconds"), "Stay signed in" (focused) and "Sign out". Screen readers hear the title and description at once and polite updates at 2 minutes, 1 minute, 30 seconds and 10 seconds.
+2. Stay signed in: the dialog closes, focus returns to where it was, "Your session has been extended." is announced and the 30 minute clock restarts. Escape does the same.
+3. Sign out: the user is signed out on purpose and lands on Sign in. Unsaved text is not kept.
+4. Nothing chosen: at zero the dialog says "You were signed out" with "Sign in again". Unsaved editor text is kept in the tab, the user signs in, returns to the same editor and sees "We restored your unsaved text from before you were signed out. Check it, then choose Save changes."
+5. Eight hours after sign in a variant warns 5 minutes ahead (no extension possible). Screen: `screens/admin-session-timeout.md`.
+
+### A9 Edit site wide text (US-33, FR-35, AC-33.2)
+
+Site text, choose a group (Navigation, Footer, Form labels and help, Form messages, Buttons and common labels). Each text has four language cells, with the same chips, "Missing" flags and save bar as the page editor. Saving goes live at once. Screens: `screens/admin-site-text.md`.
+
+### A10 Change the consent or privacy wording (US-13, US-15, US-17, FR-20, FR-22, D-2, AC-13.12)
+
+Consent and privacy wording shows two texts: the newsletter consent text and the contact form privacy information line, each with its current version label, four language cells and a list of earlier versions. Save asks for confirmation ("Save as a new version?") because it creates version V+1 and never changes an old one. Subscribers and enquiries keep the label of the version their visitor saw. Screen: `screens/admin-consent-wording.md`.
 
 ## 3. Screen list with states
 
@@ -117,16 +133,20 @@ Legend: L loading, E empty, X error, S success. A dash means the state cannot oc
 | Screen | File | L | E | X | S |
 | --- | --- | --- | --- | --- | --- |
 | Admin shell | screens/admin-shell.md | skeleton | n/a | session ended | n/a |
+| Session timeout warning (dialog) | screens/admin-session-timeout.md | Extending | n/a | extend failed, ended | extended |
 | Sign in | screens/admin-sign-in.md | Signing in | first view | wrong details, locked, session ended | redirect |
 | Forced first password change | screens/admin-first-password-change.md | Saving | first view | six messages | redirect and alert |
 | Dashboard | screens/admin-dashboard.md | skeleton | no enquiries | retry | n/a |
+| Pages index | screens/admin-pages-index.md | skeleton | no pages (cannot happen, 21 fixed) | retry | n/a |
 | Page editor (four languages) | screens/admin-page-editor.md | skeleton | four missing cells | save failed, too long, conflict | saved and live |
 | Missing translations | screens/admin-missing-translations.md | skeleton | "nothing missing" | retry | n/a |
+| Site text (four languages) | screens/admin-site-text.md | skeleton | all cells missing | save failed, too long, conflict | saved and live |
 | List management (rooms fixed at six) | screens/admin-list-management.md | skeleton | "no items yet" | reorder failed | saved |
 | Media library | screens/admin-media-library.md | skeleton | "no photos yet" | delete refused | replaced, deleted |
 | Media upload | screens/admin-media-upload.md | per file progress | no files chosen | per file messages | uploaded |
 | Enquiries (list and detail) | screens/admin-enquiries.md | skeleton | "no enquiries yet" | retry | handled |
 | Subscribers and export | screens/admin-subscribers.md | skeleton | "no subscribers yet" | export failed | export ready |
+| Consent and privacy wording | screens/admin-consent-wording.md | skeleton | no earlier versions | save failed, too long, missing link, conflict | new version saved |
 | Settings | screens/admin-settings.md | skeleton | optional fields empty | seven messages | saved and live |
 | Account management | screens/admin-accounts.md | skeleton | n/a | five messages | created, disabled, deleted |
 
@@ -140,4 +160,4 @@ Home; Rooms overview; six rooms (one screen type); Dining; Pools and beach; Acti
 
 ## 5. Prototype coverage
 
-Built in `design/prototype/`: Home (four languages), Rooms overview, Family Suite, Contact (empty, errors, sending, retry, success), 404, loader, transition, admin sign in (and error), dashboard, page editor. Other public screens reuse these components and are specified in the screen files without a prototype.
+Built in `design/prototype/`: Home (four languages), Rooms overview, Family Suite, Contact (empty, errors, sending, retry, success), 404, loader, transition, admin sign in (and error), dashboard, page editor, session timeout warning (`admin-session-warning.html`). Other public screens reuse these components and are specified in the screen files without a prototype.
