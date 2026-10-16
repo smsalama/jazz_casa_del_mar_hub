@@ -151,6 +151,14 @@
       "task": "P4-T5b",
       "tokens": 80000,
       "note": "estimate: no subagent_tokens figure returned"
+    },
+    {
+      "date": "2026-10-15",
+      "phase": "4 Design and architecture",
+      "role": "role-database-engineer",
+      "task": "P4-T8",
+      "tokens": 60000,
+      "note": "estimate: no subagent_tokens figure returned"
     }
   ],
   "tasks": [
@@ -353,7 +361,7 @@
       "role": "role-database-engineer",
       "repo": "hub",
       "branch": "p4-data-fix",
-      "status": "doing",
+      "status": "done",
       "depends_on": [
         "P4-T5"
       ],
