@@ -1,0 +1,29 @@
+[
+ {
+  "check": "Public mobile menu opens (aria-expanded false to true, header data-open)",
+  "pass": true,
+  "detail": "false->true"
+ },
+ {
+  "check": "Escape closes menu",
+  "pass": true
+ },
+ {
+  "check": "Pause motion toggles aria-pressed and html data-motion",
+  "pass": true,
+  "detail": "false->true data-motion=paused"
+ },
+ {
+  "check": "Pause motion toggles back",
+  "pass": true
+ },
+ {
+  "check": "Password Show toggle works",
+  "pass": true,
+  "detail": "password->text pressed=true"
+ },
+ {
+  "check": "Admin menu opens",
+  "pass": true
+ }
+]
