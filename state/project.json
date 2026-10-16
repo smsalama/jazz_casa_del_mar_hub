@@ -466,7 +466,7 @@
       "role": "role-devops-engineer",
       "repo": "web",
       "branch": "",
-      "status": "todo",
+      "status": "doing",
       "depends_on": [
         "P5-T0"
       ],
@@ -725,6 +725,12 @@
       "decision": "T2 approved with all recommendations in docs/t2-decisions.md (Node 24 required; licences SQLite, libvips, BlueOak-1.0.0, Python-2.0; OQ-22 to OQ-25 as recommended; 8 hour limit essential with unsaved text restore)",
       "by": "Steven (in chat): \"Approve T2\"",
       "file": "approvals/T2-design.md"
+    },
+    {
+      "date": "2026-10-16",
+      "decision": "Q27: nodejs.org allowed for the workspace. Node 24.16.0 installed at /opt/node24 and checked against SHASUMS256.txt from nodejs.org (sha256 OK, npm 11.13.0)",
+      "by": "Steven (in chat): \"Allow nodejs.org\"",
+      "file": "docs/dev-plan.md"
     }
   ],
   "open_questions": [
@@ -733,12 +739,6 @@
       "question": "Solicitor question pack Q1 to Q7 in docs/legal/questions-2026-10-15.md (needed before any hosting, not before the local build)",
       "for": "Steven (solicitor)",
       "asked": "2026-10-15"
-    },
-    {
-      "id": "Q27",
-      "question": "Phase 6 needs Node 24 in the cloud workspace. Allow nodejs.org in network settings (preferred, checksum verified), or approve building with an unverified npm registry repackage of Node 24 (build only, never shipped)?",
-      "for": "Steven",
-      "asked": "2026-10-16"
     }
   ]
 }
