@@ -199,7 +199,7 @@ Likelihood (L) and impact (I) are High, Medium or Low. The inherent rating, befo
 | ID | STRIDE | Threat | L | I | Rating | Planned mitigations | Gap | Residual (MVP) | Stack |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | TM-20 | S | Credential stuffing or password spraying against the few admin accounts | M | H | High | NFR-19 (12 characters, breached list, lockout 5 per 15 minutes, Argon2id), NFR-21 (20 per 15 minutes per address, Should) | G-10 | Medium (Low local) | |
-| TM-21 | S | Account takeover by phishing or password reuse, with no second factor because FR-33 (US-31) is Won't this release | M | H | High | NFR-19, NFR-20, FR-32 generic errors. FR-33 would mitigate but is deferred | G-22, G-23 | High if hosted, Low local | |
+| TM-21 | S | Account takeover by phishing or password reuse, with no second factor because FR-33 (US-31) is Won't this release | M | H | High | NFR-19, NFR-20, FR-32 generic errors. FR-33 would mitigate but is deferred. Exposure guard (ADR-0015): loopback listen address and origin, empty TRUSTED_PROXIES, loopback peers only, 421 on forwarding headers | G-22, G-23 | High if hosted, Low local | |
 | TM-22 | S, I | Session theft by script or network | L | H | Medium | NFR-20 (`HttpOnly`, `Secure`, `SameSite=Strict`, 128 bit id, timeouts), NFR-24 CSP, NFR-18 HTTPS | | Low | Y |
 | TM-23 | S | Session fixation | L | H | Medium | NFR-20 (new id at sign in) | | Low | Y |
 | TM-24 | D | An attacker locks every admin account by sending 5 wrong passwords each per 15 minutes (lock applies whatever the source) | M | M | Medium | NFR-19 (15 minute lock), FR-34 (password reset by command) | G-21 | Medium | |
@@ -288,7 +288,7 @@ Likelihood (L) and impact (I) are High, Medium or Low. The inherent rating, befo
 | TM-62 | S | Signing keys (session, form token, suppression hash key) are shipped as defaults, shared between installs or weak, so tokens can be forged | L | H | Medium | NFR-26 (no secrets in the package, read from configuration) | G-17 | Low | Y |
 | TM-63 | I, T | The data folder or configuration is readable or writable by other local accounts | L | H | Medium | NFR-18 | G-17 | Low | |
 | TM-64 | R | The purge job fails silently and personal data is kept beyond its retention period | M | M | Medium | FR-45 (runs logged in the audit log, deferred with FR-46) | G-2 | Low | |
-| TM-65 | S, D | Rate limits bypassed with a forged `X-Forwarded-For`, or every visitor shares the proxy's address and is blocked together | M | M | Medium | NFR-21, RSK-12 (hosting guide) | G-20 | Low | Y |
+| TM-65 | S, D | Rate limits bypassed with a forged `X-Forwarded-For`, or every visitor shares the proxy's address and is blocked together | M | M | Medium | NFR-21, RSK-12 (hosting guide). In this release no forwarding header is read: requests carrying one get 421 (G-22) | G-20 | Low | Y |
 
 ### EP-15 Raw request handling on a 1 CPU server
 
@@ -309,7 +309,7 @@ Likelihood (L) and impact (I) are High, Medium or Low. The inherent rating, befo
 
 - Inherent High (17): TM-01, TM-08, TM-09, TM-14, TM-16, TM-20, TM-21, TM-26, TM-30, TM-31, TM-33, TM-37, TM-45, TM-47, TM-48, TM-53, TM-58.
 - Residual Medium (11): TM-01, TM-06, TM-08, TM-14, TM-20, TM-24, TM-33, TM-34, TM-48, TM-53, TM-58. Of these, TM-01, TM-08, TM-14 and TM-20 drop to Low in local review.
-- Residual High: TM-21 (admin takeover without a second factor) on any reachable server; Low in local review. G-22 makes the hosted case impossible without FR-33.
+- Residual High: TM-21 (admin takeover without a second factor) on any reachable server; Low in local review. G-22 makes the hosted case, and publishing through a local reverse proxy or tunnel, impossible without FR-33; a raw TCP forward deliberately set up by the machine's owner remains undetectable by the server and is excluded by the run instructions.
 - 31 of the 68 threats are stack dependent (marked Y; see section 9).
 
 ## 8. Requirement gaps
@@ -339,7 +339,7 @@ Each gap is a threat that no existing requirement mitigates, or mitigates only p
 | G-19 | TM-29 | Change NFR-20 | "All sessions of an account shall end when its password is changed or reset, or when the account is disabled or deleted." |
 | G-20 | TM-65 | Change NFR-21 | "The client address shall be taken from a forwarding header only when the direct peer is a configured trusted proxy; by default no forwarding header is trusted." |
 | G-21 | TM-24 | Change FR-34 | "A documented server side command shall unlock a locked account, so that a lockout attack cannot keep every Administrator out." |
-| G-22 | TM-21 | Change NFR-18 (compensating control for US-31) | "The package shall refuse to start on a non local address unless HTTPS is configured and two step verification (FR-33) is built and enforced for every admin account." |
+| G-22 | TM-21 | Change NFR-18 (compensating control for US-31) | "Until HTTPS is configured and two step verification (FR-33) is built and enforced for every admin account, the package shall refuse to start unless the listen address is a loopback address, `PUBLIC_ORIGIN` is the server's own `http` loopback origin on the listen port, and no trusted proxy is configured; and it shall answer 421 to every request from a non loopback peer, carrying a forwarding header (`Forwarded`, `X-Forwarded-*`, `X-Real-IP`, `Via` or similar), or with a `Host` that is not the `PUBLIC_ORIGIN` host. There shall be no setting that relaxes this." |
 | G-23 | TM-21, TM-28 | Change FR-32 | "After sign in the portal shall show the time of the account's previous successful sign in and the number of failed attempts since then." |
 
 Also noted for the Product Owner, not a requirement gap: in the MVP every staff user has every permission (one role, OQ-1). That is acceptable for local review with synthetic data, but least privilege (separate Editor and Administrator, FR-34) should return before real enquiries or subscribers exist.
@@ -401,7 +401,7 @@ Declared deviation: ASVS Level 2 aligns its authentication chapter with NIST SP 
 
 ## 12. Specific topics
 
-**Admin account takeover with no two step verification.** TM-20, TM-21, TM-24, TM-26. Passwords alone protect an account that can rewrite every page and export the list. In local review the portal is reachable only from the reviewer's own machine, so the residual is Low; on a reachable server it is High. Compensating controls: NFR-19, NFR-20, rate limits promoted to Must (G-10), first run hijack closed (G-1), lockout unlock (G-21), previous sign in shown (G-23), and a hard stop on non local binding without FR-33 (G-22).
+**Admin account takeover with no two step verification.** TM-20, TM-21, TM-24, TM-26. Passwords alone protect an account that can rewrite every page and export the list. In local review the portal is reachable only from the reviewer's own machine, so the residual is Low; on a reachable server it is High. Compensating controls: NFR-19, NFR-20, rate limits promoted to Must (G-10), first run hijack closed (G-1), lockout unlock (G-21), previous sign in shown (G-23), and a hard stop without FR-33 on non local binding, on a non loopback or https origin, on a configured proxy, and on any proxied request (G-22).
 
 **Stored XSS through "edit everything" rich text in four languages.** TM-30, TM-31, TM-32, TM-09. The defence is layered: an allow list sanitiser on save for every language value (G-7), context encoding on render, and a strict CSP on every response including the admin portal (NFR-24, G-8). Data passed to the 3D scenes must reach them as encoded data, never as inline script (section 9).
 

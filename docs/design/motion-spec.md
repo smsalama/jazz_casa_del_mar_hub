@@ -145,7 +145,7 @@ CSS about 1.2 KB, inline SVG about 0.6 KB, script about 40 lines (milestone clas
 ### 5.1 Purpose and trigger
 
 - Purpose: a calm hand over between pages that keeps the JavaScript state alive (the single WebGL context, the 3D chunk) and hides the swap (FR-29b, NFR-9).
-- Trigger: activation of a same origin link that swup handles (primary click, Enter on a focused link, back and forward buttons). Links with `target`, `download`, `mailto:`, `tel:`, hash only links and the language switcher's hard locale changes follow swup's default ignore rules (the language switcher is a normal link to the other language's page and may use the transition).
+- Trigger: activation of a same origin link that swup handles (primary click, Enter on a focused link, back and forward buttons). Links with `target`, `download`, `mailto:`, `tel:`, hash only links and the language switcher's hard locale changes follow swup's default ignore rules (the language switcher is a normal link to the other language's page and uses the transition; the head plugin then sets `html lang` to the new language, and the panel label, announcements, header, navigation and footer all switch language at the swap).
 - Prefetch: `@swup/preload-plugin` starts the fetch on pointer down (not hover only), keyboard focus on a link, and touch start. On pointer down the pressed state (M-10) shows in 90 ms.
 
 ### 5.2 Storyboard (page ready within the cover time, the best case)
@@ -155,7 +155,7 @@ CSS about 1.2 KB, inline SVG about 0.6 KB, script about 40 lines (milestone clas
 | 0 | Visit starts. `html` gets `is-animating is-leaving`. The 3D engine receives `visit:start`: abort any in flight scene fetch (AbortController), stop reading input. | instant |
 | 0 to 300 ms | The Abyss panel rises from below the viewport. Its top edge is scalloped (a row of arches, 4.5 rem wide). The page beneath is not animated. | translateY 100% to 0, `--dur-page-exit`, `--ease-inout` |
 | 100 to 400 ms | Inside the panel the resort name appears in Prata and below it a gold progress line (sun token, 3 px high, 16 rem or 60 vw wide) fills from 5 to 90 percent. Text fades in over 160 ms starting when the panel covers about a third of the viewport. | line: transform scaleX from left, 700 ms, `--ease-out` |
-| 300 ms (earliest) or later when the page is ready | Swap: swup replaces `main`, updates title, description and robots through the head plugin, resets scroll to the top (restores the saved offset on back and forward, kept in memory), the a11y plugin announces the new page and moves focus to the new h1. The engine disposes the old scene and moves the canvas (section 8.7). All of this must fit in one task of at most 50 ms; scene start is deferred (section 5.4). | instant |
+| 300 ms (earliest) or later when the page is ready | Swap: swup replaces the three containers `#swup-top` (skip link, top concept notice, header with navigation and `aria-current`, language switcher), `#swup-main` (`main`) and `#swup-footer` (concept sentence, legal links, newsletter form with its fresh `formToken`); the head plugin merges the new head (title, description, robots, stylesheets, waiting for new stylesheets such as the Cyrillic font file) and updates `lang` and `dir` on `html`; the panel's "Loading" label takes the new page's language; resets scroll to the top (restores the saved offset on back and forward, kept in memory), the a11y plugin announces the new page and moves focus to the new h1. The engine disposes the old scene and moves the canvas (section 8.7). All of this must fit in one task of at most 50 ms; scene start is deferred (section 5.4). | instant |
 | Swap | The progress line completes to 100 percent. | 120 ms, `--ease-out` |
 | Swap + 0 to 420 ms | The panel continues upward and leaves through the top (scalloped bottom edge), revealing the new page. | translateY 0 to -100%, `--dur-page-enter`, `--ease-inout` |
 | Swap + 420 ms | `is-animating` removed. The new page's poster is already visible; the 3D canvas (if allowed) fades in later by itself (section 8.3). | instant |
@@ -171,20 +171,20 @@ Best case total: 300 ms + 420 ms = 720 ms, inside the 800 ms limit (NFR-9, AC-54
 
 ### 5.4 Blocking and cost rules (NFR-9)
 
-- Input blocking at most 100 ms in total (AC-54.2). Definition used in `budgets.md`: the sum of main thread blocking time (long task time above 50 ms per task) between visit start and `is-animating` removed. Budget by step: pointer down handler 5 ms, swap task at most 50 ms (DOM replace and head update), scene dispose at most 15 ms, scene start deferred so that none of the 3D work lands inside the 720 ms window. The page behind the panel is not set `inert` and the panel has `pointer-events: none`: the visitor can scroll, press Escape or click again (see interruption). Focus moves only at swap.
+- Input blocking at most 100 ms in total (AC-54.2). Definition used in `budgets.md`: the sum of main thread blocking time (long task time above 50 ms per task) between visit start and `is-animating` removed. Budget by step: pointer down handler 5 ms, swap task at most 50 ms (replace of the three containers, head merge and `html lang` update; waiting for a new stylesheet happens before the swap and is not part of the task), scene dispose at most 15 ms, scene start deferred so that none of the 3D work lands inside the 720 ms window. The page behind the panel is not set `inert` and the panel has `pointer-events: none`: the visitor can scroll, press Escape or click again (see interruption). Focus moves only at swap.
 - Scene start is deferred: the engine waits for `is-animating` removal plus one idle callback (or 200 ms, whichever first) before importing the new scene module and glb. That is how the transition does not add to the next page's LCP beyond the cover time and how the heap and GPU work stay out of the 720 ms.
 - LCP: the new page's poster is painted at the swap. Added delay compared with a plain navigation is bounded by the cover time (300 ms minus how early the page was prefetched). Budget: at most 200 ms added (NFR-9, AC-54.3). If the measurement exceeds 200 ms on L1, the first fallback is to start the swap at 240 ms (panel about 90 percent covered on the `--ease-inout` curve), and the second is to cut `--dur-page-exit` to 240 ms; both keep the 800 ms limit. Recorded as risk R-M2 in section 12.
 
 ### 5.5 Variants
 
-- Reduced motion: no panel. `main` fades out in 60 ms and the new `main` fades in over 60 ms (`linear`), 120 ms in all (limit 150 ms, NFR-11, AC-56.3). No scroll animation. The same swap, focus and announcement rules apply.
+- Reduced motion: no panel. the three containers fade out in 60 ms and the new ones fade in over 60 ms (`linear`), as one swap, 120 ms in all (limit 150 ms, NFR-11, AC-56.3). No scroll animation. The same swap, focus and announcement rules apply.
 - Paused: instant swap, no panel, no fade (FR-30, AC-28.2).
 - No JavaScript: normal navigation, no overlay.
 - Panel under `prefers-reduced-transparency` or `forced-colors`: already opaque.
 
 ### 5.6 Accessibility
 
-- The a11y plugin announces the new page title through its live region; the panel contains a visually hidden "Loading" in a `role="status"` element while the panel is up (translated, AC-27.4). Announcements stop when the panel is removed.
+- The a11y plugin announces the new page title through its live region, using announcement wording keyed by the new `html lang` (en, de, it, ru, from the fixed resource files); the panel contains a visually hidden "Loading" in a `role="status"` element while the panel is up (translated, AC-27.4). Announcements stop when the panel is removed.
 - Focus lands on the new h1 and is visible (3 px ring). Focus is never trapped; the panel is not a dialog.
 - The panel adds no flashing: one monotonic rise, one monotonic leave.
 - Contrast on the panel is as on the loader.
@@ -797,6 +797,7 @@ No FR or NFR is withdrawn or weakened by this spec.
 | --- | --- | --- |
 | R-M1 | Meshopt decode, scene build and shader compile on the main thread could exceed 50 ms tasks and hurt TBT and INP | Task slicing in 8.3; measure in the Phase 4 performance spike |
 | R-M2 | The transition's 300 ms cover could add more than 200 ms to LCP (AC-54.3) | Fallbacks in 5.4 (swap at 240 ms, then a 240 ms cover) |
+| R-M4 | The head plugin's `awaitAssets` can delay the swap on a first visit to a `ru` page while the Cyrillic font stylesheet loads; counts within the cover time | Performance Engineer measures on L1 |
 | R-M3 | swup 4.10.0 behaviour on a click during a transition is assumed, not verified | Developer verifies and records |
 | R-M4 | The Lighthouse 3D mode Performance score (at least 80) may be low because Lighthouse renders WebGL in software (RSK-3) | Poster as LCP, task slicing; report cloud and real phone numbers separately |
 | R-M5 | iOS Low Power Mode caps requestAnimationFrame at 30 Hz, a frame time of 33.3 ms, which the governor reads as above 33 ms and answers with fallback | Accepted: such a device gets the poster; Steven can ask for a softer rule |
