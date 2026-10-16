@@ -3,7 +3,7 @@
   "project": "site",
   "agency_version": "0.1.1+ef1fb3c",
   "created": "2026-10-15",
-  "phase": "4 Design and architecture",
+  "phase": "5 Development planning",
   "repos": {
     "hub": {
       "name": "jazz_casa_del_mar_hub",
@@ -26,8 +26,8 @@
       "approval_file": "approvals/T1-scope.md"
     },
     "T2-design": {
-      "status": "pending",
-      "approval_file": ""
+      "status": "approved",
+      "approval_file": "approvals/T2-design.md"
     },
     "T3-release": {
       "status": "pending",
@@ -545,6 +545,12 @@
       "decision": "Q22: fix round limited to the high findings only (AC-H1, AC-H2, SEC-H1, DC-H1 handled as a T2 name decision, DC-H3, DC-H4, A-1). No 3D hero preview; Steven will judge the 3D look blind at T2 (DC-H2 accepted). All medium and low findings go to T2 as known items.",
       "by": "Steven (in chat): \"fix only the highs, skip the 3D hero preview, and take the remaining mediums to T2 as known items. I will judge the look blindly.\"",
       "file": "docs/reviews/phase4-gate-findings.md"
+    },
+    {
+      "date": "2026-10-16",
+      "decision": "T2 approved with all recommendations in docs/t2-decisions.md (Node 24 required; licences SQLite, libvips, BlueOak-1.0.0, Python-2.0; OQ-22 to OQ-25 as recommended; 8 hour limit essential with unsaved text restore)",
+      "by": "Steven (in chat): \"Approve T2\"",
+      "file": "approvals/T2-design.md"
     }
   ],
   "open_questions": [
@@ -553,54 +559,6 @@
       "question": "Solicitor question pack Q1 to Q7 in docs/legal/questions-2026-10-15.md (needed before any hosting, not before the local build)",
       "for": "Steven (solicitor)",
       "asked": "2026-10-15"
-    },
-    {
-      "id": "Q18",
-      "question": "OQ-22 suppression at newsletter sign-up (silent block for 36 months, or fresh consent overrides)",
-      "for": "Steven (T2)",
-      "asked": "2026-10-15"
-    },
-    {
-      "id": "Q19",
-      "question": "OQ-23 Russian \u0439 and \u0451 search handling (working answer: kept distinct)",
-      "for": "Steven (T2)",
-      "asked": "2026-10-15"
-    },
-    {
-      "id": "Q20",
-      "question": "OQ-24 concept notice 13 px below 640 px and 14 px above, exempt from 16 px minimum",
-      "for": "Steven (T2)",
-      "asked": "2026-10-15"
-    },
-    {
-      "id": "Q21",
-      "question": "OQ-25 first 3D frame budget 4 s, or 4.5 s if the spike misses",
-      "for": "Steven (T2)",
-      "asked": "2026-10-15"
-    },
-    {
-      "id": "Q23",
-      "question": "T2: resort name (Jaz Elite Casa del Mar Beach, short form, or neutral codename); docs currently say Jazz Casa del Mar",
-      "for": "Steven (T2)",
-      "asked": "2026-10-16"
-    },
-    {
-      "id": "Q24",
-      "question": "T2: 3D look judged blind (no preview, DC-H2 accepted); direction recommended is stylised low poly diorama",
-      "for": "Steven (T2)",
-      "asked": "2026-10-16"
-    },
-    {
-      "id": "Q25",
-      "question": "T2: Node 24.16.0 and npm 11 now required (workspace has Node 22); licences SQLite, libvips LGPL, BlueOak-1.0.0, Python-2.0; Astro/SQLite/no Docker; single web repo",
-      "for": "Steven (T2)",
-      "asked": "2026-10-16"
-    },
-    {
-      "id": "Q26",
-      "question": "T2: is the 8 hour admin session limit an essential exception under WCAG 2.2.1 (needs unsaved text restore)",
-      "for": "Steven (T2)",
-      "asked": "2026-10-16"
     }
   ]
 }
