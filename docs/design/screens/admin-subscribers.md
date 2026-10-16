@@ -33,7 +33,7 @@ See subscribers and export the active list.
 
 ## Content
 
-- Columns: email, language, signed up, consent wording version, status.
+- Columns: email, language, signed up, consent wording version, status. The version label (for example N-2) is a link to the read only version viewer in `admin-consent-wording.md`, so staff can read the exact words that subscriber saw.
 - Export contains active subscribers only by default; a checkbox "Include unsubscribed" is unticked by default.
 
 ## States
