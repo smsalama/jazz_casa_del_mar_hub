@@ -7,7 +7,7 @@
 
 ## Context
 
-The agency rule is one setup command and one verify command on Steven's Mac, and the same verify in the Linux cloud workspace, which has Node.js 22.22.0 and no Docker engine. The full visitor and admin test suite must pass with outgoing network blocked (NFR-31, AC-76.3). Accessibility evidence is an axe-core scan with zero violations on every page and state (NFR-1). No CSP violation may be logged in the end-to-end tests (NFR-24). The agency default is Vitest, Playwright, and PGlite in tests.
+The agency rule is one setup command and one verify command on Steven's Mac, and the same verify in the Linux cloud workspace, which has no Docker engine. The workspace has Node.js 22.22.0 with npm 10.9.4 today; the project minimum is Node.js 24.16.0 with npm 11 (ADR-0001, ADR-0014, amended 2026-10-16 for gate finding AC-H1), so the workspace must be given Node.js 24 before the web repo is scaffolded. nodejs.org is not reachable through the workspace proxy (checked 2026-10-16); the DevOps Engineer either has nodejs.org allowed for the workspace or installs the Node.js 24 binary from the npm registry with its SHA-256 checked against the official `SHASUMS256.txt` taken on the Mac, and `scripts/doctor.sh` refuses to continue on an older Node.js or npm. The full visitor and admin test suite must pass with outgoing network blocked (NFR-31, AC-76.3). Accessibility evidence is an axe-core scan with zero violations on every page and state (NFR-1). No CSP violation may be logged in the end-to-end tests (NFR-24). The agency default is Vitest, Playwright, and PGlite in tests.
 
 ## Options considered
 

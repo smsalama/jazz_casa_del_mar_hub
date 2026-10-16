@@ -27,7 +27,7 @@ Option 1. One Node.js process, started with `node --max-old-space-size=256 dist/
 
 Server side commands (create the first Administrator, reset a password, unlock an account, back up, restore, purge, migrate) are separate short-lived Node.js programs that use the same modules and the same data folder (ADR-0015).
 
-Runtime: **Node.js 22 LTS, minimum 22.22.0** (`.nvmrc` = `22`, matching the agency template and the cloud workspace, which runs 22.22.0). Code must also run unchanged on Node.js 24 LTS. Node.js 22 reaches end of life on 30 April 2027, so the move to Node.js 24 or 26 LTS is recorded as a condition before any hosting (see Consequences).
+Runtime: **Node.js 24 LTS, minimum 24.16.0, with npm 11 or later** (`.nvmrc` = `24`; `engines` `{ "node": "^24.16.0", "npm": ">=11" }`). Amended 2026-10-16 in P4R2-ARCH (architecture gate finding AC-H1): the earlier minimum of Node.js 22.22.0 could not install the pinned development tools with `engine-strict=true` (eslint-plugin-astro 3.2.1 and astro-eslint-parser 3.2.0 need 22.22.3, 24.16.0 or 26.3.0 or later; license-checker-rseidelsohn 5.0.1 needs Node.js 24 and npm 11; npm 10, bundled with every Node.js 22, fails to resolve vitest 5). The evidence is in ADR-0014. This replaces the agency template's `.nvmrc` value of `22` for this project. Node.js 24 is supported until 30 April 2028, so the earlier T2 condition "move off Node.js 22 (end of support 30 April 2027) before hosting" is met by this change. The cloud workspace runs Node.js 22.22.0 today and must be given Node.js 24 before the web repo is scaffolded (ADR-0012).
 
 No Docker anywhere: there is no database server to run, so Docker Compose adds nothing on the Mac and is unavailable in the cloud workspace.
 
@@ -39,11 +39,11 @@ No Docker anywhere: there is no database server to run, so Docker Compose adds n
 - A long synchronous task would block every request. Mitigated: SQLite queries are short and indexed; CSV export streams rows; image work runs in a child process; password hashing runs on the libuv thread pool.
 - Option 2 was rejected because two processes double the memory floor and add an internal network hop, an extra repo (ADR-0013) and a CORS and authentication boundary between them, for no requirement that needs it.
 - Option 4 was rejected because FR-38 requires edits to go live within 60 seconds without a rebuild.
-- Condition before hosting: move `.nvmrc` and `engines` to Node.js 24 or 26 LTS (Node.js 22 is in maintenance and ends on 30 April 2027).
+- The earlier condition before hosting (move from Node.js 22, which ends on 30 April 2027, to 24 or 26 LTS) is met by the Node.js 24 minimum (AC-H1). Before hosting, check that Node.js 24 is still supported on the planned date (end of support 30 April 2028).
 
 ## Versions and licences
 
 | Component | Version | Licence |
 | --- | --- | --- |
-| Node.js runtime | 22 LTS, minimum 22.22.0 (also tested on 24 LTS) | MIT (Node.js), with bundled third party notices |
-| npm | as bundled with Node.js (10.9.4 in the workspace) | Artistic-2.0 (build tool only, not shipped) |
+| Node.js runtime | 24 LTS, minimum 24.16.0 (pins resolved and installed on 24.16.0 and 24.22.0, ADR-0014) | MIT (Node.js), with bundled third party notices |
+| npm | 11 or later, as bundled with Node.js 24 (11.13.0 with 24.16.0); npm 10 is refused | Artistic-2.0 (build tool only, not shipped) |

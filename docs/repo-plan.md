@@ -18,7 +18,7 @@
 ```
 jazz_casa_del_mar_web/
   .githooks/                     agency template: pre-commit (dash check, secret scan), commit-msg
-  .nvmrc                         22
+  .nvmrc                         24 (minimum 24.16.0 with npm 11, ADR-0001, ADR-0014)
   .npmrc                         ignore-scripts=true, engine-strict=true, save-exact=true, audit-level=high
   .gitignore                     node_modules, dist, data, backups, .env, test-results, playwright-report, coverage, release
   .gitleaks.toml, .dash-allow    agency template
@@ -154,7 +154,7 @@ Folder rules: `src/lib/**`, `src/server/**`, `src/cli/**` and `src/workers/**` a
 
 `bash scripts/setup.sh` (agency template plus project steps, idempotent):
 
-1. `scripts/doctor.sh` (git, Node.js 22, npm, curl).
+1. `scripts/doctor.sh` (git, Node.js 24.16.0 or later, npm 11 or later, curl; refuses older versions, AC-H1).
 2. Git hooks on (`core.hooksPath .githooks`).
 3. `npm ci` (install scripts disabled by `.npmrc`).
 4. `npx playwright install chromium` (plus `webkit firefox` on macOS); skipped when the browsers are already present.
@@ -173,7 +173,9 @@ Exact versions (ADR tables hold the licences):
 
 - Shipped, server: astro 7.3.5, @astrojs/node 11.1.6, sirv 3.0.2, better-sqlite3 13.0.3, drizzle-orm 0.45.3, zod 4.6.5, @node-rs/argon2 2.2.1, sharp 0.35.5, tar-stream 3.2.1.
 - Shipped, bundled into browser code: three 0.186.1, swup 4.10.0, @swup/a11y-plugin 5.2.1, @swup/head-plugin 2.3.1, @swup/preload-plugin 3.2.12, @swup/forms-plugin 3.6.0, motion 13.4.6, react 19.3.0, react-dom 19.3.0, react-router 8.4.0, react-aria-components 1.21.1, @tiptap/react 3.31.4, @tiptap/pm 3.31.4, @tiptap/starter-kit 3.31.4, @tiptap/extension-link 3.31.4, openapi-fetch 0.17.0, the chosen Fontsource packages.
-- Development only: typescript 6.0.3, @astrojs/check 0.9.10, @astrojs/react 7.0.0, esbuild 0.28.2, tsx 4.23.15, drizzle-kit 0.31.11, vitest 5.0.3, @vitest/coverage-v8 5.0.3, @playwright/test 1.63.0, @axe-core/playwright 4.13.0, ajv 8.20.0, ajv-formats 3.0.1, @redocly/cli 2.57.0, openapi-typescript 7.13.0, lighthouse 13.5.0, eslint 10.11.0, typescript-eslint 8.71.0, eslint-plugin-astro 3.2.1, eslint-plugin-jsx-a11y 6.10.2, prettier 3.9.9, @gltf-transform/cli 4.5.1, meshoptimizer 1.3.0, gltf-validator 2.0.0-dev.3.10, @cyclonedx/cyclonedx-npm 6.0.1, license-checker-rseidelsohn 5.0.1, @types/node 22 line, @types/better-sqlite3 9.6.0, @types/react 19.3.0, @types/react-dom 19.3.0, @types/three 0.186.0, @types/tar-stream 3.1.5.
+- Development only: typescript 5.9.3, @astrojs/check 0.9.10, @astrojs/react 7.0.0, esbuild 0.28.2, tsx 4.23.15, drizzle-kit 0.31.11, vitest 5.0.3, @vitest/coverage-v8 5.0.3, @playwright/test 1.63.0, @axe-core/playwright 4.13.0, ajv 8.20.0, ajv-formats 3.0.1, @redocly/cli 2.57.0, openapi-typescript 7.13.0, lighthouse 13.5.0, eslint 10.11.0, typescript-eslint 8.71.0, eslint-plugin-astro 3.2.1, eslint-plugin-jsx-a11y-x 0.2.0, prettier 3.9.9, @gltf-transform/cli 4.5.1, meshoptimizer 1.3.0, gltf-validator 2.0.0-dev.3.10, @cyclonedx/cyclonedx-npm 6.0.1, license-checker-rseidelsohn 5.0.1, @types/node 24.19.0, @types/better-sqlite3 9.6.0, @types/react 19.3.0, @types/react-dom 19.3.0, @types/three 0.186.0, @types/tar-stream 3.1.5.
+
+`package.json` `engines` is `{ "node": "^24.16.0", "npm": ">=11" }`. This set was resolved and installed with `engine-strict=true` and install scripts disabled on Node.js 24.16.0 with npm 11.13.0 on 2026-10-16 (`npm ci` exit 0, 1,027 packages); the runs and the reasons for TypeScript 5.9.3, eslint-plugin-jsx-a11y-x and the Node.js 24 minimum are in ADR-0014 (gate finding AC-H1).
 
 Browser bundled libraries are listed under `dependencies` so that `npm ls --omit=dev`, the SBOM and the licence check include them.
 

@@ -29,12 +29,12 @@ One Node.js process on the client's small server serves everything: the 84 publi
 
 ## 3. Stack at a glance
 
-Exact versions are pinned in the web repo's `package.json` and lock file. All were checked on the npm registry on 2026-10-15 and each is the latest stable release published at least two weeks earlier (before 2026-10-01).
+Exact versions are pinned in the web repo's `package.json` and lock file. All were checked on the npm registry on 2026-10-15 and each is the latest stable release published at least two weeks earlier (before 2026-10-01), except where a newer major cannot be installed with the rest (TypeScript 5.9.3 for openapi-typescript). On 2026-10-16 (gate finding AC-H1) the whole set was resolved and installed with `engine-strict=true` and install scripts disabled on Node.js 24.16.0 with npm 11.13.0; the evidence is in ADR-0014.
 
 | Area | Choice | Version | Licence | ADR |
 | --- | --- | --- | --- | --- |
-| Runtime | Node.js LTS | 22 (minimum 22.22.0), also runs on 24 | MIT | 0001 |
-| Language | TypeScript (strict) | 6.0.3 | Apache-2.0 | 0014 |
+| Runtime | Node.js LTS, npm | 24 (minimum 24.16.0), npm 11 or later | MIT; npm Artistic-2.0 (not shipped) | 0001, 0014 |
+| Language | TypeScript (strict) | 5.9.3 | Apache-2.0 | 0014 |
 | Web framework | Astro, server rendering | 7.3.5 | MIT | 0002 |
 | Node adapter | @astrojs/node, middleware mode | 11.1.6 | MIT | 0002 |
 | Static serving | sirv | 3.0.2 | MIT | 0002 |
@@ -59,7 +59,7 @@ Exact versions are pinned in the web repo's `package.json` and lock file. All we
 | Accessibility scans | @axe-core/playwright, axe-core | 4.13.0 | MPL-2.0 | 0012 |
 | Contract tests | ajv, ajv-formats, @redocly/cli | 8.20.0, 3.0.1, 2.57.0 | MIT | 0012 |
 | Performance | lighthouse | 13.5.0 | Apache-2.0 | 0012 |
-| Lint and format | eslint, typescript-eslint, eslint-plugin-astro, eslint-plugin-jsx-a11y, prettier | 10.11.0, 8.71.0, 3.2.1, 6.10.2, 3.9.9 | MIT | 0014 |
+| Lint and format | eslint, typescript-eslint, eslint-plugin-astro, eslint-plugin-jsx-a11y-x, prettier | 10.11.0, 8.71.0, 3.2.1, 0.2.0, 3.9.9 | MIT | 0014 |
 | SBOM and notices | @cyclonedx/cyclonedx-npm, license-checker-rseidelsohn | 6.0.1, 5.0.1 | Apache-2.0, BSD-3-Clause | 0014 |
 
 Not used, with the reason: Next.js (ADR-0002), PostgreSQL and PGlite (ADR-0003), Docker Compose (ADR-0001), React Three Fiber (ADR-0007), GSAP (licence not on the allow-list, ADR-0007), Draco and KTX2 decoders (need `blob:` workers, ADR-0007), Astro `<ClientRouter />` and Astro's CSP feature (incompatible with the strict header policy, ADR-0002, ADR-0008), any email library (OQ-2), a separate api repo (ADR-0013).
@@ -74,7 +74,7 @@ flowchart LR
     O["Operator or reviewer with a shell on the machine"]
   end
 
-  subgraph Machine["Reviewer's computer in this release (client server later): Node.js 22, no database or mail server"]
+  subgraph Machine["Reviewer's computer in this release (client server later): Node.js 24, no database or mail server"]
     APP["Site application (one Node.js process): public pages, public forms, admin portal and JSON API, media, scheduler"]
     W["Image worker (short-lived child process, 60 s and 256 MB limits)"]
     CLI["Server side commands: admin:create, admin:unlock, admin:reset-password, backup, restore, purge, db:migrate"]
@@ -306,7 +306,7 @@ Language is the first path segment, slugs are shared English slugs (ADR-0011). E
 
 - **Setup on Steven's Mac** (one command): `bash scripts/setup.sh` installs dependencies with install scripts disabled, installs Playwright browsers, creates `.env`, `data/` and `backups/` with owner only permissions, migrates and seeds. Then `npm run admin:create` and `npm start`, and open `http://localhost:4321`. Docker is not needed.
 - **Verify** (one command): `bash scripts/verify.sh` runs the dash check, secret scan, `lint` (ESLint, Prettier, `npm audit` of shipped dependencies), `typecheck`, `test` (unit and integration on real SQLite files), `test:contract` (handlers against `contract/openapi.yaml`), `test:e2e` (builds, starts the production server on loopback with a fresh data folder, Playwright on Chromium with axe, CSP and external request listeners, JavaScript on and off, 3D and fallback modes) and `build`.
-- **Cloud workspace**: same commands with `bash scripts/setup.sh --workspace`; Node.js 22.22.0, no Docker needed.
+- **Cloud workspace**: same commands with `bash scripts/setup.sh --workspace`; Node.js 24.16.0 or later with npm 11 (the workspace has 22.22.0 today and must be upgraded first, ADR-0012), no Docker needed.
 - **Network blocked** (NFR-31): Node.js processes in tests load a guard that refuses non loopback connections; browsers use host resolver rules that resolve only localhost; `npm run test:offline` adds `unshare -rn` on Linux where available (ADR-0012).
 - **Browser matrix and performance**: `npm run test:e2e:all` (Chromium, WebKit, Firefox) on the Mac; `npm run test:perf` (Lighthouse with profile L1 and the NFR-10 load script) for the Performance Engineer. Frame rate on R1 or profile L2 is measured manually (NFR-8).
 
@@ -369,7 +369,7 @@ Language is the first path segment, slugs are shared English slugs (ADR-0011). E
 3. **Two licence approvals** for the licence register (ADR-0014): SQLite (public domain dedication) and libvips inside sharp (LGPL-3.0-or-later). If libvips is refused, images are processed with slower WebAssembly codecs; if SQLite is refused, there is no workable data store without a database server.
 4. **Backups and the 10 GB disk** (ADR-0010). Every daily archive is full, so 35 archives need about 36 times the data size. Fine for placeholder content; with 2 GB of photos it would need about 72 GB. Before any hosting: a larger disk, a lower media cap, or a shorter archive retention.
 5. **Single web repo; no api repo** (ADR-0013). Nothing for Steven to create.
-6. **Node.js 22 now, Node.js 24 or 26 before hosting** (ADR-0001). Node.js 22 matches the workspace and ends support on 30 April 2027.
+6. **Node.js 24 now (minimum 24.16.0 with npm 11)** (ADR-0001, ADR-0014; changed from Node.js 22 to fix gate finding AC-H1). The pinned lint and licence tools do not install on Node.js 22.22.0, and npm 10 cannot resolve vitest 5. This also removes the earlier item that Node.js 22 ends support on 30 April 2027 (Node.js 24: 30 April 2028). Steven's Mac and the cloud workspace need Node.js 24.
 7. **Rich text sanitiser interpretation** (ADR-0005). The allow-list sanitiser required by NFR-24 is a strict schema check of the editor's JSON instead of an HTML sanitiser library. The Security Engineer should confirm.
 8. **First Administrator by server command only** (ADR-0006). The setup screen alternative allowed by FR-47 is not built.
 9. **`wasm-unsafe-eval` and `blob:` sources in the public CSP** (ADR-0007, ADR-0008), needed by the meshopt decoder and three.js texture loading; allowed by NFR-24 for a 3D decoder.
